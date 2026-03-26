@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f5;
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-display), ui-serif, Georgia, serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.font-serif {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+}
+
+/* Home page: partner logos — subtle motion (respect reduced motion) */
+@keyframes partner-float-a {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes partner-float-b {
+  0%,
+  100% {
+    transform: translateY(-4px) rotate(0.8deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(-1.2deg);
+  }
+}
+
+@keyframes partner-blob-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.55;
+  }
+  33% {
+    transform: translate(12px, -10px) scale(1.08);
+    opacity: 0.75;
+  }
+  66% {
+    transform: translate(-8px, 8px) scale(0.95);
+    opacity: 0.6;
+  }
+}
+
+@keyframes partner-connector-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px -4px rgba(91, 33, 182, 0.35);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 8px 22px -4px rgba(124, 58, 237, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .partner-float-left {
+    animation: partner-float-a 4.2s ease-in-out infinite;
+  }
+
+  .partner-float-right {
+    animation: partner-float-b 5s ease-in-out infinite;
+    animation-delay: -1.2s;
+  }
+
+  .partner-blob-1 {
+    animation: partner-blob-drift 14s ease-in-out infinite;
+  }
+
+  .partner-blob-2 {
+    animation: partner-blob-drift 18s ease-in-out infinite;
+    animation-delay: -5s;
+  }
+
+  .partner-connector span {
+    animation: partner-connector-pulse 3.2s ease-in-out infinite;
+  }
+}

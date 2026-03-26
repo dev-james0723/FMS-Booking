@@ -1,0 +1,51 @@
+import { jsonError, jsonOk } from "@/lib/api-response";
+import { requireUserSession } from "@/lib/auth/require-session";
+import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
+import { listAvailability } from "@/lib/booking/service";
+import { prisma } from "@/lib/prisma";
+
+const ymd = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function GET(req: Request) {
+  const auth = await requireUserSession();
+  if (!auth.ok) return auth.response;
+
+  const url = new URL(req.url);
+  const from = url.searchParams.get("from");
+  const to = url.searchParams.get("to");
+  if (!from || !to || !ymd.test(from) || !ymd.test(to)) {
+    return jsonError(
+      "VALIDATION_ERROR",
+      "Query from and to required as yyyy-MM-dd (Hong Kong calendar day)",
+      400
+    );
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: auth.userId },
+  });
+  if (!user?.hasCompletedRegistration || user.accountStatus !== "active") {
+    return jsonError("FORBIDDEN", "無法查閱時段", 403);
+  }
+
+  const start = hkDayStartUtc(from);
+  const end = hkDayEndUtc(to);
+  if (end < start) {
+    return jsonError("VALIDATION_ERROR", "to must be on or after from", 400);
+  }
+
+  const rows = await listAvailability({ from: start, to: end });
+
+  return jsonOk({
+    slots: rows.map((s) => ({
+      id: s.id,
+      startsAt: s.startsAt.toISOString(),
+      endsAt: s.endsAt.toISOString(),
+      capacityTotal: s.capacityTotal,
+      bookedCount: s.bookedCount,
+      remaining: s.remaining,
+      venueLabel: s.venueLabel,
+      isOpen: s.isOpen,
+    })),
+  });
+}

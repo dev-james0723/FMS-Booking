@@ -1,0 +1,664 @@
+// D Festival × 幻樂空間 — PostgreSQL schema
+// Timezone: application uses Asia/Hong_Kong; store timestamptz (UTC).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  active
+  inactive
+  suspended
+}
+
+enum RegistrationSubmissionStatus {
+  pending
+  processed
+  failed
+}
+
+enum BookingRequestStatus {
+  pending
+  approved
+  rejected
+  waitlisted
+  cancelled
+  no_show
+  completed
+}
+
+enum BookingAllocationStatus {
+  pending
+  approved
+  released
+}
+
+enum EmailLogStatus {
+  queued
+  sent
+  failed
+  bounced
+}
+
+enum NotificationJobStatus {
+  scheduled
+  running
+  completed
+  failed
+  cancelled
+}
+
+enum SocialBonusType {
+  follow_all
+  repost
+}
+
+enum SocialBonusStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BonusRewardSource {
+  social_follow
+  social_repost
+  ambassador_referral
+  admin_grant
+}
+
+enum CouponType {
+  post_experience_rental
+  dfestival
+  dmasters
+  other
+}
+
+enum CouponStatus {
+  unused
+  issued
+  redeemed
+  expired
+}
+
+enum QrCodeType {
+  privilege_dfestival
+  privilege_dmasters
+  referral_ambassador
+  generic
+}
+
+enum QrCodeStatus {
+  active
+  revoked
+}
+
+enum ReferralStatus {
+  clicked
+  registered
+  converted
+}
+
+enum ConversionType {
+  festival
+  competition
+  both
+}
+
+enum FestivalConversionStatus {
+  intent
+  applied
+  accepted
+  paid
+}
+
+enum CompetitionConversionStatus {
+  intent
+  applied
+  accepted
+  paid
+}
+
+enum AdminRole {
+  admin
+  super_admin
+}
+
+enum AuditActorType {
+  system
+  user
+  admin
+}
+
+model UserCategory {
+  id          String @id @default(uuid())
+  code        String @unique // personal | teaching
+  nameZh      String @map("name_zh")
+  description String?
+
+  users User[]
+
+  @@map("user_categories")
+}
+
+model User {
+  id                       String        @id @default(uuid())
+  email                    String        @unique
+  accountStatus            AccountStatus @default(active) @map("account_status")
+  hasCompletedRegistration Boolean       @default(false) @map("has_completed_registration")
+  userCategoryId           String?       @map("user_category_id")
+  isFirstExperiencePriority Boolean      @default(true) @map("is_first_experience_priority")
+  noShowCount              Int           @default(0) @map("no_show_count")
+  suspendedUntil           DateTime?     @map("suspended_until")
+  referralAttributionCode  String?       @map("referral_attribution_code")
+  qualifiedForPrivilege    Boolean       @default(false) @map("qualified_for_privilege")
+  /// Opaque token for the post-registration page to record official profile link opens (no login required).
+  socialFollowSetupToken   String?       @unique @map("social_follow_setup_token")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  category                 UserCategory?              @relation(fields: [userCategoryId], references: [id])
+  profile                  UserProfile?
+  credentials              LoginCredential?
+  registrationSubmissions  RegistrationSubmission[]
+  bookingRequests          BookingRequest[]
+  passwordResetTokens      PasswordResetToken[]
+  emailLogs                EmailLog[]
+  socialBonusSubmissions   SocialBonusSubmission[]
+  bonusRewards             BonusReward[]
+  coupons                  Coupon[]
+  qrCodes                  QrCode[]                   @relation("QrOwner")
+  referralCodes            ReferralCode[]
+  referralsAsReferee       Referral[]                 @relation("RefereeUser")
+  festivalConversions      FestivalConversionRecord[]
+  competitionConversions   CompetitionConversionRecord[]
+  ambassadorRewardsEarned  AmbassadorReward[]         @relation("AmbassadorRewards")
+  webAuthnCredentials           WebAuthnCredential[]
+  passkeyLoginChallenges        PasskeyLoginChallenge[]
+  passkeyEnrollmentChallenges   PasskeyEnrollmentChallenge[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserProfile {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+
+  nameZh               String  @map("name_zh")
+  nameEn               String? @map("name_en")
+  phone                String
+  age                  Int
+  isAge17OrAbove       Boolean @map("is_age_17_or_above")
+  teacherRecommended   Boolean @map("teacher_recommended")
+  teacherName          String? @map("teacher_name")
+  teacherContact       String? @map("teacher_contact")
+  identityFlags        Json    @map("identity_flags")
+  /// When 「其他」is selected among identities, user-specified description.
+  identityOtherText    String? @map("identity_other_text")
+  instrumentField      String  @map("instrument_field")
+  usagePurposes        Json    @map("usage_purposes")
+  preferredDates       Json?   @map("preferred_dates")
+  preferredTimeText    String? @map("preferred_time_text")
+  wantsConsecutiveSlots Boolean? @map("wants_consecutive_slots")
+  extraNotes           String? @map("extra_notes")
+  interestDfestival    Boolean @map("interest_dfestival")
+  interestDmasters     Boolean @map("interest_dmasters")
+  marketingOptIn     Boolean @map("marketing_opt_in")
+  socialFollowClaimed Boolean @default(false) @map("social_follow_claimed")
+  /// Which official profile links were opened from the post-registration page (six keys; repeat opens ignored).
+  socialFollowLinkClicks Json    @default("{}") @map("social_follow_link_clicks")
+  socialFollowVerified Boolean @default(false) @map("social_follow_verified")
+  socialFollowVerifiedAt DateTime? @map("social_follow_verified_at")
+  wantsAmbassador      Boolean @default(false) @map("wants_ambassador")
+  agreedTerms          Boolean @map("agreed_terms")
+  agreedPrivacy        Boolean @map("agreed_privacy")
+  agreedEmailNotifications Boolean @map("agreed_email_notifications")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([phone])
+  @@map("user_profiles")
+}
+
+model PhoneOtpChallenge {
+  id                       String    @id @default(uuid())
+  phoneNorm                String    @map("phone_norm")
+  codeHash                 String    @map("code_hash")
+  expiresAt                DateTime  @map("expires_at")
+  verifyAttempts           Int       @default(0) @map("verify_attempts")
+  verifiedAt               DateTime? @map("verified_at")
+  registrationConsumedAt   DateTime? @map("registration_consumed_at")
+  createdAt                DateTime  @default(now()) @map("created_at")
+
+  @@index([phoneNorm, createdAt])
+  @@map("phone_otp_challenges")
+}
+
+model LoginCredential {
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  passwordHash        String   @map("password_hash")
+  mustChangePassword  Boolean  @default(true) @map("must_change_password")
+  lastLoginAt         DateTime? @map("last_login_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_credentials")
+}
+
+/// Passkey / WebAuthn credentials (Face ID, Touch ID, Windows Hello, security keys).
+model WebAuthnCredential {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  credentialId String   @unique @map("credential_id")
+  publicKey    Bytes    @map("public_key")
+  counter      BigInt   @default(0)
+  transports   Json?    @map("transports")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webauthn_credentials")
+}
+
+/// Pending WebAuthn registration before the user row exists (bound to verified phone + email).
+model PasskeyPreregChallenge {
+  id           String    @id @default(uuid())
+  emailNorm    String    @map("email_norm")
+  phoneNorm    String    @map("phone_norm")
+  challengeB64 String    @map("challenge_b64")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  credentialId String?   @unique @map("credential_id")
+  publicKey    Bytes?    @map("public_key")
+  counter      BigInt?
+  transports   Json?     @map("transports")
+  completedAt  DateTime? @map("completed_at")
+
+  @@index([emailNorm, phoneNorm])
+  @@map("passkey_prereg_challenges")
+}
+
+model PasskeyLoginChallenge {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  challengeB64 String   @map("challenge_b64")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("passkey_login_challenges")
+}
+
+/// Logged-in user adding another passkey from account settings.
+model PasskeyEnrollmentChallenge {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  challengeB64 String   @map("challenge_b64")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("passkey_enrollment_challenges")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model RegistrationSubmission {
+  id              String                       @id @default(uuid())
+  userId          String?                      @map("user_id")
+  email           String
+  payloadSnapshot Json                         @map("payload_snapshot")
+  status          RegistrationSubmissionStatus @default(pending)
+  failureReason   String?                      @map("failure_reason")
+  idempotencyKey  String?                      @unique @map("idempotency_key")
+  clientIp        String?                      @map("client_ip")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@map("registration_submissions")
+}
+
+model BookingSlot {
+  id             String   @id @default(uuid())
+  startsAt       DateTime @map("starts_at")
+  endsAt         DateTime @map("ends_at")
+  capacityTotal  Int      @default(1) @map("capacity_total")
+  capacityHeld   Int      @default(0) @map("capacity_held")
+  isOpen         Boolean  @default(true) @map("is_open")
+  venueLabel     String?  @map("venue_label")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  allocations BookingAllocation[]
+
+  @@index([startsAt])
+  @@map("booking_slots")
+}
+
+model BookingRequest {
+  id                   String               @id @default(uuid())
+  userId               String               @map("user_id")
+  status               BookingRequestStatus @default(pending)
+  requestedAt          DateTime             @default(now()) @map("requested_at")
+  userCategoryAtRequest String              @map("user_category_at_request")
+  adminNote            String?              @map("admin_note")
+  usesBonusSlot        Boolean              @default(false) @map("uses_bonus_slot")
+  bonusRewardId        String?              @map("bonus_reward_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bonusReward  BonusReward?         @relation(fields: [bonusRewardId], references: [id])
+  allocations BookingAllocation[]
+  statusLogs   BookingStatusLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("booking_requests")
+}
+
+model BookingAllocation {
+  id                String                  @id @default(uuid())
+  bookingRequestId  String                  @map("booking_request_id")
+  bookingSlotId     String                  @map("booking_slot_id")
+  status            BookingAllocationStatus @default(pending)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  request BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
+  slot    BookingSlot    @relation(fields: [bookingSlotId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingRequestId, bookingSlotId])
+  @@map("booking_allocations")
+}
+
+model BookingStatusLog {
+  id               String         @id @default(uuid())
+  bookingRequestId String         @map("booking_request_id")
+  fromStatus       String?        @map("from_status")
+  toStatus         String         @map("to_status")
+  actorType        AuditActorType @map("actor_type")
+  actorId          String?        @map("actor_id")
+  meta             Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  request BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
+
+  @@index([bookingRequestId])
+  @@map("booking_status_logs")
+}
+
+model EmailLog {
+  id                String         @id @default(uuid())
+  userId            String?        @map("user_id")
+  templateKey       String         @map("template_key")
+  toEmail           String         @map("to_email")
+  subject           String
+  providerMessageId String?        @map("provider_message_id")
+  status            EmailLogStatus @default(queued)
+  error             String?
+  payload           Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([templateKey])
+  @@map("email_logs")
+}
+
+model NotificationJob {
+  id        String                 @id @default(uuid())
+  jobType   String                 @map("job_type")
+  runAt     DateTime               @map("run_at")
+  status    NotificationJobStatus  @default(scheduled)
+  startedAt DateTime?              @map("started_at")
+  finishedAt DateTime?             @map("finished_at")
+  meta      Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([jobType, status])
+  @@map("notification_jobs")
+}
+
+model SocialBonusSubmission {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  bonusType   SocialBonusType   @map("bonus_type")
+  status      SocialBonusStatus @default(pending)
+  evidenceUrls Json             @map("evidence_urls")
+  userNote    String?           @map("user_note")
+  adminNote   String?           @map("admin_note")
+  reviewedBy  String?           @map("reviewed_by")
+  reviewedAt  DateTime?         @map("reviewed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bonusType])
+  @@map("social_bonus_submissions")
+}
+
+model BonusReward {
+  id             String            @id @default(uuid())
+  userId         String            @map("user_id")
+  source         BonusRewardSource
+  slotsGranted   Int               @map("slots_granted")
+  slotsRemaining Int               @map("slots_remaining")
+  expiresAt      DateTime?         @map("expires_at")
+  meta           Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingRequests BookingRequest[]
+  ambassadorReward AmbassadorReward?
+
+  @@index([userId])
+  @@map("bonus_rewards")
+}
+
+model Coupon {
+  id         String       @id @default(uuid())
+  code       String       @unique
+  userId     String?      @map("user_id")
+  couponType CouponType   @map("coupon_type")
+  status     CouponStatus @default(issued)
+  validFrom  DateTime     @map("valid_from")
+  validUntil DateTime     @map("valid_until")
+  meta       Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User?   @relation(fields: [userId], references: [id])
+  qrCodes QrCode[]
+
+  @@index([userId])
+  @@map("coupons")
+}
+
+model QrCode {
+  id            String      @id @default(uuid())
+  ownerUserId   String?     @map("owner_user_id")
+  codeType      QrCodeType  @map("code_type")
+  payloadUrl    String      @map("payload_url")
+  imageUrl      String?     @map("image_url")
+  boundCouponId   String? @map("bound_coupon_id")
+  boundReferralId String? @map("bound_referral_id")
+  status          QrCodeStatus @default(active)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ownerUser User?     @relation("QrOwner", fields: [ownerUserId], references: [id])
+  coupon    Coupon?   @relation(fields: [boundCouponId], references: [id])
+  referral  Referral? @relation(fields: [boundReferralId], references: [id])
+
+  @@index([ownerUserId])
+  @@map("qr_codes")
+}
+
+model ReferralCode {
+  id                 String    @id @default(uuid())
+  ambassadorUserId   String    @map("ambassador_user_id")
+  code               String    @unique
+  maxUses            Int?      @map("max_uses")
+  expiresAt          DateTime? @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ambassador User       @relation(fields: [ambassadorUserId], references: [id], onDelete: Cascade)
+  referrals  Referral[]
+
+  @@index([ambassadorUserId])
+  @@map("referral_codes")
+}
+
+model Referral {
+  id              String          @id @default(uuid())
+  referralCodeId  String          @map("referral_code_id")
+  refereeUserId   String?         @map("referee_user_id")
+  refereeEmail    String?         @map("referee_email")
+  status          ReferralStatus  @default(clicked)
+  convertedAt     DateTime?       @map("converted_at")
+  conversionType  ConversionType? @map("conversion_type")
+  adminOverride   Boolean         @default(false) @map("admin_override")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  referralCode ReferralCode      @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  refereeUser      User?             @relation("RefereeUser", fields: [refereeUserId], references: [id])
+  ambassadorReward AmbassadorReward?
+  boundQrCodes     QrCode[]
+
+  @@index([referralCodeId])
+  @@map("referrals")
+}
+
+model AmbassadorReward {
+  id               String @id @default(uuid())
+  ambassadorUserId String @map("ambassador_user_id")
+  referralId       String @unique @map("referral_id")
+  bonusRewardId    String @unique @map("bonus_reward_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ambassador  User        @relation("AmbassadorRewards", fields: [ambassadorUserId], references: [id], onDelete: Cascade)
+  referral    Referral    @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  bonusReward BonusReward @relation(fields: [bonusRewardId], references: [id], onDelete: Cascade)
+
+  @@index([ambassadorUserId])
+  @@map("ambassador_rewards")
+}
+
+model FestivalConversionRecord {
+  id                       String                   @id @default(uuid())
+  userId                   String                   @map("user_id")
+  couponId                 String?                  @map("coupon_id")
+  externalApplicantId      String?                  @map("external_applicant_id")
+  status                   FestivalConversionStatus @default(intent)
+  privilegedDiscountApplied Boolean                 @default(false) @map("privileged_discount_applied")
+  tuitionDiscount200Applied Boolean                 @default(false) @map("tuition_discount_200_applied")
+  freeDmastersPreliminary  Boolean                  @default(false) @map("free_dmasters_preliminary")
+  recordedAt               DateTime                 @default(now()) @map("recorded_at")
+  adminNote                String?                  @map("admin_note")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("festival_conversion_records")
+}
+
+model CompetitionConversionRecord {
+  id                  String                     @id @default(uuid())
+  userId              String                     @map("user_id")
+  couponId            String?                    @map("coupon_id")
+  externalApplicantId String?                    @map("external_applicant_id")
+  status              CompetitionConversionStatus @default(intent)
+  halfPricePreliminary Boolean                   @default(false) @map("half_price_preliminary")
+  recordedAt          DateTime                   @default(now()) @map("recorded_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("competition_conversion_records")
+}
+
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         AdminRole @default(admin)
+  isActive     Boolean   @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  auditLogs AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id           String  @id @default(uuid())
+  adminUserId  String? @map("admin_user_id")
+  action       String
+  entityType   String  @map("entity_type")
+  entityId     String? @map("entity_id")
+  diff         Json?
+  ip           String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  adminUser AdminUser? @relation(fields: [adminUserId], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id         String @id @default(uuid())
+  key        String @unique
+  valueJson  Json   @map("value_json")
+  updatedBy  String? @map("updated_by")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
