@@ -28,11 +28,13 @@ const PREFERRED_TIME_SLOTS = [
   { id: "slot_18_20", label: "6 PM - 8 PM" },
 ] as const;
 
-const DFESTIVAL_PROGRAM_URL = "https://d-festival.org/zh-hk";
-const DMASTERS_URL = "https://d-festival.org/zh-hk/dmasters";
+/** Optional; when unset, labels render as plain text (no outbound link). */
+const DFESTIVAL_INFO_URL = process.env.NEXT_PUBLIC_DFESTIVAL_INFO_URL?.trim() ?? "";
+const DMASTERS_INFO_URL = process.env.NEXT_PUBLIC_DMASTERS_INFO_URL?.trim() ?? "";
 
 const interestLinkClass =
   "font-medium text-amber-600 underline decoration-amber-600/70 underline-offset-2 hover:text-amber-500";
+const interestPlainClass = "font-medium text-stone-800";
 
 function april2026FirstWeekday(): number {
   return new Date(PREFERRED_DATE_YEAR, PREFERRED_DATE_MONTH_INDEX, 1).getDay();
@@ -883,15 +885,19 @@ export function RegistrationForm() {
           />
           <span>
             有興趣了解 2026{" "}
-            <a
-              href={DFESTIVAL_PROGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={interestLinkClass}
-              onClick={(e) => e.stopPropagation()}
-            >
-              D Festival 青年鋼琴家藝術節
-            </a>
+            {DFESTIVAL_INFO_URL ? (
+              <a
+                href={DFESTIVAL_INFO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={interestLinkClass}
+                onClick={(e) => e.stopPropagation()}
+              >
+                D Festival 青年鋼琴家藝術節
+              </a>
+            ) : (
+              <span className={interestPlainClass}>D Festival 青年鋼琴家藝術節</span>
+            )}
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
@@ -903,15 +909,19 @@ export function RegistrationForm() {
           />
           <span>
             有興趣了解 2026{" "}
-            <a
-              href={DMASTERS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={interestLinkClass}
-              onClick={(e) => e.stopPropagation()}
-            >
-              D Masters 國際鋼琴比賽
-            </a>
+            {DMASTERS_INFO_URL ? (
+              <a
+                href={DMASTERS_INFO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={interestLinkClass}
+                onClick={(e) => e.stopPropagation()}
+              >
+                D Masters 國際鋼琴比賽
+              </a>
+            ) : (
+              <span className={interestPlainClass}>D Masters 國際鋼琴比賽</span>
+            )}
           </span>
         </label>
         <label className="flex items-center gap-2 text-sm">
