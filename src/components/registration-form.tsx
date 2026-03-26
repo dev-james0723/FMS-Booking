@@ -632,10 +632,16 @@ export function RegistrationForm() {
               <p className="mt-1 text-xs text-stone-600">
                 登記前必須於本裝置完成 Face ID、Touch ID 或指紋等驗證（視乎裝置），以綁定通行密鑰；完成後亦可用同一方式登入，並仍可使用電郵及密碼登入。
               </p>
+              {!email.trim() && (
+                <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                  請先在<strong className="font-semibold">上方「Email（作為登入帳號）」</strong>
+                  填寫有效電郵，然後再按「綁定 Face ID／指紋」。通行密鑰會與該電郵綁定。
+                </p>
+              )}
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  disabled={passkeyBusy || !email.trim()}
+                  disabled={passkeyBusy}
                   onClick={() => void bindPasskey()}
                   className="rounded-lg border border-stone-700 bg-white px-4 py-2 text-sm text-stone-900 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
