@@ -7,6 +7,7 @@ import {
   getSocialFollowUrl,
   type SocialFollowLinkKey,
 } from "@/lib/social-follow";
+import { withBasePath } from "@/lib/base-path";
 
 type ApiClicks = Partial<Record<SocialFollowLinkKey, boolean>>;
 
@@ -30,7 +31,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
       if (linkKey) setPendingKey(linkKey);
       else setLoading(true);
       try {
-        const res = await fetch("/api/v1/registration/social-follow-intent", {
+        const res = await fetch(withBasePath("/api/v1/registration/social-follow-intent"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(linkKey ? { token, linkKey } : { token }),

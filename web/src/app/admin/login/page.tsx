@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -17,7 +18,7 @@ function AdminLoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/v1/admin/auth/login", {
+    const res = await fetch(withBasePath("/api/v1/admin/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",

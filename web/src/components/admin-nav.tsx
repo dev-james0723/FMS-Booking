@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 const links = [
   { href: "/admin/users", label: "登記用戶" },
@@ -14,8 +15,8 @@ export function AdminNav() {
   if (pathname === "/admin/login") return null;
 
   async function logout() {
-    await fetch("/api/v1/admin/auth/logout", { method: "POST" });
-    window.location.href = "/admin/login";
+    await fetch(withBasePath("/api/v1/admin/auth/logout"), { method: "POST" });
+    window.location.href = withBasePath("/admin/login");
   }
 
   return (

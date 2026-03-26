@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type BookingRow = {
   id: string;
@@ -16,7 +17,7 @@ export function BookingHistoryPanel() {
 
   useEffect(() => {
     void (async () => {
-      const res = await fetch("/api/v1/booking/history");
+      const res = await fetch(withBasePath("/api/v1/booking/history"));
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error?.message ?? "無法載入");

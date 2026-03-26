@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { withBasePath } from "@/lib/base-path";
 
 function LoginForm() {
   const router = useRouter();
@@ -20,7 +21,7 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/v1/auth/login", {
+    const res = await fetch(withBasePath("/api/v1/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -48,7 +49,7 @@ function LoginForm() {
     }
     setPasskeyLoading(true);
     try {
-      const optRes = await fetch("/api/v1/auth/passkey/login-options", {
+      const optRes = await fetch(withBasePath("/api/v1/auth/passkey/login-options"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
@@ -76,7 +77,7 @@ function LoginForm() {
         setError("已取消驗證，或此瀏覽器／網址不支援 Face ID／指紋登入。");
         return;
       }
-      const verRes = await fetch("/api/v1/auth/passkey/login-verify", {
+      const verRes = await fetch(withBasePath("/api/v1/auth/passkey/login-verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",

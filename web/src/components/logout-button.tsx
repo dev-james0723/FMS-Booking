@@ -1,9 +1,11 @@
 "use client";
 
+import { withBasePath } from "@/lib/base-path";
+
 export function LogoutButton() {
   async function logout() {
-    await fetch("/api/v1/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    await fetch(withBasePath("/api/v1/auth/logout"), { method: "POST" });
+    window.location.href = withBasePath("/");
   }
   return (
     <button

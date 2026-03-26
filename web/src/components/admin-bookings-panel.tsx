@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 type BookingRow = {
   id: string;
@@ -27,7 +28,7 @@ export function AdminBookingsPanel() {
     if (filter) params.set("status", filter);
     if (userIdFilter) params.set("userId", userIdFilter);
     const q = params.toString() ? `?${params.toString()}` : "";
-    const res = await fetch(`/api/v1/admin/bookings${q}`);
+    const res = await fetch(withBasePath(`/api/v1/admin/bookings${q}`));
     const data = await res.json();
     if (!res.ok) {
       setError(data?.error?.message ?? "載入失敗");
@@ -54,7 +55,7 @@ export function AdminBookingsPanel() {
       init.headers = { "Content-Type": "application/json" };
       init.body = JSON.stringify({ note: note ?? null });
     }
-    const res = await fetch(`/api/v1/admin/bookings/${id}/${path}`, init);
+    const res = await fetch(withBasePath(`/api/v1/admin/bookings/${id}/${path}`), init);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       alert(data?.error?.message ?? "操作失敗");

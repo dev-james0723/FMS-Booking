@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 const HK = { timeZone: "Asia/Hong_Kong" } as const;
 
@@ -79,7 +80,7 @@ export function AdminUsersPanel() {
 
   const load = useCallback(async () => {
     setError(null);
-    const res = await fetch("/api/v1/admin/users");
+    const res = await fetch(withBasePath("/api/v1/admin/users"));
     const data = await res.json();
     if (!res.ok) {
       setError(data?.error?.message ?? "載入失敗");

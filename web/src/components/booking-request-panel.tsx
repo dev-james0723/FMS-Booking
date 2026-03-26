@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { withBasePath } from "@/lib/base-path";
 
 type SlotRow = {
   id: string;
@@ -37,7 +38,7 @@ export function BookingRequestPanel() {
   }, []);
 
   const loadSettings = useCallback(async () => {
-    const res = await fetch("/api/v1/public/settings");
+    const res = await fetch(withBasePath("/api/v1/public/settings"));
     const data = await res.json();
     setSettings(data.settings ?? {});
   }, []);
@@ -46,7 +47,7 @@ export function BookingRequestPanel() {
     setLoading(true);
     setError(null);
     const q = new URLSearchParams({ from: range.from, to: range.to });
-    const res = await fetch(`/api/v1/booking/availability?${q}`);
+    const res = await fetch(withBasePath(`/api/v1/booking/availability?${q}`));
     const data = await res.json();
     if (!res.ok) {
       setError(data?.error?.message ?? "無法載入時段");
@@ -79,7 +80,7 @@ export function BookingRequestPanel() {
     setSubmitting(true);
     setError(null);
     setDone(null);
-    const res = await fetch("/api/v1/booking/request", {
+    const res = await fetch(withBasePath("/api/v1/booking/request"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slotIds: [...selected] }),

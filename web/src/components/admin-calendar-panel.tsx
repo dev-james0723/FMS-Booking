@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type SlotRow = {
   id: string;
@@ -38,7 +39,7 @@ export function AdminCalendarPanel() {
   const load = useCallback(async () => {
     setError(null);
     const q = new URLSearchParams({ from, to });
-    const res = await fetch(`/api/v1/admin/calendar?${q}`);
+    const res = await fetch(withBasePath(`/api/v1/admin/calendar?${q}`));
     const data = await res.json();
     if (!res.ok) {
       setError(data?.error?.message ?? "載入失敗");

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { startRegistration } from "@simplewebauthn/browser";
+import { withBasePath } from "@/lib/base-path";
 
 type PasskeyRow = { id: string; createdAt: string; hint: string };
 
@@ -16,7 +17,7 @@ export function AccountPasskeysPanel() {
 
   const fetchList = useCallback(async () => {
     setError(null);
-    const res = await fetch("/api/v1/account/passkeys", { credentials: "same-origin" });
+    const res = await fetch(withBasePath("/api/v1/account/passkeys"), { credentials: "same-origin" });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setError(typeof data?.error?.message === "string" ? data.error.message : "無法載入");
@@ -58,7 +59,7 @@ export function AccountPasskeysPanel() {
     setError(null);
     setAddBusy(true);
     try {
-      const optRes = await fetch("/api/v1/account/passkeys/register-options", {
+      const optRes = await fetch(withBasePath("/api/v1/account/passkeys/register-options"), {
         method: "POST",
         credentials: "same-origin",
       });
@@ -85,7 +86,7 @@ export function AccountPasskeysPanel() {
         setError("已取消驗證，或此瀏覽器／網址不支援 Face ID／指紋。");
         return;
       }
-      const verRes = await fetch("/api/v1/account/passkeys/register-verify", {
+      const verRes = await fetch(withBasePath("/api/v1/account/passkeys/register-verify"), {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +118,7 @@ export function AccountPasskeysPanel() {
     setError(null);
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/v1/account/passkeys/${encodeURIComponent(id)}`, {
+      const res = await fetch(withBasePath(`/api/v1/account/passkeys/${encodeURIComponent(id)}`), {
         method: "DELETE",
         credentials: "same-origin",
       });

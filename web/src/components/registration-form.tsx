@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 import { RecaptchaV2, type RecaptchaV2Handle } from "@/components/recaptcha-v2";
+import { withBasePath } from "@/lib/base-path";
 
 const IDENTITY_OPTIONS = [
   { value: "student", label: "學生" },
@@ -217,7 +218,7 @@ export function RegistrationForm() {
     }
     setSmsBusy(true);
     try {
-      const res = await fetch("/api/v1/registration/phone/send-code", {
+      const res = await fetch(withBasePath("/api/v1/registration/phone/send-code"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: p }),
@@ -247,7 +248,7 @@ export function RegistrationForm() {
     }
     setVerifyBusy(true);
     try {
-      const res = await fetch("/api/v1/registration/phone/verify-code", {
+      const res = await fetch(withBasePath("/api/v1/registration/phone/verify-code"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: p, code: smsCode.trim() }),
@@ -285,7 +286,7 @@ export function RegistrationForm() {
     }
     setPasskeyBusy(true);
     try {
-      const optRes = await fetch("/api/v1/registration/passkey/options", {
+      const optRes = await fetch(withBasePath("/api/v1/registration/passkey/options"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -321,7 +322,7 @@ export function RegistrationForm() {
         );
         return;
       }
-      const verRes = await fetch("/api/v1/registration/passkey/verify", {
+      const verRes = await fetch(withBasePath("/api/v1/registration/passkey/verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -458,7 +459,7 @@ export function RegistrationForm() {
     };
 
     try {
-      const res = await fetch("/api/v1/registration", {
+      const res = await fetch(withBasePath("/api/v1/registration"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

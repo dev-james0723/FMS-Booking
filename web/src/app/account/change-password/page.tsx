@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { withBasePath } from "@/lib/base-path";
 
 function Form() {
   const router = useRouter();
@@ -17,7 +18,7 @@ function Form() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/v1/auth/change-password", {
+    const res = await fetch(withBasePath("/api/v1/auth/change-password"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword, newPassword }),
