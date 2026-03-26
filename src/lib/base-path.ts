@@ -1,6 +1,6 @@
 /**
- * Same value as `basePath` in `next.config.ts`, injected for client bundles.
- * Use for `fetch` and `window.location` (Next `Link` / `redirect` / `router.push` add it automatically).
+ * Optional subpath if the app is ever deployed behind a path prefix again
+ * (`NEXT_PUBLIC_BASE_PATH`). Empty in the default setup.
  */
 export function appBasePath(): string {
   return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
