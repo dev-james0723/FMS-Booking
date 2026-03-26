@@ -1,5 +1,6 @@
 import { BookingRequestStatus, type BookingSlot, type User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
 import { getEffectiveNow, getAllSettings, parseInstantSetting } from "@/lib/settings";
 import { hkDateKey } from "@/lib/time";
 import { hkCalendarDaysBetween, maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
@@ -7,12 +8,8 @@ import {
   parseBookingNumericSettings,
   parseCampaignDateKeys,
 } from "@/lib/booking/settings";
-
-const COUNTED_REQUEST_STATUS: BookingRequestStatus[] = [
-  BookingRequestStatus.pending,
-  BookingRequestStatus.approved,
-  BookingRequestStatus.waitlisted,
-];
+import { COUNTED_REQUEST_STATUS, loadUserExistingDayCounts } from "@/lib/booking/day-counts";
+import { userHasExtendedBookingTier } from "@/lib/booking/limits-tier";
 
 export type BookingGateErrorCode =
   | "BOOKING_NOT_OPEN"
@@ -45,7 +42,7 @@ export class BookingRuleError extends Error {
 export async function assertBookingPortalAllowed(user: User & { credentials: { mustChangePassword: boolean } | null }) {
   const settings = await getAllSettings();
   const now = await getEffectiveNow();
-  const bookingOpens = parseInstantSetting(settings["booking_opens_at"]);
+  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
   if (!bookingOpens || now.getTime() < bookingOpens.getTime()) {
     throw new BookingRuleError("BOOKING_NOT_OPEN", "預約系統尚未開放");
   }
@@ -59,27 +56,6 @@ export async function assertBookingPortalAllowed(user: User & { credentials: { m
     throw new BookingRuleError("MUST_CHANGE_PASSWORD", "請先更改臨時密碼");
   }
   return { settings, now };
-}
-
-async function loadUserExistingDayCounts(
-  userId: string
-): Promise<Map<string, number>> {
-  const allocs = await prisma.bookingAllocation.findMany({
-    where: {
-      status: { in: ["pending", "approved"] },
-      request: {
-        userId,
-        status: { in: COUNTED_REQUEST_STATUS },
-      },
-    },
-    include: { slot: true },
-  });
-  const map = new Map<string, number>();
-  for (const a of allocs) {
-    const key = hkDateKey(a.slot.startsAt);
-    map.set(key, (map.get(key) ?? 0) + 1);
-  }
-  return map;
 }
 
 async function loadSlotUsageCounts(
@@ -149,7 +125,7 @@ export async function validateAndCreateBookingRequest(params: {
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    include: { credentials: true, category: true },
+    include: { credentials: true, category: true, profile: true },
   });
 
   const { settings, now } = await assertBookingPortalAllowed(user);
@@ -161,14 +137,11 @@ export async function validateAndCreateBookingRequest(params: {
   }
 
   const todayKey = hkDateKey(now);
-  const dailyMax =
-    userCategoryCode === "teaching"
-      ? nums.teachingMaxPerDay
-      : nums.personalMaxPerDay;
-  const rollingMax =
-    userCategoryCode === "teaching"
-      ? nums.teachingMaxRolling3d
-      : nums.personalMaxRolling3d;
+  const extended = userHasExtendedBookingTier(user);
+  const dailyMax = extended ? nums.teachingMaxPerDay : nums.personalMaxPerDay;
+  const rollingMax = extended
+    ? nums.teachingMaxRolling3d
+    : nums.personalMaxRolling3d;
 
   const slots = await prisma.bookingSlot.findMany({
     where: { id: { in: uniqueSlotIds } },
@@ -212,7 +185,7 @@ export async function validateAndCreateBookingRequest(params: {
   for (const s of slots) {
     const used = usage.get(s.id) ?? 0;
     if (used >= s.capacityTotal) {
-      throw new BookingRuleError("SLOT_FULL", "此時段申請名額已滿", {
+      throw new BookingRuleError("SLOT_FULL", "此時段預約名額已滿", {
         slotId: s.id,
       });
     }
@@ -230,7 +203,7 @@ export async function validateAndCreateBookingRequest(params: {
   });
 
   if (userHasSlotOverlap(slots, existingAllocs)) {
-    throw new BookingRuleError("SLOT_OVERLAP", "所選時段與現有申請重疊或彼此重疊");
+    throw new BookingRuleError("SLOT_OVERLAP", "所選時段與現有預約重疊或彼此重疊");
   }
 
   const existingDayCounts = await loadUserExistingDayCounts(userId);
@@ -242,7 +215,7 @@ export async function validateAndCreateBookingRequest(params: {
     if (n > dailyMax) {
       throw new BookingRuleError(
         "BOOKING_LIMIT_DAILY",
-        `同一日最多只可申請 ${dailyMax} 節（30 分鐘為 1 節）`,
+        `同一日最多只可預約 ${dailyMax} 節（30 分鐘為 1 節）`,
         { date: day, count: n }
       );
     }
@@ -251,7 +224,7 @@ export async function validateAndCreateBookingRequest(params: {
   if (maxRollingThreeDaySum(merged) > rollingMax) {
     throw new BookingRuleError(
       "BOOKING_LIMIT_ROLLING_3D",
-      `任何連續 3 個曆日內最多只可申請 ${rollingMax} 節`,
+      `任何連續 3 個曆日內最多只可預約 ${rollingMax} 節`,
       { rollingMax }
     );
   }
@@ -328,6 +301,31 @@ export async function listAvailability(params: {
   const slots = await prisma.bookingSlot.findMany({
     where: {
       isOpen: true,
+      startsAt: { gte: params.from, lte: params.to },
+    },
+    orderBy: { startsAt: "asc" },
+  });
+  const ids = slots.map((s) => s.id);
+  const usage = await loadSlotUsageCounts(ids);
+  return slots.map((s) => {
+    const booked = usage.get(s.id) ?? 0;
+    return {
+      ...s,
+      bookedCount: booked,
+      remaining: Math.max(0, s.capacityTotal - booked),
+    };
+  });
+}
+
+/** All slots in range (including closed), for calendar / timeline views. */
+export async function listSlotsForCalendarView(params: {
+  from: Date;
+  to: Date;
+}): Promise<
+  (BookingSlot & { bookedCount: number; remaining: number })[]
+> {
+  const slots = await prisma.bookingSlot.findMany({
+    where: {
       startsAt: { gte: params.from, lte: params.to },
     },
     orderBy: { startsAt: "asc" },

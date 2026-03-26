@@ -24,3 +24,32 @@ export function startOfHkDay(d: Date): Date {
 export function hkDateKey(d: Date): string {
   return formatInTimeZone(d, HK_TZ, "yyyy-MM-dd");
 }
+
+/** Home page / emails: booking portal opens (instant shown in Hong Kong). */
+export function formatInstantForBookingOpensZhHk(d: Date): string {
+  const y = formatInTimeZone(d, HK_TZ, "yyyy");
+  const monthNum = Number(formatInTimeZone(d, HK_TZ, "M"));
+  const dayNum = Number(formatInTimeZone(d, HK_TZ, "d"));
+  const hour24 = Number(formatInTimeZone(d, HK_TZ, "H"));
+  const minute = Number(formatInTimeZone(d, HK_TZ, "m"));
+  let period: string;
+  let h12: number;
+  if (hour24 === 0) {
+    period = "上午";
+    h12 = 12;
+  } else if (hour24 < 12) {
+    period = "上午";
+    h12 = hour24;
+  } else if (hour24 === 12) {
+    period = "下午";
+    h12 = 12;
+  } else {
+    period = "下午";
+    h12 = hour24 - 12;
+  }
+  const clock =
+    minute === 0
+      ? `${period} ${h12} 點`
+      : `${period} ${h12} 點 ${String(minute).padStart(2, "0")} 分`;
+  return `${y} 年 ${monthNum} 月 ${dayNum} 日${clock}`;
+}

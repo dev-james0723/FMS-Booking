@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 
 type BookingRow = {
   id: string;
   status: string;
   requestedAt: string;
   usesBonusSlot: boolean;
-  slots: { startsAt: string; venueLabel: string | null }[];
+  slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
 
 export function BookingHistoryPanel() {
@@ -32,7 +33,7 @@ export function BookingHistoryPanel() {
   }
 
   if (rows.length === 0) {
-    return <p className="text-sm text-stone-500">暫未有預約申請紀錄。</p>;
+    return <p className="text-sm text-stone-500 dark:text-stone-500">暫未有預約紀錄。</p>;
   }
 
   return (
@@ -40,28 +41,23 @@ export function BookingHistoryPanel() {
       {rows.map((r) => (
         <li
           key={r.id}
-          className="rounded-xl border border-stone-200 bg-white p-4 text-sm shadow-sm"
+          className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface p-4 text-sm shadow-sm"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-xs text-stone-500">{r.id.slice(0, 8)}…</span>
-            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs">{r.status}</span>
+            <span className="font-mono text-xs text-stone-500 dark:text-stone-500">{r.id.slice(0, 8)}…</span>
+            <span className="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs">{r.status}</span>
           </div>
-          <p className="mt-2 text-xs text-stone-500">
+          <p className="mt-2 text-xs text-stone-500 dark:text-stone-500">
             提交時間：{new Date(r.requestedAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
             {r.usesBonusSlot ? " · 使用 bonus 時段" : ""}
           </p>
-          <ul className="mt-3 space-y-1 text-stone-800">
+          <ul className="mt-3 space-y-1 text-stone-800 dark:text-stone-200">
             {r.slots.map((s, i) => (
               <li key={i}>
-                {new Date(s.startsAt).toLocaleString("zh-HK", {
-                  timeZone: "Asia/Hong_Kong",
-                  weekday: "short",
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                {s.venueLabel ? `· ${s.venueLabel}` : ""}
+                {formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}
+                {s.venueLabel != null && s.venueLabel !== ""
+                  ? ` · ${displayVenueLabel(s.venueLabel)}`
+                  : ""}
               </li>
             ))}
           </ul>

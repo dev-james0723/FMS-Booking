@@ -78,10 +78,9 @@ export function SocialFollowSetupPanel({ token }: Props) {
   if (verified) {
     return (
       <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-6 text-left">
-        <h2 className="font-serif text-lg text-stone-900">社群追蹤步驟已完成</h2>
-        <p className="mt-2 text-sm text-stone-700">
-          你已透過本頁開啟全部六個官方帳戶連結；系統已記錄你符合「追蹤指定社交媒體帳號」資格，並已為你預留{" "}
-          <strong>額外 1 節 30 分鐘</strong> 獎賞時段額度（實際預約須視乎名額及活動條款）。
+        <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤步驟已完成</h2>
+        <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+          你已透過本頁開啟全部六個官方帳戶連結；系統已記錄你完成登記時承諾之「追蹤指定社交媒體帳號」步驟。此舉不會帶來額外預約時段；免費體驗之名額與批核仍依活動條款及主辦安排為準。
         </p>
       </section>
     );
@@ -89,12 +88,12 @@ export function SocialFollowSetupPanel({ token }: Props) {
 
   return (
     <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-violet-200 bg-violet-50/50 px-4 py-6 text-left">
-      <h2 className="font-serif text-lg text-stone-900">追蹤官方帳戶以啟用社群獎勵</h2>
-      <p className="mt-2 text-sm font-medium text-stone-800">
-        立即追蹤以下帳戶的 Instagram 及 Facebook，獲取額外 1–30 分鐘 bonus slots。
+      <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤官方帳戶（登記承諾）</h2>
+      <p className="mt-2 text-sm font-medium text-stone-800 dark:text-stone-200">
+        參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶；完成本步驟不會獲得任何額外預約時段。
       </p>
-      <p className="mt-2 text-sm text-stone-600">
-        請點擊下列六個按鈕各一次；會在新分頁開啟對應官方頁面並於此頁記錄進度。重複點擊同一按鈕不會重複計算；六個都曾點擊即視為達標並發放獎賞額度。
+      <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        請點擊下列六個按鈕各一次；會在新分頁開啟對應官方頁面並於此頁記錄進度。重複點擊同一按鈕不會重複計算；六個都曾點擊即視為完成追蹤承諾之系統記錄。
       </p>
       {missingUrlCount > 0 && (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
@@ -106,7 +105,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
           {error}
         </p>
       )}
-      <p className="mt-3 text-sm font-medium text-stone-800">
+      <p className="mt-3 text-sm font-medium text-stone-800 dark:text-stone-200">
         進度：{loading ? "…" : `${progress} / 6`}
       </p>
 
@@ -114,9 +113,9 @@ export function SocialFollowSetupPanel({ token }: Props) {
         {SOCIAL_FOLLOW_ACCOUNTS.map((col) => (
           <div
             key={col.columnTitle}
-            className="rounded-xl border border-stone-200 bg-white/90 px-3 py-4 shadow-sm"
+            className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-3 py-4 shadow-sm"
           >
-            <h3 className="text-sm font-semibold leading-snug text-stone-900">{col.columnTitle}</h3>
+            <h3 className="text-sm font-semibold leading-snug text-stone-900 dark:text-stone-50">{col.columnTitle}</h3>
             <div className="mt-4 flex flex-col gap-2">
               <FollowButton
                 label="Instagram"
@@ -136,7 +135,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-stone-500">
+      <p className="mt-4 text-xs text-stone-500 dark:text-stone-500">
         請在電腦瀏覽器完成此步驟效果最佳。若你曾清除瀏覽器資料或更換裝置，請登入後聯絡主辦方協助。
       </p>
     </section>
@@ -161,7 +160,7 @@ function FollowButton({
       type="button"
       disabled={disabled || busy || done}
       onClick={onPress}
-      className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 bg-stone-50 px-3 py-2.5 text-sm font-medium text-stone-800 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-stone-50 dark:bg-stone-900 px-3 py-2.5 text-sm font-medium text-stone-800 dark:text-stone-200 transition hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {done ? (
         <>

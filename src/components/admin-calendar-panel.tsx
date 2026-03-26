@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 
 type SlotRow = {
   id: string;
   startsAt: string;
+  endsAt: string;
   capacityTotal: number;
   used: number;
   remaining: number;
@@ -87,7 +89,7 @@ export function AdminCalendarPanel() {
             登記用戶（對照身份與預約列表）
           </Link>
           <Link href="/admin/bookings" className="underline hover:text-slate-300">
-            預約申請
+            預約
           </Link>
         </div>
       </div>
@@ -101,23 +103,14 @@ export function AdminCalendarPanel() {
             className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm"
           >
             <div className="flex flex-wrap justify-between gap-2 text-slate-200">
-              <span>
-                {new Date(s.startsAt).toLocaleString("zh-HK", {
-                  timeZone: "Asia/Hong_Kong",
-                  weekday: "short",
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
+              <span>{formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}</span>
               <span className="text-slate-400">
                 名額 {s.used}/{s.capacityTotal} · 剩 {s.remaining}
                 {!s.isOpen ? " · 已關閉" : ""}
               </span>
             </div>
-            {s.venueLabel && (
-              <div className="text-xs text-slate-500">{s.venueLabel}</div>
+            {s.venueLabel != null && s.venueLabel !== "" && (
+              <div className="text-xs text-slate-500">{displayVenueLabel(s.venueLabel)}</div>
             )}
             {s.bookings.length > 0 && (
               <ul className="mt-2 space-y-1 border-t border-slate-800 pt-2 text-xs text-slate-400">

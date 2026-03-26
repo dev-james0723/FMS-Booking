@@ -76,25 +76,28 @@ export async function POST(req: Request) {
     );
   }
 
-  const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY?.trim();
-  if (recaptchaSecret) {
-    const captchaOk = await verifyRecaptchaResponse(
-      data.captchaToken ?? undefined,
-      clientIp
-    );
-    if (!captchaOk) {
+  const skipRecaptchaVerify = process.env.SKIP_RECAPTCHA_VERIFICATION === "true";
+  if (!skipRecaptchaVerify) {
+    const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY?.trim();
+    if (recaptchaSecret) {
+      const captchaOk = await verifyRecaptchaResponse(
+        data.captchaToken ?? undefined,
+        clientIp
+      );
+      if (!captchaOk) {
+        return jsonError(
+          "CAPTCHA_FAILED",
+          "請完成「我不是機械人」驗證，或重新整理頁面後再試。",
+          400
+        );
+      }
+    } else if (process.env.REQUIRE_CAPTCHA === "true") {
       return jsonError(
-        "CAPTCHA_FAILED",
-        "請完成「我不是機械人」驗證，或重新整理頁面後再試。",
-        400
+        "CAPTCHA_MISCONFIG",
+        "已啟用 REQUIRE_CAPTCHA，但伺服器未設定 RECAPTCHA_SECRET_KEY。",
+        500
       );
     }
-  } else if (process.env.REQUIRE_CAPTCHA === "true") {
-    return jsonError(
-      "CAPTCHA_MISCONFIG",
-      "已啟用 REQUIRE_CAPTCHA，但伺服器未設定 RECAPTCHA_SECRET_KEY。",
-      500
-    );
   }
 
   const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
@@ -217,6 +220,7 @@ export async function POST(req: Request) {
           socialFollowClaimed: data.socialFollowClaimed,
           socialFollowLinkClicks: {},
           socialFollowVerified: false,
+          socialRepostClaimed: data.socialRepostClaimed,
           wantsAmbassador: data.wantsAmbassador,
           agreedTerms: data.agreedTerms,
           agreedPrivacy: data.agreedPrivacy,

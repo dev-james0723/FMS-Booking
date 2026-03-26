@@ -1,5 +1,6 @@
 import { EmailLogStatus } from "@prisma/client";
 import { Resend } from "resend";
+import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
 import { getAllSettings, parseInstantSetting } from "@/lib/settings";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
@@ -29,7 +30,7 @@ function buildRegistrationBodies(params: {
     `臨時密碼：${params.tempPassword}`,
     `登入連結：${loginUrl}`,
     ``,
-    `請注意：完成資料登記並不代表預約已成功。預約系統將於 ${params.bookingOpensHk || "主辦公布時間"} 正式開放申請。`,
+    `請注意：完成資料登記並不代表預約已成功。預約系統將於 ${params.bookingOpensHk || "主辦公布時間"} 正式開放預約。`,
     `請妥善保存此電郵。`,
     ``,
     `客服：（請於上線前設定）`,
@@ -56,7 +57,7 @@ function buildRegistrationBodies(params: {
       <p style="margin:0 0 20px;">
         <a href="${escapeHtml(loginUrl)}" style="display:inline-block;padding:10px 20px;background:#1c1917;color:#fff;text-decoration:none;border-radius:9999px;font-size:14px;">前往登入</a>
       </p>
-      <p style="margin:0;font-size:13px;color:#78716c;">請注意：完成資料登記並不代表預約已成功。預約系統將於 <strong>${safeZh}</strong> 正式開放申請。</p>
+      <p style="margin:0;font-size:13px;color:#78716c;">請注意：完成資料登記並不代表預約已成功。預約系統將於 <strong>${safeZh}</strong> 正式開放預約。</p>
       <p style="margin:16px 0 0;font-size:13px;color:#78716c;">請妥善保存此電郵。</p>
       <p style="margin:16px 0 0;font-size:13px;color:#a8a29e;">客服：（請於上線前設定）</p>
     </td></tr>
@@ -74,7 +75,7 @@ export async function sendRegistrationConfirmation(params: {
   userName: string;
 }): Promise<RegistrationEmailOutcome> {
   const settings = await getAllSettings();
-  const bookingOpens = parseInstantSetting(settings["booking_opens_at"]);
+  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
   const bookingOpensHk = bookingOpens
     ? bookingOpens.toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })
     : "";

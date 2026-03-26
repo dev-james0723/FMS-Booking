@@ -7,7 +7,7 @@ import {
   socialFollowProgress,
   type SocialFollowLinkKey,
 } from "@/lib/social-follow";
-import { BonusRewardSource, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 const linkKeyEnum = z.enum(SOCIAL_FOLLOW_LINK_KEYS);
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   });
 
   if (!user?.profile) {
-    return jsonError("INVALID_TOKEN", "連結已失效或無效。若你已完成步驟，請直接登入。", 401);
+    return jsonError("INVALID_TOKEN", "連結已失效或無效。若您已完成步驟，請直接登入。", 401);
   }
 
   const { profile } = user;
@@ -89,28 +89,13 @@ export async function POST(req: Request) {
     });
   }
 
-  await prisma.$transaction(async (tx) => {
-    const existingBonus = await tx.bonusReward.findFirst({
-      where: { userId: user.id, source: BonusRewardSource.social_follow },
-    });
-    if (!existingBonus) {
-      await tx.bonusReward.create({
-        data: {
-          userId: user.id,
-          source: BonusRewardSource.social_follow,
-          slotsGranted: 1,
-          slotsRemaining: 1,
-        },
-      });
-    }
-    await tx.userProfile.update({
-      where: { userId: user.id },
-      data: {
-        socialFollowLinkClicks: merged as Prisma.InputJsonValue,
-        socialFollowVerified: true,
-        socialFollowVerifiedAt: new Date(),
-      },
-    });
+  await prisma.userProfile.update({
+    where: { userId: user.id },
+    data: {
+      socialFollowLinkClicks: merged as Prisma.InputJsonValue,
+      socialFollowVerified: true,
+      socialFollowVerifiedAt: new Date(),
+    },
   });
 
   return jsonOk({

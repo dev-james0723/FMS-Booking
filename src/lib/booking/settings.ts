@@ -18,7 +18,7 @@ export function parseBookingNumericSettings(
   };
   return {
     personalMaxPerDay: num("personal_max_slots_per_day", 3),
-    personalMaxRolling3d: num("personal_max_slots_any_3_consecutive_days", 7),
+    personalMaxRolling3d: num("personal_max_slots_any_3_consecutive_days", 8),
     teachingMaxPerDay: num("teaching_max_slots_per_day", 8),
     teachingMaxRolling3d: num("teaching_max_slots_any_3_consecutive_days", 16),
     maxAdvanceDays: num("max_advance_booking_days", 3),

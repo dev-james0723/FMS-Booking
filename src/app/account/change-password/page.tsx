@@ -7,7 +7,7 @@ import { withBasePath } from "@/lib/base-path";
 function Form() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  const next = searchParams.get("next") || "/account";
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -37,19 +37,21 @@ function Form() {
   return (
     <form
       onSubmit={onSubmit}
-      className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm"
+      className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-8 shadow-sm"
     >
-      <h1 className="font-serif text-2xl text-stone-900">更改密碼</h1>
-      <p className="text-xs text-stone-600">
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">更改密碼</h1>
+      <p className="text-xs text-stone-600 dark:text-stone-400">
         為保障帳戶安全，首次登入須更改臨時密碼。新密碼至少 10 個字元。
       </p>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+      )}
       <label className="block text-sm">
         目前密碼（臨時密碼）
         <input
           type="password"
           required
-          className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
         />
@@ -60,7 +62,7 @@ function Form() {
           type="password"
           required
           minLength={10}
-          className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
@@ -79,7 +81,7 @@ function Form() {
 export default function ChangePasswordPage() {
   return (
     <main className="flex flex-1 flex-col justify-center px-4 py-16">
-      <Suspense fallback={<p className="text-center text-stone-500">載入中…</p>}>
+      <Suspense fallback={<p className="text-center text-stone-500 dark:text-stone-500">載入中…</p>}>
         <Form />
       </Suspense>
     </main>

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
+import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
 import { getEffectiveNow, getPublicSettings, parseInstantSetting } from "@/lib/settings";
 
 export async function GET() {
@@ -24,7 +25,7 @@ export async function GET() {
 
   const settings = await getPublicSettings();
   const now = await getEffectiveNow();
-  const bookingOpensAt = parseInstantSetting(settings["booking_opens_at"]);
+  const bookingOpensAt = parseBookingOpensAt(settings["booking_opens_at"]);
   const bookingOpen = bookingOpensAt ? now.getTime() >= bookingOpensAt.getTime() : false;
 
   const canAccessBookingPortal =

@@ -10,11 +10,11 @@ export async function sendBookingApproved(params: {
   requestId: string;
   slotLines: string[];
 }): Promise<void> {
-  const subject = "預約申請已獲批核｜D Festival × 幻樂空間";
+  const subject = "預約已獲批核｜D Festival × 幻樂空間";
   const body = [
-    `${params.userName} 你好，`,
+    `${params.userName} 您好，`,
     ``,
-    `你的預約申請（${params.requestId.slice(0, 8)}…）已獲批核。時段如下：`,
+    `您的預約（${params.requestId.slice(0, 8)}…）已獲批核。時段如下：`,
     ...params.slotLines.map((l) => `· ${l}`),
     ``,
     `詳情及注意事項請登入查看：${APP_URL}/booking/history`,
@@ -41,14 +41,14 @@ export async function sendBookingRejected(params: {
   requestId: string;
   note?: string | null;
 }): Promise<void> {
-  const subject = "預約申請未能安排｜D Festival × 幻樂空間";
+  const subject = "預約未能安排｜D Festival × 幻樂空間";
   const body = [
-    `${params.userName} 你好，`,
+    `${params.userName} 您好，`,
     ``,
-    `很抱歉，你的預約申請（${params.requestId.slice(0, 8)}…）未能安排。`,
+    `很抱歉，您的預約（${params.requestId.slice(0, 8)}…）未能安排。`,
     params.note ? `說明：${params.note}` : "",
     ``,
-    `如有查詢請聯絡主辦方。你亦可登入查看紀錄：${APP_URL}/booking/history`,
+    `如有查詢請聯絡主辦方。您亦可登入查看紀錄：${APP_URL}/booking/history`,
   ]
     .filter(Boolean)
     .join("\n");

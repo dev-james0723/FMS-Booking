@@ -40,11 +40,22 @@ export const registrationSchema = z
     interestDfestival: z.boolean(),
     interestDmasters: z.boolean(),
     marketingOptIn: z.boolean(),
-    socialFollowClaimed: z.boolean(),
+    socialFollowClaimed: z
+      .boolean()
+      .refine((v) => v === true, { message: "請勾選承諾追蹤指定社交媒體帳號" }),
+    socialRepostClaimed: z
+      .boolean()
+      .refine((v) => v === true, { message: "請勾選承諾轉發指定貼文並標註官方帳號" }),
     wantsAmbassador: z.boolean(),
-    agreedTerms: z.literal(true),
-    agreedPrivacy: z.literal(true),
-    agreedEmailNotifications: z.boolean(),
+    agreedTerms: z
+      .boolean()
+      .refine((v) => v === true, { message: "請勾選同意活動條款" }),
+    agreedPrivacy: z
+      .boolean()
+      .refine((v) => v === true, { message: "請勾選同意資料收集安排" }),
+    agreedEmailNotifications: z
+      .boolean()
+      .refine((v) => v === true, { message: "請勾選同意透過 Email 收取系統通知" }),
     captchaToken: z.string().optional().nullable(),
     referralCode: z.string().max(64).optional().nullable(),
     /** JWT from POST /api/v1/registration/passkey/verify — required to complete registration. */

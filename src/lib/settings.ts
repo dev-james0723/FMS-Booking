@@ -1,9 +1,11 @@
+import { fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/prisma";
 import {
   FALLBACK_SYSTEM_SETTINGS,
   isUnreachableDbError,
   shouldUseSettingsFallbackOnDbError,
 } from "@/lib/settings-fallback";
+import { HK_TZ } from "@/lib/time";
 
 /** Keys exposed to the public frontend (no secrets). */
 export const PUBLIC_SETTING_KEYS = [
@@ -24,6 +26,22 @@ export const PUBLIC_SETTING_KEYS = [
 ] as const;
 
 export type PublicSettingKey = (typeof PUBLIC_SETTING_KEYS)[number];
+
+/** String settings that represent an instant in time (normalize for API / SSR). */
+export const PUBLIC_INSTANT_SETTING_KEYS: readonly PublicSettingKey[] = [
+  "site_registration_opens_at",
+  "booking_opens_at",
+  "booking_reminder_scheduled_at",
+  "campaign_starts_at",
+  "campaign_ends_at",
+  "dfestival_dmasters_privilege_deadline_at",
+  "post_experience_coupon_valid_from",
+  "post_experience_coupon_valid_until",
+];
+
+function hasExplicitUtcOrOffset(iso: string): boolean {
+  return /Z$/i.test(iso) || /[+-]\d{2}:?\d{2}$/.test(iso);
+}
 
 export async function getAllSettings(): Promise<Record<string, unknown>> {
   if (!process.env.DATABASE_URL?.trim()) {
@@ -66,8 +84,32 @@ export async function getPublicSettings(): Promise<Record<string, unknown>> {
 export function parseInstantSetting(value: unknown): Date | null {
   if (value == null) return null;
   if (typeof value !== "string") return null;
-  const d = new Date(value);
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (hasExplicitUtcOrOffset(trimmed)) {
+    const d = new Date(trimmed);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const d = fromZonedTime(`${trimmed}T00:00:00`, HK_TZ);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+    const d = fromZonedTime(trimmed, HK_TZ);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(trimmed);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Canonical UTC ISO for clients so SSR and every timezone parse the same instant. */
+export function instantSettingToUtcIso(value: unknown): string | null {
+  const d = parseInstantSetting(value);
+  return d ? d.toISOString() : null;
 }
 
 /** Use when you already loaded settings (avoids a second DB round-trip). */

@@ -33,7 +33,7 @@ export function BookingCountdown({
 
   if (!bookingOpensAtIso) {
     return (
-      <p className="text-sm text-stone-600">預約開放時間請留意主辦方公布。</p>
+      <p className="text-sm text-stone-600 dark:text-stone-400">預約開放時間請留意主辦方公布。</p>
     );
   }
 
@@ -42,8 +42,8 @@ export function BookingCountdown({
 
   if (diff <= 0) {
     return (
-      <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-        預約申請已開放（須先完成登記及更改臨時密碼）。請登入後進入預約系統。
+      <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100">
+        預約已開放（須先完成登記及更改臨時密碼）。請登入後進入預約系統。
       </p>
     );
   }
@@ -55,13 +55,15 @@ export function BookingCountdown({
   const seconds = s % 60;
 
   return (
-    <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-4 text-center">
-      <p className="text-sm font-medium text-amber-950">預約系統正式開放倒數（香港時間）</p>
-      <p className="mt-2 font-mono text-2xl tracking-widest text-amber-950">
+    <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-4 text-center dark:border-amber-700/50 dark:bg-amber-950/40">
+      <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
+        預約系統正式開放倒數（香港時間）
+      </p>
+      <p className="mt-2 font-mono text-2xl tracking-widest text-amber-950 dark:text-amber-50">
         {days > 0 ? `${days} 日 ` : ""}
         {pad(hours)}:{pad(minutes)}:{pad(seconds)}
       </p>
-      <p className="mt-2 text-xs text-amber-900/80">
+      <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
         開放時間：{bookingOpensAtLabel ?? bookingOpensAtIso}
       </p>
     </div>

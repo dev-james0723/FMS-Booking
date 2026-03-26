@@ -11,7 +11,7 @@ export function LogoutButton() {
     <button
       type="button"
       onClick={() => logout()}
-      className="rounded-full border border-stone-300 px-6 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+      className="rounded-full border border-stone-300 dark:border-stone-600 px-6 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
     >
       登出
     </button>

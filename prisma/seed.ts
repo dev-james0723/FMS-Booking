@@ -1,4 +1,9 @@
 import { PrismaClient, AdminRole } from "@prisma/client";
+import {
+  CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
+  CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
+} from "../src/lib/booking/campaign-constants";
+import { addDaysToDateKey } from "../src/lib/hk-calendar-client";
 import { hashPassword } from "../src/lib/password";
 import { FALLBACK_SYSTEM_SETTINGS_ROWS } from "../src/lib/settings-fallback";
 
@@ -59,24 +64,25 @@ async function main() {
       isOpen: boolean;
       venueLabel: string;
     }[] = [];
-    for (let day = 1; day <= 10; day++) {
-      const d = String(day).padStart(2, "0");
-      const key = `2026-04-${d}`;
-      for (let h = 9; h <= 18; h++) {
+    let dayKey = CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY;
+    for (;;) {
+      const startHour = dayKey === CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY ? 11 : 6;
+      for (let h = startHour; h <= 19; h++) {
         for (const mm of [0, 30] as const) {
-          if (h === 18 && mm === 30) break;
           const hm = `${String(h).padStart(2, "0")}:${mm === 0 ? "00" : "30"}:00`;
-          const startsAt = fromZonedTime(`${key}T${hm}`, HK);
+          const startsAt = fromZonedTime(`${dayKey}T${hm}`, HK);
           const endsAt = addMinutes(startsAt, 30);
           rows.push({
             startsAt,
             endsAt,
             capacityTotal: 2,
             isOpen: true,
-            venueLabel: "幻樂空間 · Studio A",
+            venueLabel: "幻樂空間 · Room No.2",
           });
         }
       }
+      if (dayKey === CAMPAIGN_EXPERIENCE_LAST_DAY_KEY) break;
+      dayKey = addDaysToDateKey(dayKey, 1);
     }
     await prisma.bookingSlot.createMany({ data: rows });
     console.log("Seeded booking slots:", rows.length);

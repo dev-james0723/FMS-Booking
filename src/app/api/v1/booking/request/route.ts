@@ -1,7 +1,9 @@
+import { syncBookingRequestToGoogleCalendar } from "@/lib/calendar/google-booking-sync";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { BookingRuleError, validateAndCreateBookingRequest } from "@/lib/booking/service";
 import { sendBookingSubmitted } from "@/lib/email/booking";
+import { sendBookingAdminNotification } from "@/lib/email/booking-admin-notify";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
       where: { id: requestId },
       include: {
         allocations: { include: { slot: true } },
-        user: { include: { profile: true } },
+        user: { include: { profile: true, category: true } },
       },
     });
 
@@ -60,6 +62,21 @@ export async function POST(req: Request) {
         requestId: full.id,
         slotCount: full.allocations.length,
       });
+    }
+
+    if (full) {
+      const results = await Promise.allSettled([
+        sendBookingAdminNotification(full),
+        syncBookingRequestToGoogleCalendar(full),
+      ]);
+      for (const r of results) {
+        if (r.status === "rejected") {
+          console.error("[booking/request] admin notify or calendar sync", r.reason);
+        }
+      }
+      if (results[1].status === "fulfilled" && !results[1].value.ok && results[1].value.error) {
+        console.error("[booking/request] Google Calendar:", results[1].value.error);
+      }
     }
 
     return jsonOk({
@@ -88,6 +105,6 @@ export async function POST(req: Request) {
       return jsonError(e.code, e.message, status, e.details);
     }
     console.error(e);
-    return jsonError("BOOKING_FAILED", "無法建立預約申請", 500);
+    return jsonError("BOOKING_FAILED", "無法建立預約", 500);
   }
 }

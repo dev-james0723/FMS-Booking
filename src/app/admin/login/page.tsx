@@ -50,7 +50,7 @@ function AdminLoginForm() {
           測試帳號：<span className="text-slate-400">super@staging.local</span>
           <br />
           預設密碼：<span className="text-slate-400">AdminStaging1!</span>
-          （或你設定嘅 <code className="text-slate-500">SEED_ADMIN_PASSWORD</code>）
+          （或您設定的 <code className="text-slate-500">SEED_ADMIN_PASSWORD</code>）
         </p>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <label className="block text-sm text-slate-300">

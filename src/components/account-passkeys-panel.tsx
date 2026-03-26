@@ -134,11 +134,11 @@ export function AccountPasskeysPanel() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+    <div className="mx-auto max-w-lg space-y-6 rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-8 shadow-sm">
       <div>
-        <h1 className="font-serif text-2xl text-stone-900">通行密鑰（Passkey）</h1>
-        <p className="mt-2 text-xs text-stone-600">
-          管理已綁定嘅 Face ID、Touch ID、指紋或 Windows Hello 等登入方式。你可新增多部裝置，亦可移除唔再使用嘅密鑰。
+        <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">通行密鑰（Passkey）</h1>
+        <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+          管理已綁定的 Face ID、Touch ID、指紋或 Windows Hello 等登入方式。您可新增多部裝置，亦可移除不再使用的密鑰。
         </p>
       </div>
 
@@ -149,25 +149,25 @@ export function AccountPasskeysPanel() {
       )}
 
       {loading ? (
-        <p className="text-sm text-stone-500">載入中…</p>
+        <p className="text-sm text-stone-500 dark:text-stone-500">載入中…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-stone-600">目前未有通行密鑰。你可按下方新增（須瀏覽器支援）。</p>
+        <p className="text-sm text-stone-600 dark:text-stone-400">目前未有通行密鑰。您可按下方新增（須瀏覽器支援）。</p>
       ) : (
         <ul className="space-y-2">
           {items.map((p) => (
             <li
               key={p.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-200 px-3 py-3 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-200 dark:border-stone-700 px-3 py-3 text-sm"
             >
               <div>
-                <p className="font-medium text-stone-900">裝置識別碼（節略）· {p.hint}</p>
-                <p className="text-xs text-stone-500">新增於 {formatDate(p.createdAt)}</p>
+                <p className="font-medium text-stone-900 dark:text-stone-50">裝置識別碼（節略）· {p.hint}</p>
+                <p className="text-xs text-stone-500 dark:text-stone-500">新增於 {formatDate(p.createdAt)}</p>
               </div>
               <button
                 type="button"
                 disabled={deletingId === p.id}
                 onClick={() => void removePasskey(p.id)}
-                className="shrink-0 rounded-lg border border-stone-300 px-3 py-1.5 text-xs text-stone-800 hover:bg-stone-50 disabled:opacity-50"
+                className="shrink-0 rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-1.5 text-xs text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-50"
               >
                 {deletingId === p.id ? "移除中…" : "移除"}
               </button>
@@ -176,7 +176,7 @@ export function AccountPasskeysPanel() {
         </ul>
       )}
 
-      <div className="border-t border-stone-200 pt-4">
+      <div className="border-t border-stone-200 dark:border-stone-700 pt-4">
         <button
           type="button"
           disabled={addBusy || !webauthnSupported}
@@ -193,7 +193,7 @@ export function AccountPasskeysPanel() {
       </div>
 
       <p className="text-center text-sm">
-        <Link href="/dashboard" className="text-stone-700 underline decoration-stone-400 underline-offset-2">
+        <Link href="/account" className="text-stone-700 dark:text-stone-300 underline decoration-stone-400 underline-offset-2">
           返回帳戶概覽
         </Link>
       </p>

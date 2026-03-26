@@ -2,6 +2,7 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireAdminSession } from "@/lib/auth/require-admin";
 import { adminApproveBookingRequest, AdminBookingError } from "@/lib/booking/admin-actions";
 import { sendBookingApproved } from "@/lib/email/booking-admin";
+import { formatSlotListLineZhDateEnRange, displayVenueLabel } from "@/lib/booking-slot-display";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -31,16 +32,11 @@ export async function PATCH(_req: Request, ctx: Ctx) {
   });
 
   if (full?.user.profile) {
-    const slotLines = full.allocations.map((a) =>
-      new Date(a.slot.startsAt).toLocaleString("zh-HK", {
-        timeZone: "Asia/Hong_Kong",
-        weekday: "short",
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    );
+    const slotLines = full.allocations.map((a) => {
+      const line = formatSlotListLineZhDateEnRange(a.slot.startsAt, a.slot.endsAt);
+      const v = a.slot.venueLabel?.trim();
+      return v ? `${line} · ${displayVenueLabel(v)}` : line;
+    });
     await sendBookingApproved({
       userId: full.userId,
       toEmail: full.user.email,

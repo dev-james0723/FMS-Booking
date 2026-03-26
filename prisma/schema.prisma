@@ -215,7 +215,13 @@ model UserProfile {
   socialFollowLinkClicks Json    @default("{}") @map("social_follow_link_clicks")
   socialFollowVerified Boolean @default(false) @map("social_follow_verified")
   socialFollowVerifiedAt DateTime? @map("social_follow_verified_at")
+  /// Opt-in: willing to repost two specified D Festival posts for community bonus slots.
+  socialRepostClaimed  Boolean @default(false) @map("social_repost_claimed")
   wantsAmbassador      Boolean @default(false) @map("wants_ambassador")
+  /// cat | dog | rabbit | hamster — avatar picker / optional AI icon.
+  favoriteAvatarAnimal String? @map("favorite_avatar_animal")
+  /// Data URL or https URL for generated / fallback avatar image (may be large).
+  avatarImageDataUrl   String? @map("avatar_image_data_url") @db.Text
   agreedTerms          Boolean @map("agreed_terms")
   agreedPrivacy        Boolean @map("agreed_privacy")
   agreedEmailNotifications Boolean @map("agreed_email_notifications")

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
+import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 
 const HK = { timeZone: "Asia/Hong_Kong" } as const;
 
@@ -71,23 +72,83 @@ type UserRow = {
   bookingRequests: BookingReq[];
 };
 
+type AdminUsersApiBody = {
+  users?: UserRow[];
+  error?: { message?: string };
+};
+
+type ApiErrorEnvelope = {
+  error?: { message?: string };
+};
+
 export function AdminUsersPanel() {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("highlight")?.trim() ?? "";
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   const load = useCallback(async () => {
     setError(null);
-    const res = await fetch(withBasePath("/api/v1/admin/users"));
-    const data = await res.json();
+    const res = await fetch(withBasePath("/api/v1/admin/users"), {
+      credentials: "include",
+    });
+    const raw = await res.text();
+    let data: AdminUsersApiBody | null = null;
+    if (raw.trim()) {
+      try {
+        data = JSON.parse(raw) as AdminUsersApiBody;
+      } catch {
+        setError(`伺服器回應不是有效 JSON（HTTP ${res.status}）`);
+        return;
+      }
+    } else if (!res.ok) {
+      setError(`載入失敗（HTTP ${res.status}，無回應內容）`);
+      return;
+    }
     if (!res.ok) {
       setError(data?.error?.message ?? "載入失敗");
       return;
     }
-    setRows(data.users ?? []);
+    setRows(data?.users ?? []);
   }, []);
+
+  const deleteUser = useCallback(
+    async (userId: string, email: string) => {
+      const ok = window.confirm(
+        `確定要從資料庫永久刪除此用戶？\n\n${email}\n\n此操作無法還原，相關預約與登記資料亦會一併刪除或解除關聯。`
+      );
+      if (!ok) return;
+
+      setDeletingId(userId);
+      setError(null);
+      try {
+        const res = await fetch(withBasePath(`/api/v1/admin/users/${encodeURIComponent(userId)}`), {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const raw = await res.text();
+        let body: ApiErrorEnvelope | null = null;
+        if (raw.trim()) {
+          try {
+            body = JSON.parse(raw) as ApiErrorEnvelope;
+          } catch {
+            setError(`刪除失敗：伺服器回應不是有效 JSON（HTTP ${res.status}）`);
+            return;
+          }
+        }
+        if (!res.ok) {
+          setError(body?.error?.message ?? `刪除失敗（HTTP ${res.status}）`);
+          return;
+        }
+        setRows((prev) => prev.filter((u) => u.id !== userId));
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -115,7 +176,7 @@ export function AdminUsersPanel() {
           重新整理
         </button>
         <Link href="/admin/bookings" className="text-slate-400 underline hover:text-white">
-          預約申請（全部）
+          預約（全部）
         </Link>
         <Link href="/admin/calendar" className="text-slate-400 underline hover:text-white">
           日曆／時段
@@ -172,36 +233,50 @@ export function AdminUsersPanel() {
                     className={`sticky z-20 box-border px-3 py-3 align-top shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)] ${stickyBg} text-slate-200`}
                   >
                     <div className="break-words">{p?.nameZh ?? "—"}</div>
-                    {p && (
-                      <details className="mt-2 text-[11px] text-slate-500">
-                        <summary className="cursor-pointer text-slate-400 hover:text-slate-200">
-                          更多登記欄位
-                        </summary>
-                        <div className="mt-2 space-y-1 border-l border-slate-600 pl-2 text-slate-400">
-                          <p>
-                            <span className="text-slate-500">身份：</span>
-                            {p.identityLabels.length ? p.identityLabels.join("、") : "—"}
-                            {p.identityOtherText ? (
-                              <span className="block text-slate-500">
-                                （其他說明：{p.identityOtherText}）
-                              </span>
-                            ) : null}
-                          </p>
-                          <p>
-                            <span className="text-slate-500">意向日期：</span>
-                            {p.preferredDates.length ? p.preferredDates.join("、") : "—"}
-                          </p>
-                          <p>
-                            <span className="text-slate-500">希望時段：</span>
-                            {p.preferredTimeText ?? "—"}
-                          </p>
-                          <p>
-                            <span className="text-slate-500">補充：</span>
-                            {p.extraNotes ?? "—"}
-                          </p>
+                    <details className="mt-2 text-[11px] text-slate-500">
+                      <summary className="cursor-pointer text-slate-400 hover:text-slate-200">
+                        更多登記欄位
+                      </summary>
+                      <div className="mt-2 space-y-1 border-l border-slate-600 pl-2 text-slate-400">
+                        {p ? (
+                          <>
+                            <p>
+                              <span className="text-slate-500">身份：</span>
+                              {p.identityLabels.length ? p.identityLabels.join("、") : "—"}
+                              {p.identityOtherText ? (
+                                <span className="block text-slate-500">
+                                  （其他說明：{p.identityOtherText}）
+                                </span>
+                              ) : null}
+                            </p>
+                            <p>
+                              <span className="text-slate-500">意向日期：</span>
+                              {p.preferredDates.length ? p.preferredDates.join("、") : "—"}
+                            </p>
+                            <p>
+                              <span className="text-slate-500">希望時段：</span>
+                              {p.preferredTimeText ?? "—"}
+                            </p>
+                            <p>
+                              <span className="text-slate-500">補充：</span>
+                              {p.extraNotes ?? "—"}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-slate-500">此用戶沒有登記檔案紀錄。</p>
+                        )}
+                        <div className="mt-3 border-t border-slate-700 pt-2">
+                          <button
+                            type="button"
+                            disabled={deletingId === u.id}
+                            onClick={() => void deleteUser(u.id, u.email)}
+                            className="text-left text-red-400 underline decoration-red-400/70 hover:text-red-300 hover:decoration-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === u.id ? "刪除中…" : "刪除用戶"}
+                          </button>
                         </div>
-                      </details>
-                    )}
+                      </div>
+                    </details>
                   </td>
                   <td
                     style={{ width: STICKY.phone, minWidth: STICKY.phone, left: STICKY.leftPhone }}
@@ -234,11 +309,11 @@ export function AdminUsersPanel() {
                   </td>
                   <td className="px-3 py-3 align-top text-xs text-slate-300">
                     {u.bookingRequests.length === 0 ? (
-                      <span className="text-slate-500">尚未提交預約申請</span>
+                      <span className="text-slate-500">尚未提交預約</span>
                     ) : (
                       <details className="group">
                         <summary className="cursor-pointer text-slate-200 hover:text-white">
-                          {u.bookingRequests.length} 宗申請 ·
+                          {u.bookingRequests.length} 宗預約 ·
                           {u.bookingRequests.map((b) => b.status).join(" / ")}
                         </summary>
                         <ul className="mt-2 space-y-3 border-l border-slate-600 pl-3">
@@ -249,14 +324,16 @@ export function AdminUsersPanel() {
                                   {br.status}
                                 </span>
                                 <span className="text-slate-500">
-                                  申請於 {fmt(br.requestedAt)} · {br.slotCount} 節
+                                  預約於 {fmt(br.requestedAt)} · {br.slotCount} 節
                                 </span>
                               </div>
                               <ul className="mt-1 space-y-0.5 text-[11px] text-slate-400">
                                 {br.slots.map((s) => (
                                   <li key={s.id}>
-                                    {fmt(s.startsAt)}
-                                    {s.venueLabel ? ` · ${s.venueLabel}` : ""}
+                                    {formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}
+                                    {s.venueLabel != null && s.venueLabel !== ""
+                                      ? ` · ${displayVenueLabel(s.venueLabel)}`
+                                      : ""}
                                     <span className="text-slate-600"> ({s.allocationStatus})</span>
                                   </li>
                                 ))}
@@ -273,7 +350,7 @@ export function AdminUsersPanel() {
                         href={`/admin/bookings?userId=${encodeURIComponent(u.id)}`}
                         className="text-xs text-sky-400 underline hover:text-sky-300"
                       >
-                        在「預約申請」篩選
+                        在「預約」篩選
                       </Link>
                       <Link
                         href="/admin/calendar"
@@ -295,7 +372,7 @@ export function AdminUsersPanel() {
       )}
 
       <p className="text-xs text-slate-500">
-        提示：橫向捲動時，「中文名、電話、類別」三欄會固定顯示，方便對照右側「預約紀錄」與「聯動」。日曆頁面可查看每格時段的整體佔用與申請者
+        提示：橫向捲動時，「中文名、電話、類別」三欄會固定顯示，方便對照右側「預約紀錄」與「聯動」。日曆頁面可查看每格時段的整體佔用與預約者
         Email。
       </p>
     </div>

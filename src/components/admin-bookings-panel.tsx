@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
+import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 
 type BookingRow = {
   id: string;
   status: string;
   requestedAt: string;
   user: { id: string; email: string; nameZh: string | null };
-  slots: { startsAt: string; venueLabel: string | null }[];
+  slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
 
 export function AdminBookingsPanel() {
@@ -68,7 +69,7 @@ export function AdminBookingsPanel() {
     <div className="space-y-6">
       {userIdFilter && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-800/80 bg-sky-950/40 px-4 py-3 text-sm text-sky-100">
-          <span>正在按用戶篩選預約申請（與「登記用戶」聯動）。</span>
+          <span>正在按用戶篩選預約（與「登記用戶」聯動）。</span>
           <Link
             href={`/admin/users?highlight=${encodeURIComponent(userIdFilter)}`}
             className="text-sky-300 underline hover:text-white"
@@ -122,7 +123,7 @@ export function AdminBookingsPanel() {
                 <td className="px-3 py-3 align-top text-slate-200">
                   <div className="font-medium">{r.user.nameZh ?? "—"}</div>
                   <div className="text-xs text-slate-500">{r.user.email}</div>
-                  <div className="mt-1 font-mono text-[10px] text-slate-600">申請 {r.id.slice(0, 8)}…</div>
+                  <div className="mt-1 font-mono text-[10px] text-slate-600">預約 {r.id.slice(0, 8)}…</div>
                   <Link
                     href={`/admin/users?highlight=${encodeURIComponent(r.user.id)}`}
                     className="mt-1 inline-block text-[10px] text-sky-400 underline hover:text-sky-300"
@@ -137,14 +138,10 @@ export function AdminBookingsPanel() {
                   <ul className="space-y-1">
                     {r.slots.map((s, i) => (
                       <li key={i}>
-                        {new Date(s.startsAt).toLocaleString("zh-HK", {
-                          timeZone: "Asia/Hong_Kong",
-                          month: "numeric",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        {s.venueLabel ? ` · ${s.venueLabel}` : ""}
+                        {formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}
+                        {s.venueLabel != null && s.venueLabel !== ""
+                          ? ` · ${displayVenueLabel(s.venueLabel)}`
+                          : ""}
                       </li>
                     ))}
                   </ul>

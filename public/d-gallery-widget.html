@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><style>html,body{margin:0;background:transparent}</style></head>
+<body>
+<!-- ✅ Webflow-safe (scoped) D-Gallery: does NOT change your site font, body, or global styles -->
+<div class="d-gallery-scope" id="d-gallery">
+  <style>
+    /* =========================================================
+       SCOPE EVERYTHING to #d-gallery so your Webflow fonts remain
+       ========================================================= */
+
+    #d-gallery{
+      /* Variables live ONLY inside this gallery */
+      --dg-bg: transparent; /* change if you want a gallery-only background */
+      --dg-card: rgba(255,255,255,.06);
+      --dg-cardBorder: rgba(255,255,255,.10);
+      --dg-shadow: 0 18px 45px rgba(0,0,0,.45);
+      --dg-radius: 18px;
+      --dg-gap: 18px;
+
+      --dg-lbBackdrop: rgba(0,0,0,.72);
+      --dg-lbPanel: rgba(14, 18, 28, .92);
+      --dg-lbBorder: rgba(255,255,255,.10);
+      --dg-text: rgba(255,255,255,.92);
+
+      /* IMPORTANT: keep Webflow font */
+      font-family: inherit;
+      color: inherit;
+      background: var(--dg-bg);
+    }
+
+    /* Only inside the gallery */
+    #d-gallery, #d-gallery * { box-sizing: border-box; }
+
+    #d-gallery .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 70px;
+    }
+
+    /* Grid */
+    #d-gallery .grid{
+      display: grid;
+      gap: var(--dg-gap);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    @media (max-width: 980px){
+      #d-gallery .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px){
+      #d-gallery .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Card */
+    #d-gallery .card{
+      position: relative;
+      border-radius: var(--dg-radius);
+      background: var(--dg-card);
+      border: 1px solid var(--dg-cardBorder);
+      box-shadow: var(--dg-shadow);
+      overflow: hidden;
+
+      transform: translateY(14px);
+      opacity: 0;
+      transition:
+        opacity 700ms cubic-bezier(.2,.9,.2,1),
+        transform 700ms cubic-bezier(.2,.9,.2,1),
+        border-color 240ms ease;
+      will-change: transform, opacity;
+      isolation: isolate;
+    }
+    #d-gallery .card.is-visible{ opacity: 1; transform: translateY(0); }
+
+    #d-gallery .open{
+      display: block;
+      width: 100%;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .open:focus-visible{
+      outline: 2px solid rgba(125,211,252,.75);
+      outline-offset: 3px;
+      border-radius: calc(var(--dg-radius) + 6px);
+    }
+
+    #d-gallery .media{
+      aspect-ratio: 4 / 3;
+      position: relative;
+      overflow: hidden;
+      background: rgba(255,255,255,.03);
+    }
+
+    /* Parallax layer */
+    #d-gallery .parallax{
+      position: absolute;
+      inset: -10% 0;
+      width: 100%;
+      height: 120%;
+      transform: translate3d(0, var(--py, 0px), 0) scale(1.02);
+      transition: transform 220ms ease;
+      will-change: transform;
+    }
+    #d-gallery .parallax img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+    }
+
+    /* Hover polish */
+    #d-gallery .card::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(800px 220px at 50% 120%, rgba(125,211,252,.16), transparent 55%),
+        linear-gradient(to top, rgba(0,0,0,.18), transparent 55%);
+      opacity: 0;
+      transition: opacity 220ms ease;
+      pointer-events: none;
+    }
+    #d-gallery .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.18);
+    }
+    #d-gallery .card:hover::after{ opacity: 1; }
+    #d-gallery .card:hover .parallax{
+      transform: translate3d(0, var(--py, 0px), 0) scale(1.06);
+    }
+
+    /* Stagger reveal */
+    #d-gallery .card{ transition-delay: calc(var(--i, 0) * 55ms); }
+
+    /* View More */
+    #d-gallery .more-wrap{
+      display: flex;
+      justify-content: center;
+      padding: 22px 0 0;
+    }
+    #d-gallery .view-more{
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.95);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .view-more:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.55);
+      background: rgba(125,211,252,.14);
+    }
+    #d-gallery .view-more:focus-visible{
+      outline: 2px solid rgba(125,211,252,.80);
+      outline-offset: 3px;
+    }
+    #d-gallery .view-more.is-visible{ display: inline-flex; }
+
+    /* Lightbox */
+    #d-gallery .lightbox{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: var(--dg-lbBackdrop);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 99999;
+    }
+    #d-gallery .lightbox[aria-hidden="false"]{ display: flex; }
+
+    #d-gallery .lb-panel{
+      width: min(980px, 100%);
+      background: var(--dg-lbPanel);
+      border: 1px solid var(--dg-lbBorder);
+      border-radius: 20px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.6);
+      overflow: hidden;
+      transform: translateY(8px) scale(.98);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+    #d-gallery .lightbox[aria-hidden="false"] .lb-panel{
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    #d-gallery .lb-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 12px 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    #d-gallery .lb-title{
+      margin: 0;
+      font-size: 14px;
+      color: #ffffff;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .lb-close{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .lb-close:hover{ background: rgba(255,255,255,.12); }
+    #d-gallery .lb-close:focus-visible{
+      outline: 2px solid rgba(125,211,252,.75);
+      outline-offset: 2px;
+    }
+
+    #d-gallery .lb-media{
+      position: relative;
+      background: rgba(0,0,0,.25);
+      overflow: hidden;
+      user-select: none;
+      touch-action: none; /* enable pinch/pan/swipe handling */
+    }
+    #d-gallery .lb-stage{
+      width: 100%;
+      height: min(70vh, 720px);
+      display: grid;
+      place-items: center;
+      opacity: 1;
+      transition: opacity 220ms ease;
+    }
+    #d-gallery .lb-stage.is-fading{ opacity: 0; }
+
+    #d-gallery .lb-img{
+      width: 100%;
+      height: 100%;
+      max-height: min(70vh, 720px);
+      object-fit: contain;
+      background: rgba(0,0,0,.30);
+      transform: translate3d(0,0,0) scale(1);
+      will-change: transform;
+    }
+
+    #d-gallery .lb-nav{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.95);
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+      z-index: 2;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .lb-nav:hover{
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.22);
+      transform: translateY(-50%) scale(1.02);
+    }
+    #d-gallery .lb-nav:focus-visible{
+      outline: 2px solid rgba(125,211,252,.80);
+      outline-offset: 3px;
+    }
+    #d-gallery .lb-prev{ left: 12px; }
+    #d-gallery .lb-next{ right: 12px; }
+
+    /* Bottom bar: centered button, no instruction text */
+    #d-gallery .lb-bottom{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    #d-gallery .lb-action{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(125,211,252,.22), rgba(125,211,252,.10));
+      color: rgba(255,255,255,.95);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      font: inherit; /* keep Webflow font */
+    }
+    #d-gallery .lb-action:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.55);
+      background: linear-gradient(180deg, rgba(125,211,252,.28), rgba(125,211,252,.14));
+    }
+    #d-gallery .lb-action:focus-visible{
+      outline: 2px solid rgba(125,211,252,.80);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      #d-gallery .card,
+      #d-gallery .parallax,
+      #d-gallery .lb-panel,
+      #d-gallery .lb-stage{
+        transition: none !important;
+      }
+      #d-gallery .card{ opacity: 1; transform: none; }
+      #d-gallery .parallax{ transform: none !important; }
+      #d-gallery .lb-stage{ opacity: 1 !important; }
+    }
+  </style>
+
+  <div class="wrap">
+    <section class="grid" id="dgGallery" aria-label="D-Gallery image gallery"></section>
+    <div class="more-wrap">
+      <button class="view-more" id="dgViewMore" type="button">Fill More</button>
+    </div>
+  </div>
+
+  <!-- Lightbox (inside scope so styles remain scoped) -->
+  <div class="lightbox" id="dgLightbox" aria-hidden="true">
+    <div class="lb-panel" role="dialog" aria-modal="true" aria-labelledby="dgLbTitle">
+      <div class="lb-top">
+        <p class="lb-title" id="dgLbTitle">D-Gallery Image</p>
+        <button class="lb-close" id="dgLbClose" type="button" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="lb-media" id="dgLbMedia" aria-label="Image viewer">
+        <button class="lb-nav lb-prev" id="dgLbPrev" type="button" aria-label="Previous image">‹</button>
+        <button class="lb-nav lb-next" id="dgLbNext" type="button" aria-label="Next image">›</button>
+
+        <div class="lb-stage" id="dgLbStage">
+          <img class="lb-img" id="dgLbImg" alt="" src="" />
+        </div>
+      </div>
+
+      <div class="lb-bottom">
+        <a class="lb-action" id="dgLbAction" href="#" target="_blank" rel="noopener">Explore</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const scope = document.getElementById("d-gallery");
+      if (!scope) return;
+
+      const gallery = scope.querySelector("#dgGallery");
+      const viewMoreBtn = scope.querySelector("#dgViewMore");
+
+      // --- YOUR IMAGES (as provided) ---
+      const imageUrls = [
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c7617a53db0b7f09182e_01.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c76184d82a78d81092bd_02.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c764c529ab62721196af_03.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c84f20e5ce5bf74414a1_04.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c7627fa9c07187c59584_05.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c761338f671e2f9667a5_06.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c7617e9f88a4d287a073_07.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c762a4beaa7ca777ad30_08.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c76259f51b2a55bedab2_09.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c75dab6879304aa5f444_10.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c76221ce88092c231569_11.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945c75e9cbf6f3c751d9be6_12.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d16f9b805d11d664383a_13.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d608a48e251ee6beb9e4_14.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d607ea26e0362a47bbee_15.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d60776a5b89c25bfb044_16.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d60832ba22ea93efddb5_17.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d607b662dbdca100c429_18.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d6087be6a79495402dc8_19.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945d6086501003723ebd729_20.jpeg",
+
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69360bc9f144d70cd6dc542c_opera%20theatre.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/693e41b0f0b3d313ff075b93_nshd.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/693f7513c0634943936c1c14_DSC01652.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/693f75703ba7e58b9994c27d_DSC01645%20(1).jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/693f7571b31da0783c0eec79_DSC01651.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69402cebdcf1c51b3ec42734_DSC01444.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7ba68bdd763aa44a4d_65cd1c6be56dd10bdffd908360dcdcca_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7c1c984713adb7cbe3_a70d554582c9d3071b1376662fe905b4_under2mb.avif",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7c2201a8a93cf5a152_575b8bf1d8aa1fb52b63a54e78a87514_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7c2201a8a93cf5a152_575b8bf1d8aa1fb52b63a54e78a87514_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7c707727de445f5d53_e883dcf2c150de4104a2224b25f4687b_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7cdcf1c51b3ec9b2b1_fa984640167a0cec51d0597b4e91dd15_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7c7c97f456347264c9_d1bb47fe358f937b2aba16586d08253b_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7d8d32a4475269eda3_158c2bf1aa41277429bd4462d1c35aae_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7d44ebc345a3daef38_5c89785fd614273aaba3570ab019d59a_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403a7dfe12044c6d3b12b1_49f64a1b04f8c8c1d605189cb4b9c6bb_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acc4dba5b5fe742b988_7ed08b6350dacf9ff718b15fb48b221f_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acc6512e124e00f86ce_d1780619d6ab0818d11d9c38c9edfb0d_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acd1d797eab113c393f_ec9f889961de6c69c408f4835dd92aa5_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acd8d32a447526a06ee_3247cddb258dd4bfa0840834653fa7c6_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acd99df7ed66b1c520e_2a81af3da69beb559df979e3dc753843_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acd17cf86af2f41dba0_01ef10e1ba45b2681e64275031f483e8_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acd69543b5ec716606b_ee6c5ec6674f2bbc523d85c314daaa5f_under2mb.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69403acdce5cc4c89048e27a_df7892ac596a5562d4b61d8dd82a85d2_under2mb.jpg",
+
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/694440185983b8398bd1e2ec_IMG_7734.avif",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/69444c6fcd726a20d5f9aa22_DSC09108.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6944c78bd00a22b6cd738153_DSC09204.avif",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4944012f7c4b4d4945b_DSC09287.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e49450896b78bbe68f24_DSC09131.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e494b86b893316aa9cdc_DSC09063.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4934646a190a13b76ce_DSC09077.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4932500bfc7a86115a5_DSC09117.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4932500bfc7a86115a5_DSC09117.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e493cef5810332ab7d9f_DSC09115.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4930ed78755b247650a_DSC09047.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e493c0edd6ef8da4ed1c_DSC09051.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48b9f6080d5f79d8707_IMG_4126.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a2085a5cfb29f6e37_IMG_4084.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a754c5f0a8d8836eb_IMG_8827.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48aee2a2737c574d7db_DSC09037.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a21de25163163de91_DSC01289.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a5f94432e63d314b2_DSC09140.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a6e2b9a7354f5ca94_DSC09136.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a66a405e5a2d408d5_DSC01331.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a333ce83d6d271dc0_IMG_4133.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48a82e3bc21262d26bf_DSC09080.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48ac8dd6ad7ea763c55_IMG_4089.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48ab3574849a57c350d_DSC09076.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48879bd619f8fa247e1_DSC01411.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488c90811b2a06010fa_DSC01478.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4881a00a0a2d72a2982_DSC01591.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4886535ecda4f4f95e0_DSC08944.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488976a360369efb22b_IMG_4228.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488e52fe63bd41adec8_DSC01663.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48876a8cd9b87ce70fc_IMG_4243.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4887c14762579cbc815_IMG_4380.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48886ceb50bed418770_DSC01439.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488213e7d05b3957938_IMG_4368.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488a48669fe55a75eeb_DSC08973.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e488acd03a338fb2a767_IMG_4325.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4857e55edcf507faad2_DSC01519.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4854e30b6e67d565cf7_IMG_4671.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e48515fad9da9d25ec17_IMG_4262.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4854a5115b0b148735c_IMG_4912.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e485a359a6208075dcfb_IMG_4282.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e485b9dd30be9796bcec_IMG_4504.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4853774e4c6fed45d1c_DSC01432.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e485605115176d8ea7ea_IMG_4157%202.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4855891acfab109bec1_IMG_4599.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e4853e6aae91064b8c4b_IMG_4878.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e485213e7d05b39578d0_DSC01622.jpeg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e485e7815c7c859331d2_IMG_4651.jpg",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e867796c6f98839707ec_Xnip2025-12-19_19-14-42.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e8685a2248259028cc58_Xnip2025-12-19_19-14-03.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e868f9a73eef235dd461_Xnip2025-12-19_19-13-17.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e868d8e45e33f7aa8781_Xnip2025-12-19_19-12-44.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e868af65e1d0a5360d67_Xnip2025-12-19_19-11-54.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e8689b9e3609b7404d2c_Xnip2025-12-19_19-10-56.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e86840981b751adbabae_Xnip2025-12-19_19-12-34.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e868af65e1d0a5360d67_Xnip2025-12-19_19-11-54.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e8689b9e3609b7404d2c_Xnip2025-12-19_19-10-56.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e86840981b751adbabae_Xnip2025-12-19_19-12-34.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e868e15f8f1ce5565596_Xnip2025-12-19_19-13-53.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e86966a405e5a2d4610f_Xnip2025-12-19_19-14-31.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e869a9cb1d105d753473_Xnip2025-12-19_19-11-30.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e8690fa6228f108fefcf_Xnip2025-12-19_19-11-12.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e869da23eef076ea88a6_Xnip2025-12-19_19-10-46.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e869b0031f8c817fbe30_Xnip2025-12-19_19-13-01.png",
+        "https://cdn.prod.website-files.com/692f0ba55905e9d22c848d0d/6945e869a48669fe55a7c023_Xnip2025-12-19_19-10-31.png"
+      ];
+
+      const images = imageUrls.map((src, i) => ({ src, title: `D-Gallery Image ${i + 1}` }));
+
+      // Explore mapping: 1–10 Mission, 11–20 Programs, 21–30 IDPC, 31+ Faculty
+      function exploreConfigForIndex(oneBasedIndex){
+        if (oneBasedIndex >= 1 && oneBasedIndex <= 10) {
+          return { text: "Explore Mission", href: "https://d-festival.org/d-festival-mission" };
+        }
+        if (oneBasedIndex >= 11 && oneBasedIndex <= 20) {
+          return { text: "Explore Programs", href: "https://d-festival.org/2026-d-festival-programs" };
+        }
+        if (oneBasedIndex >= 21 && oneBasedIndex <= 30) {
+          return { text: "Explore IDPC", href: "https://d-festival.org/international-d-masters-piano-competition-2026" };
+        }
+        return { text: "Explore 2026 Faculty", href: "https://d-festival.org/2026-faculty" };
+      }
+
+      // -----------------------
+      // Memory-safe "View More":
+      // Only APPEND 10 at a time (does NOT render all upfront)
+      // -----------------------
+      const PAGE_SIZE = 10;
+      let renderedCount = 0;
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const activeCards = new Set();
+      const revealIO = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          const card = entry.target;
+          if (entry.isIntersecting) {
+            card.classList.add("is-visible");
+            activeCards.add(card);
+          } else {
+            activeCards.delete(card);
+          }
+        }
+        if (!prefersReducedMotion) requestTick();
+      }, { threshold: 0.15, rootMargin: "120px 0px 120px 0px" });
+
+      const imgIO = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const img = entry.target;
+          const src = img.dataset.src;
+          if (src) {
+            img.src = src;
+            img.removeAttribute("data-src");
+          }
+          imgIO.unobserve(img);
+        }
+      }, { threshold: 0.01, rootMargin: "300px 0px 300px 0px" });
+
+      function createCard(idx){
+        const item = images[idx];
+        const card = document.createElement("article");
+        card.className = "card";
+        card.dataset.index = String(idx);
+        card.style.setProperty("--i", idx % 12);
+
+        card.innerHTML = `
+          <button class="open" type="button" data-index="${idx}" aria-label="Open ${item.title}">
+            <div class="media">
+              <div class="parallax">
+                <img data-src="${item.src}" alt="${item.title}" loading="lazy" decoding="async" />
+              </div>
+            </div>
+          </button>
+        `;
+
+        revealIO.observe(card);
+        const img = card.querySelector("img");
+        if (img) imgIO.observe(img);
+
+        return card;
+      }
+
+      // Show "View More" only when you reach the last rendered image
+      let moreIO = null;
+      function watchLastVisibleForViewMore(){
+        if (moreIO) moreIO.disconnect();
+        if (renderedCount <= 0 || renderedCount >= images.length) return;
+
+        const lastIndex = renderedCount - 1;
+        const lastCard = gallery.querySelector(`.card[data-index="${lastIndex}"]`);
+        if (!lastCard) return;
+
+        moreIO = new IntersectionObserver((entries) => {
+          if (entries[0] && entries[0].isIntersecting) {
+            viewMoreBtn.classList.add("is-visible");
+          }
+        }, { threshold: 0.35, rootMargin: "0px 0px 120px 0px" });
+
+        viewMoreBtn.classList.remove("is-visible");
+        moreIO.observe(lastCard);
+      }
+
+      function appendNextBatch(){
+        const prev = renderedCount;
+        renderedCount = Math.min(images.length, renderedCount + PAGE_SIZE);
+
+        for (let i = prev; i < renderedCount; i++) {
+          gallery.appendChild(createCard(i));
+        }
+
+        if (renderedCount >= images.length) {
+          viewMoreBtn.classList.remove("is-visible");
+          return;
+        }
+
+        watchLastVisibleForViewMore();
+      }
+
+      viewMoreBtn.addEventListener("click", () => {
+        appendNextBatch();
+        requestTick();
+      });
+
+      // Initial
+      appendNextBatch();
+
+      // -----------------------
+      // Parallax
+      // -----------------------
+      let ticking = false;
+      function requestTick(){
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(updateParallax);
+        }
+      }
+      function updateParallax(){
+        ticking = false;
+        if (prefersReducedMotion) return;
+
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+
+        activeCards.forEach(card => {
+          const media = card.querySelector(".media");
+          const layer = card.querySelector(".parallax");
+          if (!media || !layer) return;
+
+          const rect = media.getBoundingClientRect();
+          const centerY = rect.top + rect.height / 2;
+          const viewportCenter = vh / 2;
+          const distance = (centerY - viewportCenter) / (vh / 2);
+
+          const clamped = Math.max(-1, Math.min(1, distance));
+          const maxOffset = 14;
+          const offset = (-clamped * maxOffset).toFixed(2);
+          layer.style.setProperty("--py", `${offset}px`);
+        });
+      }
+      window.addEventListener("scroll", requestTick, { passive: true });
+      window.addEventListener("resize", requestTick, { passive: true });
+      requestTick();
+
+      // -----------------------
+      // Lightbox + pinch zoom + pan + swipe (swipe disabled when zoomed)
+      // -----------------------
+      const lightbox = scope.querySelector("#dgLightbox");
+      const lbTitle  = scope.querySelector("#dgLbTitle");
+      const lbClose  = scope.querySelector("#dgLbClose");
+      const lbAction = scope.querySelector("#dgLbAction");
+      const lbMedia  = scope.querySelector("#dgLbMedia");
+      const lbPrev   = scope.querySelector("#dgLbPrev");
+      const lbNext   = scope.querySelector("#dgLbNext");
+      const lbStage  = scope.querySelector("#dgLbStage");
+      const lbImg    = scope.querySelector("#dgLbImg");
+
+      let currentIndex = 0;
+      let lastFocusedEl = null;
+      let changing = false;
+
+      // Zoom state
+      let scale = 1;
+      let tx = 0, ty = 0;
+      const MIN_SCALE = 1;
+      const MAX_SCALE = 3;
+
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+      function applyZoom(){
+        lbImg.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+      }
+      function resetZoom(){
+        scale = 1; tx = 0; ty = 0;
+        applyZoom();
+      }
+      function clampPan(){
+        const rect = lbMedia.getBoundingClientRect();
+        const maxX = (scale - 1) * rect.width / 2;
+        const maxY = (scale - 1) * rect.height / 2;
+        tx = clamp(tx, -maxX, maxX);
+        ty = clamp(ty, -maxY, maxY);
+      }
+
+      function setExplore(oneBasedIndex){
+        const cfg = exploreConfigForIndex(oneBasedIndex);
+        lbAction.textContent = cfg.text;
+        lbAction.href = cfg.href;
+      }
+
+      function fadeToImage(index){
+        if (changing) return;
+        changing = true;
+
+        const total = images.length;
+        currentIndex = (index + total) % total;
+        const item = images[currentIndex];
+        const oneBased = currentIndex + 1;
+
+        resetZoom();
+
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) {
+          lbImg.src = item.src;
+          lbImg.alt = item.title;
+          lbTitle.textContent = item.title;
+          setExplore(oneBased);
+          changing = false;
+          return;
+        }
+
+        lbStage.classList.add("is-fading");
+        setTimeout(() => {
+          lbImg.onload = () => {
+            lbTitle.textContent = item.title;
+            setExplore(oneBased);
+            lbStage.classList.remove("is-fading");
+            changing = false;
+          };
+          lbImg.src = item.src;
+          lbImg.alt = item.title;
+        }, 120);
+      }
+
+      function openLightbox(index){
+        lastFocusedEl = document.activeElement;
+        lightbox.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        currentIndex = index;
+        fadeToImage(currentIndex);
+        lbClose.focus();
+      }
+
+      function closeLightbox(){
+        lightbox.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        lbImg.src = "";
+        resetZoom();
+        if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+      }
+
+      function nextImage(){ if (scale > 1.01) return; fadeToImage(currentIndex + 1); }
+      function prevImage(){ if (scale > 1.01) return; fadeToImage(currentIndex - 1); }
+
+      // Open from grid (delegation)
+      gallery.addEventListener("click", (e) => {
+        const btn = e.target.closest(".open");
+        if (!btn) return;
+        const index = Number(btn.dataset.index);
+        if (!Number.isFinite(index)) return;
+        openLightbox(index);
+      });
+
+      // Close handlers
+      lbClose.addEventListener("click", closeLightbox);
+      lightbox.addEventListener("click", (e) => {
+        const panel = e.target.closest(".lb-panel");
+        if (!panel) closeLightbox();
+      });
+
+      // Nav buttons
+      lbNext.addEventListener("click", (e) => { e.stopPropagation(); nextImage(); });
+      lbPrev.addEventListener("click", (e) => { e.stopPropagation(); prevImage(); });
+
+      // Keyboard
+      document.addEventListener("keydown", (e) => {
+        if (lightbox.getAttribute("aria-hidden") === "true") return;
+
+        if (e.key === "Escape") { e.preventDefault(); closeLightbox(); return; }
+        if (e.key === "ArrowRight") { e.preventDefault(); nextImage(); return; }
+        if (e.key === "ArrowLeft") { e.preventDefault(); prevImage(); return; }
+
+        // Focus trap (close <-> explore)
+        if (e.key === "Tab") {
+          const focusables = [lbClose, lbAction].filter(Boolean);
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      });
+
+      // Pinch-to-zoom + pan + swipe (Pointer Events)
+      const pointers = new Map();
+      let startX = 0, startY = 0;
+      let startTx = 0, startTy = 0;
+      let startScale = 1;
+      let startDist = 0;
+
+      // Swipe tracking (only when not zoomed)
+      let swipeStartX = 0, swipeStartY = 0;
+      const SWIPE_THRESHOLD = 45;
+
+      function dist(a,b){
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        return Math.hypot(dx, dy);
+      }
+
+      // Double-tap zoom toggle
+      let lastTap = 0;
+      lbMedia.addEventListener("pointerup", (e) => {
+        if (lightbox.getAttribute("aria-hidden") === "true") return;
+        const now = Date.now();
+        const isDoubleTap = (now - lastTap) < 280;
+        lastTap = now;
+        if (!isDoubleTap) return;
+
+        if (scale < 1.2) scale = 2;
+        else { scale = 1; tx = 0; ty = 0; }
+        clampPan();
+        applyZoom();
+      });
+
+      lbMedia.addEventListener("pointerdown", (e) => {
+        if (lightbox.getAttribute("aria-hidden") === "true") return;
+
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        try { lbMedia.setPointerCapture(e.pointerId); } catch {}
+
+        if (pointers.size === 1) {
+          swipeStartX = e.clientX;
+          swipeStartY = e.clientY;
+
+          startX = e.clientX;
+          startY = e.clientY;
+          startTx = tx;
+          startTy = ty;
+        }
+
+        if (pointers.size === 2) {
+          const [a,b] = Array.from(pointers.values());
+          startDist = dist(a,b);
+          startScale = scale;
+          startTx = tx;
+          startTy = ty;
+        }
+      });
+
+      lbMedia.addEventListener("pointermove", (e) => {
+        if (!pointers.has(e.pointerId)) return;
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // Pinch
+        if (pointers.size === 2) {
+          const [a,b] = Array.from(pointers.values());
+          const d = dist(a,b);
+          scale = clamp(startScale * (d / startDist), MIN_SCALE, MAX_SCALE);
+          tx = startTx; ty = startTy;
+          clampPan();
+          applyZoom();
+          e.preventDefault?.();
+          return;
+        }
+
+        // Pan when zoomed
+        if (pointers.size === 1 && scale > 1.01) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          tx = startTx + dx;
+          ty = startTy + dy;
+          clampPan();
+          applyZoom();
+          e.preventDefault?.();
+        }
+      }, { passive: false });
+
+      lbMedia.addEventListener("pointerup", (e) => {
+        if (!pointers.has(e.pointerId)) return;
+
+        // Swipe only when NOT zoomed
+        if (pointers.size === 1 && scale <= 1.01) {
+          const dx = e.clientX - swipeStartX;
+          const dy = e.clientY - swipeStartY;
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) >= SWIPE_THRESHOLD) {
+            if (dx < 0) nextImage();
+            else prevImage();
+          }
+        }
+
+        pointers.delete(e.pointerId);
+
+        // If one pointer remains, reset baselines
+        if (pointers.size === 1) {
+          const [only] = Array.from(pointers.values());
+          startX = only.x; startY = only.y;
+          startTx = tx; startTy = ty;
+        }
+      });
+
+      lbMedia.addEventListener("pointercancel", (e) => {
+        pointers.delete(e.pointerId);
+      });
+
+      // (Optional) expose count for debugging
+      // console.log("D-Gallery total photos:", images.length);
+    })();
+  </script>
+</div>
+
+</body>
+</html>

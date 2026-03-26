@@ -1,0 +1,26 @@
+diff --git a/node_modules/next/dist/esm/server/dev/middleware-turbopack.js b/node_modules/next/dist/esm/server/dev/middleware-turbopack.js
+index 1297c6d..3a178fd 100644
+--- a/node_modules/next/dist/esm/server/dev/middleware-turbopack.js
++++ b/node_modules/next/dist/esm/server/dev/middleware-turbopack.js
+@@ -32,7 +32,7 @@ const currentSourcesByFile = new Map();
+             source: null
+         };
+     }
+-    const currentDirectoryFileUrl = pathToFileURL(process.cwd()).href;
++    const currentDirectoryFileUrl = decodeURI(pathToFileURL(process.cwd()).href);
+     const sourceFrame = await project.traceSource(frame, currentDirectoryFileUrl);
+     if (!sourceFrame) {
+         return {
+diff --git a/node_modules/next/dist/server/dev/middleware-turbopack.js b/node_modules/next/dist/server/dev/middleware-turbopack.js
+index f31d34a..2698a78 100644
+--- a/node_modules/next/dist/server/dev/middleware-turbopack.js
++++ b/node_modules/next/dist/server/dev/middleware-turbopack.js
+@@ -63,7 +63,7 @@ const currentSourcesByFile = new Map();
+             source: null
+         };
+     }
+-    const currentDirectoryFileUrl = (0, _nodeurl.pathToFileURL)(process.cwd()).href;
++    const currentDirectoryFileUrl = decodeURI((0, _nodeurl.pathToFileURL)(process.cwd()).href);
+     const sourceFrame = await project.traceSource(frame, currentDirectoryFileUrl);
+     if (!sourceFrame) {
+         return {

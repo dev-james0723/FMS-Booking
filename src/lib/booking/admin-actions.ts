@@ -46,13 +46,13 @@ export async function adminApproveBookingRequest(
     include: { allocations: { include: { slot: true } } },
   });
   if (!req) {
-    throw new AdminBookingError("NOT_FOUND", "申請不存在");
+    throw new AdminBookingError("NOT_FOUND", "預約不存在");
   }
   if (
     req.status !== BookingRequestStatus.pending &&
     req.status !== BookingRequestStatus.waitlisted
   ) {
-    throw new AdminBookingError("INVALID_STATUS", "只可批核待審核或後補狀態的申請");
+    throw new AdminBookingError("INVALID_STATUS", "只可批核待審核或後補狀態的預約");
   }
 
   for (const a of req.allocations) {
@@ -104,13 +104,13 @@ export async function adminRejectBookingRequest(
     where: { id: bookingRequestId },
   });
   if (!req) {
-    throw new AdminBookingError("NOT_FOUND", "申請不存在");
+    throw new AdminBookingError("NOT_FOUND", "預約不存在");
   }
   if (
     req.status !== BookingRequestStatus.pending &&
     req.status !== BookingRequestStatus.waitlisted
   ) {
-    throw new AdminBookingError("INVALID_STATUS", "只可拒絕待審核或後補狀態的申請");
+    throw new AdminBookingError("INVALID_STATUS", "只可拒絕待審核或後補狀態的預約");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -160,10 +160,10 @@ export async function adminWaitlistBookingRequest(
     where: { id: bookingRequestId },
   });
   if (!req) {
-    throw new AdminBookingError("NOT_FOUND", "申請不存在");
+    throw new AdminBookingError("NOT_FOUND", "預約不存在");
   }
   if (req.status !== BookingRequestStatus.pending) {
-    throw new AdminBookingError("INVALID_STATUS", "只可將「待審核」申請設為後補");
+    throw new AdminBookingError("INVALID_STATUS", "只可將「待審核」預約設為後補");
   }
 
   await prisma.$transaction(async (tx) => {

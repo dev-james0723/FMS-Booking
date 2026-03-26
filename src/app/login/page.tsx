@@ -9,7 +9,7 @@ import { withBasePath } from "@/lib/base-path";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  const next = searchParams.get("next") || "/account";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -108,16 +108,18 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-      <h1 className="font-serif text-2xl text-stone-900">登入</h1>
-      <p className="text-xs text-stone-500">使用登記時的 Email 及郵件內的臨時密碼。</p>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+    <form onSubmit={onSubmit} className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-8 shadow-sm">
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">登入</h1>
+      <p className="text-xs text-stone-500 dark:text-stone-500">使用登記時的 Email 及郵件內的臨時密碼。</p>
+      {error && (
+        <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+      )}
       <label className="block text-sm">
         Email
         <input
           type="email"
           required
-          className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -127,7 +129,7 @@ function LoginForm() {
         <input
           type="password"
           required
-          className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -139,23 +141,23 @@ function LoginForm() {
       >
         {loading ? "登入中…" : "登入"}
       </button>
-      <div className="relative py-2 text-center text-xs text-stone-400 before:absolute before:inset-x-8 before:top-1/2 before:h-px before:bg-stone-200">
-        <span className="relative bg-white px-2">或</span>
+      <div className="relative py-2 text-center text-xs text-stone-400 dark:text-stone-500 before:absolute before:inset-x-8 before:top-1/2 before:h-px before:bg-stone-200 dark:before:bg-stone-600">
+        <span className="relative bg-surface px-2">或</span>
       </div>
       <button
         type="button"
         disabled={passkeyLoading || loading || !email.trim()}
         onClick={() => void onPasskeyLogin()}
-        className="w-full rounded-full border border-stone-300 bg-white py-2.5 text-sm text-stone-800 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-full border border-stone-300 dark:border-stone-600 bg-surface py-2.5 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {passkeyLoading ? "正在驗證…" : "Face ID／指紋登入"}
       </button>
-      <p className="text-center text-[11px] text-stone-500">
+      <p className="text-center text-[11px] text-stone-500 dark:text-stone-500">
         須已在登記時綁定通行密鑰；請先輸入 Email 再按此鍵。
       </p>
-      <p className="text-center text-xs text-stone-500">
+      <p className="text-center text-xs text-stone-500 dark:text-stone-500">
         尚未有帳戶？{" "}
-        <Link href="/register" className="text-stone-800 underline">
+        <Link href="/register" className="text-stone-800 dark:text-stone-200 underline">
           前往登記
         </Link>
       </p>
@@ -166,7 +168,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <main className="flex flex-1 flex-col justify-center px-4 py-16">
-      <Suspense fallback={<p className="text-center text-stone-500">載入中…</p>}>
+      <Suspense fallback={<p className="text-center text-stone-500 dark:text-stone-500">載入中…</p>}>
         <LoginForm />
       </Suspense>
     </main>
