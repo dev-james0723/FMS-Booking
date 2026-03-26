@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { withBasePath } from "@/lib/base-path";
 
 export function HomePartnerLogos() {
   return (
@@ -24,7 +25,7 @@ export function HomePartnerLogos() {
       <div className="relative flex flex-col items-center justify-center gap-8 sm:flex-row sm:gap-2 md:gap-6">
         <div className="partner-float-left flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
           <Image
-            src="/branding/d-festival-young-pianist.png"
+            src={withBasePath("/branding/d-festival-young-pianist.png")}
             alt="D Festival 青年鋼琴家藝術節"
             width={360}
             height={120}
@@ -41,7 +42,7 @@ export function HomePartnerLogos() {
 
         <div className="partner-float-right flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
           <Image
-            src="/branding/fantasia-music-space.png"
+            src={withBasePath("/branding/fantasia-music-space.png")}
             alt="Fantasia Music Space 幻樂空間"
             width={360}
             height={200}
