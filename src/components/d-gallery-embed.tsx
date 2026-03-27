@@ -1,19 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { withBasePath } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 /**
  * D-Gallery runs as a same-origin iframe so the original embed script can execute unchanged.
- * Height follows content (incl. “Fill More”) via ResizeObserver on the iframe document body.
+ * Height follows gallery grid via ResizeObserver on the iframe document body.
  */
 export function DGalleryEmbed({
   showPageFillMore = false,
 }: {
-  /** Renders a host-page “Fill More” control that triggers the iframe’s load-more action. */
+  /** Renders a host-page “View more” control that triggers the iframe’s load-more action. */
   showPageFillMore?: boolean;
 }) {
+  const { locale } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const viewMoreLabel = locale === "en" ? "View More" : "瀏覽更多";
+  const iframeLangParam = locale === "en" ? "en" : "zh-HK";
+  const iframeSrc = useMemo(
+    () => `${withBasePath("/d-gallery-widget.html")}?lang=${encodeURIComponent(iframeLangParam)}`,
+    [iframeLangParam],
+  );
 
   const detachResizeObserver = useCallback(() => {
     resizeObserverRef.current?.disconnect();
@@ -53,7 +62,7 @@ export function DGalleryEmbed({
 
   useEffect(() => () => detachResizeObserver(), [detachResizeObserver]);
 
-  const triggerIframeFillMore = useCallback(() => {
+  const triggerIframeViewMore = useCallback(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
     try {
@@ -67,20 +76,20 @@ export function DGalleryEmbed({
     <div className="w-full">
       <iframe
         ref={iframeRef}
-        src="/d-gallery-widget.html"
+        src={iframeSrc}
         title="D-Gallery 圖片庫"
         className="mx-auto block w-full max-w-[1100px] border-0 bg-transparent"
         style={{ minHeight: 480 }}
         onLoad={onIframeLoad}
       />
       {showPageFillMore ? (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-4 flex justify-center">
           <button
             type="button"
-            onClick={triggerIframeFillMore}
+            onClick={triggerIframeViewMore}
             className="rounded-full border border-white/25 bg-white/5 px-8 py-2.5 text-sm font-medium tracking-wide text-white/95 shadow-sm backdrop-blur-sm transition hover:border-[#c9a227]/60 hover:bg-white/10 hover:text-white"
           >
-            Fill More
+            {viewMoreLabel}
           </button>
         </div>
       ) : null}

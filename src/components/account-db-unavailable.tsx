@@ -8,7 +8,7 @@ type Props = {
 /** 當 Prisma 無法連上 PostgreSQL（例如 Supabase pooler／網絡）時顯示，避免整頁 Runtime Error。 */
 export function AccountDbUnavailable({ email }: Props) {
   return (
-    <main className="mx-auto max-w-lg space-y-6 px-4 py-16">
+    <main className="mx-auto max-w-lg space-y-6 px-5 sm:px-4 py-16">
       <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">暫時無法載入帳戶資料</h1>
       <p className="text-sm text-stone-600 dark:text-stone-400">
         伺服器無法連接資料庫（常見原因：Supabase 暫停專案、網絡阻斷，或{" "}

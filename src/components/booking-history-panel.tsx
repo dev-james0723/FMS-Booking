@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
-import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
+import {
+  displayVenueLabel,
+  formatSlotListLineForLocale,
+} from "@/lib/booking-slot-display";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type BookingRow = {
   id: string;
@@ -13,6 +17,7 @@ type BookingRow = {
 };
 
 export function BookingHistoryPanel() {
+  const { t, locale } = useTranslation();
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,19 +26,21 @@ export function BookingHistoryPanel() {
       const res = await fetch(withBasePath("/api/v1/booking/history"));
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "無法載入");
+        setError(data?.error?.message ?? t("booking.historyPanel.loadError"));
         return;
       }
       setRows(data.bookings ?? []);
     })();
-  }, []);
+  }, [t]);
 
   if (error) {
     return <p className="text-sm text-red-700">{error}</p>;
   }
 
   if (rows.length === 0) {
-    return <p className="text-sm text-stone-500 dark:text-stone-500">暫未有預約紀錄。</p>;
+    return (
+      <p className="text-sm text-stone-500 dark:text-stone-500">{t("booking.historyPanel.empty")}</p>
+    );
   }
 
   return (
@@ -45,18 +52,27 @@ export function BookingHistoryPanel() {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-mono text-xs text-stone-500 dark:text-stone-500">{r.id.slice(0, 8)}…</span>
-            <span className="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs">{r.status}</span>
+            <span className="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs">
+              {(() => {
+                const path = `booking.status.${r.status}`;
+                const label = t(path);
+                return label === path ? r.status : label;
+              })()}
+            </span>
           </div>
           <p className="mt-2 text-xs text-stone-500 dark:text-stone-500">
-            提交時間：{new Date(r.requestedAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}
-            {r.usesBonusSlot ? " · 使用 bonus 時段" : ""}
+            {t("booking.historyPanel.submittedAt")}
+            {new Date(r.requestedAt).toLocaleString(locale === "en" ? "en-HK" : "zh-HK", {
+              timeZone: "Asia/Hong_Kong",
+            })}
+            {r.usesBonusSlot ? ` · ${t("booking.historyPanel.bonusSlot")}` : ""}
           </p>
           <ul className="mt-3 space-y-1 text-stone-800 dark:text-stone-200">
             {r.slots.map((s, i) => (
               <li key={i}>
-                {formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}
+                {formatSlotListLineForLocale(s.startsAt, s.endsAt, locale)}
                 {s.venueLabel != null && s.venueLabel !== ""
-                  ? ` · ${displayVenueLabel(s.venueLabel)}`
+                  ? ` · ${displayVenueLabel(s.venueLabel, locale)}`
                   : ""}
               </li>
             ))}

@@ -6,6 +6,7 @@ import {
   formatHkRange,
   timelineStartHourForHkDateKey,
 } from "@/lib/booking/day-timeline";
+import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
 
 export type TimelineSlotInput = {
@@ -35,6 +36,7 @@ export function DaySlotsTimeline({
   slots: TimelineSlotInput[];
   variant?: "user" | "admin";
 }) {
+  const { t, tr } = useTranslation();
   const daySlots = slots.filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey);
 
   const windowStartHour = timelineStartHourForHkDateKey(dateKey);
@@ -94,8 +96,11 @@ export function DaySlotsTimeline({
             border = "border-emerald-700";
             text = "text-white";
           }
-          const statusZh =
-            !s.isOpen ? "已關閉" : s.remaining <= 0 ? "已滿／已被預約" : "尚有名額";
+          const statusLabel = !s.isOpen
+            ? t("booking.timeline.statusClosed")
+            : s.remaining <= 0
+              ? t("booking.timeline.statusFull")
+              : t("booking.timeline.statusOpen");
           return (
             <div
               key={s.id}
@@ -104,14 +109,19 @@ export function DaySlotsTimeline({
                 top: `${clip.topPct}%`,
                 height: `${Math.max(clip.heightPct, 2.2)}%`,
               }}
-              title={`${fullRange} · ${statusZh}`}
+              title={`${fullRange} · ${statusLabel}`}
             >
               <div className="font-semibold">{fullRange}</div>
               {variant === "user" && s.remaining <= 0 && s.isOpen && (
-                <div className="opacity-95">此節已被預約</div>
+                <div className="opacity-95">{t("booking.timeline.bookedThis")}</div>
               )}
               {variant === "user" && s.remaining > 0 && s.isOpen && (
-                <div className="opacity-95">可預約 · 剩 {s.remaining}/{s.capacityTotal} 名額</div>
+                <div className="opacity-95">
+                  {tr("booking.timeline.canBookRemaining", {
+                    remaining: String(s.remaining),
+                    capacity: String(s.capacityTotal),
+                  })}
+                </div>
               )}
               {s.venueLabel && (
                 <div className="truncate opacity-90">{s.venueLabel}</div>
@@ -126,7 +136,8 @@ export function DaySlotsTimeline({
 
 export function summarizeDaySlotsText(
   dateKey: string,
-  slots: TimelineSlotInput[]
+  slots: TimelineSlotInput[],
+  lineTr?: (path: string, vars: Record<string, string>) => string
 ): { bookedLines: string[]; availableLines: string[]; closedLines: string[] } {
   const daySlots = slots
     .filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey)
@@ -140,11 +151,27 @@ export function summarizeDaySlotsText(
   for (const s of daySlots) {
     const range = formatHkRange(new Date(s.startsAt), new Date(s.endsAt));
     if (!s.isOpen) {
-      closedLines.push(`${range}（時段已關閉）`);
+      closedLines.push(
+        lineTr
+          ? lineTr("booking.cal.summaryLineClosed", { range })
+          : `${range}（時段已關閉）`
+      );
     } else if (s.remaining <= 0) {
-      bookedLines.push(`${range}（已滿／已被預約）`);
+      bookedLines.push(
+        lineTr
+          ? lineTr("booking.cal.summaryLineBooked", { range })
+          : `${range}（已滿／已被預約）`
+      );
     } else {
-      availableLines.push(`${range}（可預約 · 剩餘 ${s.remaining}/${s.capacityTotal}）`);
+      availableLines.push(
+        lineTr
+          ? lineTr("booking.cal.summaryLineAvailable", {
+              range,
+              remaining: String(s.remaining),
+              capacity: String(s.capacityTotal),
+            })
+          : `${range}（可預約 · 剩餘 ${s.remaining}/${s.capacityTotal}）`
+      );
     }
   }
 

@@ -68,7 +68,7 @@ export function AdminBookingsPanel() {
   return (
     <div className="space-y-6">
       {userIdFilter && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-800/80 bg-sky-950/40 px-4 py-3 text-sm text-sky-100">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-800/80 bg-sky-950/40 px-5 sm:px-4 py-3 text-sm text-sky-100">
           <span>正在按用戶篩選預約（與「登記用戶」聯動）。</span>
           <Link
             href={`/admin/users?highlight=${encodeURIComponent(userIdFilter)}`}

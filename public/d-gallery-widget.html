@@ -139,11 +139,9 @@
     /* Stagger reveal */
     #d-gallery .card{ transition-delay: calc(var(--i, 0) * 55ms); }
 
-    /* View More */
+    /* View More: hidden — host page renders the visible control; keep #dgViewMore for load-more clicks */
     #d-gallery .more-wrap{
-      display: flex;
-      justify-content: center;
-      padding: 22px 0 0;
+      display: none !important;
     }
     #d-gallery .view-more{
       display: none;
@@ -346,7 +344,7 @@
   <div class="wrap">
     <section class="grid" id="dgGallery" aria-label="D-Gallery image gallery"></section>
     <div class="more-wrap">
-      <button class="view-more" id="dgViewMore" type="button">Fill More</button>
+      <button class="view-more" id="dgViewMore" type="button">View More</button>
     </div>
   </div>
 
@@ -380,6 +378,13 @@
 
       const gallery = scope.querySelector("#dgGallery");
       const viewMoreBtn = scope.querySelector("#dgViewMore");
+      var dgLang = new URLSearchParams(location.search).get("lang");
+      if (viewMoreBtn) {
+        viewMoreBtn.textContent =
+          dgLang === "zh" || dgLang === "zh-HK" || dgLang === "zh-Hant"
+            ? "瀏覽更多"
+            : "View More";
+      }
 
       // --- YOUR IMAGES (as provided) ---
       const imageUrls = [

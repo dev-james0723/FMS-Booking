@@ -10,6 +10,7 @@ import {
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
+  CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN,
   CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH,
 } from "@/lib/booking/campaign-constants";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/lib/booking/day-timeline";
 import { withBasePath } from "@/lib/base-path";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
+import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
 
 const APRIL_2026 = { year: 2026, month1: 4 };
@@ -67,19 +69,19 @@ function MonthCalendarBlock(props: {
   slots: TimelineSlotInput[];
   selected: string;
   onSelect: (key: string) => void;
+  weekdays: readonly string[];
   footer?: ReactNode;
 }) {
   const grid = useMemo(
     () => buildMonthGrid(props.year, props.month1),
     [props.year, props.month1]
   );
-  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
 
   return (
     <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 p-4">
       <p className="text-center text-sm font-medium text-stone-800 dark:text-stone-200">{props.title}</p>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-stone-500 dark:text-stone-500">
-        {weekdays.map((w) => (
+        {props.weekdays.map((w) => (
           <div key={w} className="py-1 font-medium">
             {w}
           </div>
@@ -139,6 +141,17 @@ function MonthCalendarBlock(props: {
 }
 
 export function BookingCalendarOverviewPanel() {
+  const { t, tr, locale } = useTranslation();
+  const campaignRange =
+    locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
+  const weekdays = useMemo(
+    () =>
+      locale === "en"
+        ? (["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const)
+        : (["日", "一", "二", "三", "四", "五", "六"] as const),
+    [locale]
+  );
+
   const range = useMemo(
     () => ({
       from: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
@@ -157,10 +170,13 @@ export function BookingCalendarOverviewPanel() {
     const res = await fetch(withBasePath(`/api/v1/booking/calendar-overview?${q}`));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { ok: false as const, message: String(data?.error?.message ?? "無法載入月曆資料") };
+      return {
+        ok: false as const,
+        message: String(data?.error?.message ?? t("booking.cal.loadError")),
+      };
     }
     return { ok: true as const, slots: (data.slots ?? []) as TimelineSlotInput[] };
-  }, [range.from, range.to]);
+  }, [range.from, range.to, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,9 +214,13 @@ export function BookingCalendarOverviewPanel() {
     })();
   }, [fetchOverviewData]);
 
+  const lineTr = useCallback(
+    (path: string, vars: Record<string, string>) => tr(path, vars),
+    [tr]
+  );
   const summaryText = useMemo(
-    () => summarizeDaySlotsText(selected, slots),
-    [selected, slots]
+    () => summarizeDaySlotsText(selected, slots, lineTr),
+    [selected, slots, lineTr]
   );
 
   const windowStart = timelineStartHourForHkDateKey(selected);
@@ -210,20 +230,22 @@ export function BookingCalendarOverviewPanel() {
       <div className="space-y-3">
         <div>
           <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">
-            {CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH} · 總覽
+            {tr("booking.cal.overviewTitle", { range: campaignRange })}
           </h2>
           <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            點選日子查看當日時間軸：4 月 3 日為 11:00–20:00，其餘活動日為 6:00–20:00（香港時間）。綠色為仍可預約，紅色為已滿／已被預約，灰色為已關閉或不在活動期內。
+            {t("booking.cal.overviewIntro")}
           </p>
         </div>
         <button
           type="button"
           onClick={refreshOverview}
-          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800"
+          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-5 sm:px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800"
         >
-          重新整理
+          {t("booking.cal.refresh")}
         </button>
-        {loading && <p className="text-sm text-stone-500 dark:text-stone-500">載入中…</p>}
+        {loading && (
+          <p className="text-sm text-stone-500 dark:text-stone-500">{t("booking.cal.loading")}</p>
+        )}
         {error && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
             {error}
@@ -233,52 +255,58 @@ export function BookingCalendarOverviewPanel() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <MonthCalendarBlock
-          title="2026 年 4 月"
+          title={t("booking.cal.monthApr")}
           year={APRIL_2026.year}
           month1={APRIL_2026.month1}
           slots={slots}
           selected={selected}
           onSelect={setSelected}
+          weekdays={weekdays}
           footer={
             <Link
               href="/booking"
-              className="flex w-full min-h-12 items-center justify-center rounded-lg border border-stone-800 bg-surface px-4 py-3 text-center text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 dark:border-stone-600 dark:text-stone-50 dark:hover:bg-neutral-800 dark:focus-visible:outline-stone-400 sm:min-h-[3rem] sm:text-base"
+              className="flex w-full min-h-12 items-center justify-center rounded-lg border border-stone-800 bg-surface px-5 sm:px-4 py-3 text-center text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 dark:border-stone-600 dark:text-stone-50 dark:hover:bg-neutral-800 dark:focus-visible:outline-stone-400 sm:min-h-[3rem] sm:text-base"
             >
-              離開月曆總覽
+              {t("booking.cal.leaveOverview")}
             </Link>
           }
         />
         <MonthCalendarBlock
-          title="2026 年 5 月（活動尾段）"
+          title={t("booking.cal.monthMay")}
           year={MAY_2026.year}
           month1={MAY_2026.month1}
           slots={slots}
           selected={selected}
           onSelect={setSelected}
+          weekdays={weekdays}
         />
       </div>
 
       <p className="text-center text-xs text-stone-500 dark:text-stone-500">
-        綠底：當日仍有可預約時段 · 紅底：當日開放時段均已滿 · 灰底：未有時段或不在免費體驗期內
+        {t("booking.cal.legend")}
       </p>
 
       <section className="space-y-3">
         <h3 className="font-medium text-stone-900 dark:text-stone-50">
-          已選日期：{selected}（香港時間）
+          {tr("booking.cal.selectedDate", { date: selected })}
         </h3>
         <p className="text-xs text-stone-500 dark:text-stone-500">
-          時間軸範圍：{String(windowStart).padStart(2, "0")}:00 –{" "}
-          {String(TIMELINE_END_HOUR).padStart(2, "0")}:00（香港時間）
+          {tr("booking.cal.timelineRange", {
+            start: String(windowStart),
+            end: String(TIMELINE_END_HOUR),
+          })}
         </p>
         <DaySlotsTimeline dateKey={selected} slots={slots} variant="user" />
       </section>
 
-      <section className="space-y-4 rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-4 py-5 text-sm text-stone-800 dark:text-stone-200">
-        <h3 className="font-medium text-stone-900 dark:text-stone-50">當日時段（文字列表）</h3>
+      <section className="space-y-4 rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-5 text-sm text-stone-800 dark:text-stone-200">
+        <h3 className="font-medium text-stone-900 dark:text-stone-50">
+          {t("booking.cal.textListTitle")}
+        </h3>
         {summaryText.bookedLines.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
-              已滿／已被預約
+              {t("booking.cal.sectionBooked")}
             </p>
             <ul className="mt-1 list-inside list-disc space-y-0.5 text-stone-700 dark:text-stone-300">
               {summaryText.bookedLines.map((line) => (
@@ -290,7 +318,7 @@ export function BookingCalendarOverviewPanel() {
         {summaryText.availableLines.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              仍可預約（Available）
+              {t("booking.cal.sectionAvailable")}
             </p>
             <ul className="mt-1 list-inside list-disc space-y-0.5 text-stone-700 dark:text-stone-300">
               {summaryText.availableLines.map((line) => (
@@ -302,7 +330,7 @@ export function BookingCalendarOverviewPanel() {
         {summaryText.closedLines.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              已關閉
+              {t("booking.cal.sectionClosed")}
             </p>
             <ul className="mt-1 list-inside list-disc space-y-0.5 text-stone-600 dark:text-stone-400">
               {summaryText.closedLines.map((line) => (
@@ -314,7 +342,7 @@ export function BookingCalendarOverviewPanel() {
         {summaryText.bookedLines.length === 0 &&
           summaryText.availableLines.length === 0 &&
           summaryText.closedLines.length === 0 && (
-            <p className="text-stone-500 dark:text-stone-500">此日沒有時段資料。</p>
+            <p className="text-stone-500 dark:text-stone-500">{t("booking.cal.noSlotData")}</p>
           )}
       </section>
 
@@ -323,7 +351,7 @@ export function BookingCalendarOverviewPanel() {
           href="/booking"
           className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-stone-900 px-8 py-3 text-sm font-medium text-white hover:bg-stone-800"
         >
-          前往預約版面，立即選擇時段並提交預約
+          {t("booking.cal.ctaBooking")}
         </Link>
       </div>
     </div>

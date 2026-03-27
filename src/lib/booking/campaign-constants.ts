@@ -7,3 +7,6 @@ export const CAMPAIGN_EXPERIENCE_LAST_DAY_KEY = "2026-05-03";
 
 export const CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH =
   "2026 年 4 月 3 日至 5 月 3 日";
+
+export const CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN =
+  "3 April – 3 May 2026";

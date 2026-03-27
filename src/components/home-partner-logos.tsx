@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { withBasePath } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 export function HomePartnerLogos() {
+  const { t } = useTranslation();
   return (
     <section
-      className="relative mb-12 overflow-hidden rounded-3xl border border-violet-200/50 bg-gradient-to-br from-violet-50/90 via-amber-50/40 to-fuchsia-50/50 px-4 py-10 shadow-[0_8px_40px_-16px_rgba(91,33,182,0.2)] dark:border-violet-700/40 dark:from-violet-950/80 dark:via-stone-900 dark:to-fuchsia-950/50 dark:shadow-[0_8px_40px_-16px_rgba(0,0,0,0.45)] sm:px-8"
-      aria-label="D Festival 與幻樂空間聯合企劃"
+      className="relative mb-12 overflow-hidden rounded-3xl border border-violet-200/50 bg-gradient-to-br from-violet-50/90 via-amber-50/40 to-fuchsia-50/50 px-5 py-10 shadow-[0_8px_40px_-16px_rgba(91,33,182,0.2)] dark:border-violet-700/40 dark:from-violet-950/80 dark:via-stone-900 dark:to-fuchsia-950/50 dark:shadow-[0_8px_40px_-16px_rgba(0,0,0,0.45)] sm:px-8"
+      aria-label={t("partner.sectionAria")}
     >
       <div
         className="partner-blob partner-blob-1 pointer-events-none absolute -left-20 -top-16 h-52 w-52 rounded-full bg-violet-400/25 blur-3xl"
@@ -26,7 +28,7 @@ export function HomePartnerLogos() {
         <div className="partner-float-left flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
           <Image
             src={withBasePath("/branding/d-festival-young-pianist.png")}
-            alt="D Festival 青年鋼琴家藝術節"
+            alt={t("partner.dfestivalAlt")}
             width={1600}
             height={539}
             className="h-auto max-h-[5.5rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[6.5rem]"
@@ -43,7 +45,7 @@ export function HomePartnerLogos() {
         <div className="partner-float-right flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
           <Image
             src={withBasePath("/branding/fantasia-music-space.webp")}
-            alt="Fantasia Music Space 幻樂空間"
+            alt={t("partner.fmsAlt")}
             width={1024}
             height={1024}
             className="h-auto max-h-[6rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7rem]"
@@ -53,7 +55,7 @@ export function HomePartnerLogos() {
       </div>
 
       <p className="relative mt-7 text-center text-[11px] font-medium uppercase tracking-[0.25em] text-violet-900/45 dark:text-violet-300/55 sm:text-xs">
-        聯合企劃 · Joint presentation
+        {t("partner.jointLine")}
       </p>
     </section>
   );

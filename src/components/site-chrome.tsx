@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { LocaleProvider } from "@/lib/i18n/locale-provider";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
@@ -8,14 +10,10 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   const hideMarketing = pathname.startsWith("/admin");
 
   return (
-    <>
+    <LocaleProvider>
       {!hideMarketing && <SiteHeader />}
       <div className="min-h-0 flex-1 bg-background">{children}</div>
-      {!hideMarketing && (
-        <footer className="border-t border-stone-200 bg-[color:var(--chrome-bg)] py-8 text-center text-xs text-stone-500 backdrop-blur-md dark:border-stone-800 dark:text-stone-400">
-          © {new Date().getFullYear()} 香港幻樂國際音樂管理公司 · D Festival · 幻樂空間
-        </footer>
-      )}
-    </>
+      {!hideMarketing && <SiteFooter />}
+    </LocaleProvider>
   );
 }

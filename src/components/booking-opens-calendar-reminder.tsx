@@ -1,15 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH } from "@/lib/booking/campaign-constants";
+import { useTranslation } from "@/lib/i18n/use-translation";
 import {
   buildGoogleCalendarCreateUrl,
   buildOutlookCalendarComposeUrl,
   buildPublicEventIcsCalendar,
 } from "@/lib/venue-calendar";
-
-const REMINDER_TITLE = "幻樂空間免費琴室體驗｜預約系統開放";
-const REMINDER_DESCRIPTION = `請登入預約系統，預約幻樂空間琴室免費體驗時段。活動日為 ${CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH}（香港時間）。`;
 
 type Props = {
   bookingOpensAtIso: string | null;
@@ -75,6 +72,12 @@ export function BookingOpensCalendarReminder({
   bookingLive,
   venueAddressZh,
 }: Props) {
+  const { t, tr } = useTranslation();
+  const reminderTitle = t("calendar.reminderTitle");
+  const reminderDescription = tr("calendar.reminderDescription", {
+    campaignRange: t("campaign.dateRange"),
+  });
+
   const start = useMemo(() => {
     if (!bookingOpensAtIso) return null;
     const d = new Date(bookingOpensAtIso);
@@ -89,76 +92,78 @@ export function BookingOpensCalendarReminder({
   const googleUrl = useMemo(() => {
     if (!start || !end) return null;
     return buildGoogleCalendarCreateUrl({
-      title: REMINDER_TITLE,
+      title: reminderTitle,
       start,
       end,
-      description: REMINDER_DESCRIPTION,
+      description: reminderDescription,
       location: venueAddressZh,
     });
-  }, [start, end, venueAddressZh]);
+  }, [start, end, venueAddressZh, reminderTitle, reminderDescription]);
 
   const outlookUrl = useMemo(() => {
     if (!start || !end) return null;
     return buildOutlookCalendarComposeUrl({
-      title: REMINDER_TITLE,
+      title: reminderTitle,
       start,
       end,
-      description: REMINDER_DESCRIPTION,
+      description: reminderDescription,
       location: venueAddressZh,
     });
-  }, [start, end, venueAddressZh]);
+  }, [start, end, venueAddressZh, reminderTitle, reminderDescription]);
 
   const appleHref = useMemo(() => {
     if (!start || !end) return null;
     const ics = buildPublicEventIcsCalendar({
       uid: "booking-portal-opens",
-      title: REMINDER_TITLE,
+      title: reminderTitle,
       start,
       end,
-      description: REMINDER_DESCRIPTION,
+      description: reminderDescription,
       location: venueAddressZh,
     });
     return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
-  }, [start, end, venueAddressZh]);
+  }, [start, end, venueAddressZh, reminderTitle, reminderDescription]);
 
   if (bookingLive || !start || !end || !googleUrl || !outlookUrl || !appleHref) {
     return null;
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-4 py-4 shadow-sm">
-      <p className="text-center text-sm font-medium text-stone-900 dark:text-stone-50">日曆提醒</p>
+    <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-4 shadow-sm">
+      <p className="text-center text-sm font-medium text-stone-900 dark:text-stone-50">
+        {t("calendar.sectionTitle")}
+      </p>
       <p className="mt-1 text-center text-xs text-stone-500 dark:text-stone-500">
-        於預約系統正式開放時間（香港時間）加入 1 小時日程，提醒您登入並預約幻樂空間琴室時段。
+        {t("calendar.sectionBody")}
       </p>
       <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
         <a
           href={appleHref}
           className={btnClass}
-          aria-label="加入 Apple 日曆"
+          aria-label={t("calendar.ariaApple")}
         >
           <AppleCalendarIcon className="h-8 w-8 shrink-0 text-stone-900 dark:text-stone-50" />
-          <span>Apple 日曆</span>
+          <span>{t("calendar.apple")}</span>
         </a>
         <a
           href={googleUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={btnClass}
-          aria-label="加入 Google 日曆"
+          aria-label={t("calendar.ariaGoogle")}
         >
           <GoogleCalendarIcon className="h-8 w-8 shrink-0" />
-          <span>Google 日曆</span>
+          <span>{t("calendar.google")}</span>
         </a>
         <a
           href={outlookUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={btnClass}
-          aria-label="加入 Outlook 日曆"
+          aria-label={t("calendar.ariaOutlook")}
         >
           <OutlookCalendarIcon className="h-8 w-8 shrink-0 rounded-md" />
-          <span>Outlook</span>
+          <span>{t("calendar.outlook")}</span>
         </a>
       </div>
     </div>

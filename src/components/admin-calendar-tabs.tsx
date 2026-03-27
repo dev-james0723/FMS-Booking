@@ -15,7 +15,7 @@ export function AdminCalendarTabs() {
         <button
           type="button"
           onClick={() => setTab("list")}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+          className={`rounded-full px-5 sm:px-4 py-2 text-sm font-medium transition ${
             tab === "list"
               ? "bg-slate-100 text-slate-900"
               : "text-slate-400 hover:bg-slate-800 hover:text-white"
@@ -26,7 +26,7 @@ export function AdminCalendarTabs() {
         <button
           type="button"
           onClick={() => setTab("timeline")}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+          className={`rounded-full px-5 sm:px-4 py-2 text-sm font-medium transition ${
             tab === "timeline"
               ? "bg-slate-100 text-slate-900"
               : "text-slate-400 hover:bg-slate-800 hover:text-white"

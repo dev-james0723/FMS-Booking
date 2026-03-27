@@ -51,7 +51,7 @@ function Form() {
         <input
           type="password"
           required
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
         />
@@ -62,7 +62,7 @@ function Form() {
           type="password"
           required
           minLength={10}
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
@@ -80,7 +80,7 @@ function Form() {
 
 export default function ChangePasswordPage() {
   return (
-    <main className="flex flex-1 flex-col justify-center px-4 py-16">
+    <main className="flex flex-1 flex-col justify-center px-5 sm:px-4 py-16">
       <Suspense fallback={<p className="text-center text-stone-500 dark:text-stone-500">載入中…</p>}>
         <Form />
       </Suspense>

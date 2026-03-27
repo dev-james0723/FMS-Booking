@@ -53,3 +53,8 @@ export function formatInstantForBookingOpensZhHk(d: Date): string {
       : `${period} ${h12} 點 ${String(minute).padStart(2, "0")} 分`;
   return `${y} 年 ${monthNum} 月 ${dayNum} 日${clock}`;
 }
+
+/** Booking portal: opening instant in Hong Kong, English copy. */
+export function formatInstantForBookingOpensEn(d: Date): string {
+  return formatInTimeZone(d, HK_TZ, "d MMM yyyy 'at' h:mm a");
+}

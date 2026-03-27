@@ -77,7 +77,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
 
   if (verified) {
     return (
-      <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-6 text-left">
+      <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 sm:px-4 py-6 text-left">
         <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤步驟已完成</h2>
         <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
           你已透過本頁開啟全部六個官方帳戶連結；系統已記錄你完成登記時承諾之「追蹤指定社交媒體帳號」步驟。此舉不會帶來額外預約時段；免費體驗之名額與批核仍依活動條款及主辦安排為準。
@@ -87,7 +87,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
   }
 
   return (
-    <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-violet-200 bg-violet-50/50 px-4 py-6 text-left">
+    <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-violet-200 bg-violet-50/50 px-5 sm:px-4 py-6 text-left">
       <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤官方帳戶（登記承諾）</h2>
       <p className="mt-2 text-sm font-medium text-stone-800 dark:text-stone-200">
         參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶；完成本步驟不會獲得任何額外預約時段。

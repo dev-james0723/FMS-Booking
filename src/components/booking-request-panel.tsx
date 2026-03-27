@@ -5,7 +5,7 @@ import Link from "next/link";
 import { withBasePath } from "@/lib/base-path";
 import {
   displayVenueLabel,
-  formatSlotDateZhHk,
+  formatSlotDateForLocale,
   formatSlotTimeRangeEn,
 } from "@/lib/booking-slot-display";
 import {
@@ -16,9 +16,17 @@ import {
   parseCampaignDateKeysFromSettings,
   slotStartsAtToHkDateKey,
 } from "@/lib/hk-calendar-client";
-import { CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH } from "@/lib/booking/campaign-constants";
+import {
+  CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN,
+  CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH,
+} from "@/lib/booking/campaign-constants";
 import { buildPreviewSlotsForHkDay } from "@/lib/booking/preview-slots";
-import { formatInstantForBookingOpensZhHk, HK_TZ } from "@/lib/time";
+import { useTranslation } from "@/lib/i18n/use-translation";
+import {
+  formatInstantForBookingOpensEn,
+  formatInstantForBookingOpensZhHk,
+  HK_TZ,
+} from "@/lib/time";
 
 type SlotRow = {
   id: string;
@@ -94,6 +102,17 @@ function monthTouchesCampaign(y: number, m: number, cStart: string, cEnd: string
 }
 
 export function BookingRequestPanel() {
+  const { t, tr, locale } = useTranslation();
+  const campaignRange =
+    locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
+  const weekdays = useMemo(
+    () =>
+      locale === "en"
+        ? (["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const)
+        : (["日", "一", "二", "三", "四", "五", "六"] as const),
+    [locale]
+  );
+
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
   const [monthSlots, setMonthSlots] = useState<SlotRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -156,14 +175,14 @@ export function BookingRequestPanel() {
     const res = await fetch(withBasePath(`/api/v1/booking/availability?${q}`));
     const data = await res.json();
     if (!res.ok) {
-      setError(data?.error?.message ?? "無法載入時段");
+      setError(data?.error?.message ?? t("booking.request.loadSlotsError"));
       setMonthSlots([]);
       setLoading(false);
       return;
     }
     setMonthSlots(data.slots.filter((s: SlotRow) => s.remaining > 0));
     setLoading(false);
-  }, [monthRange.from, monthRange.to]);
+  }, [monthRange.from, monthRange.to, t]);
 
   useEffect(() => {
     void loadSettings();
@@ -213,9 +232,11 @@ export function BookingRequestPanel() {
   const bookingOpensAt =
     typeof settings?.booking_opens_at === "string" ? settings.booking_opens_at : null;
   const bookingLive = bookingOpensAt ? nowMs >= new Date(bookingOpensAt).getTime() : false;
-  const bookingOpensAtLabelZh =
+  const bookingOpensAtLabel =
     bookingOpensAt != null
-      ? formatInstantForBookingOpensZhHk(new Date(bookingOpensAt))
+      ? locale === "en"
+        ? formatInstantForBookingOpensEn(new Date(bookingOpensAt))
+        : formatInstantForBookingOpensZhHk(new Date(bookingOpensAt))
       : null;
 
   const slotsForSelectedDay = useMemo(() => {
@@ -283,7 +304,10 @@ export function BookingRequestPanel() {
       setBlockFlashSlotId(id);
       window.setTimeout(() => setBlockFlashSlotId(null), 650);
       setDailyCapHint(
-        `此日（${dayKey}）已達您身分類別之每日上限：最多 ${dailyMax} 格（每格 30 分鐘），無法再多選一格。`
+        tr("booking.request.dailyCapHint", {
+          dayKey,
+          dailyMax: String(dailyMax),
+        })
       );
       window.setTimeout(() => setDailyCapHint(null), 4500);
       return;
@@ -303,7 +327,7 @@ export function BookingRequestPanel() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data?.error?.message ?? "提交失敗");
+      setError(data?.error?.message ?? t("booking.request.submitError"));
       setSubmitting(false);
       return;
     }
@@ -321,16 +345,14 @@ export function BookingRequestPanel() {
         })()
       : null;
 
-  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-
   return (
     <div className="space-y-6">
       {!bookingLive && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          預約尚未正式開放。請先於月曆點選活動期內日子，預覽 30 分鐘一格的時段版面；時段在開放前會鎖定，無法選取或提交。
-          {bookingOpensAtLabelZh ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-5 sm:px-4 py-3 text-sm text-amber-950">
+          {t("booking.request.notOpenBanner")}
+          {bookingOpensAtLabel ? (
             <span className="mt-2 block text-xs text-amber-900/85">
-              正式開始預約時間（香港）：{bookingOpensAtLabelZh}
+              {tr("booking.request.bookingOpensLine", { time: bookingOpensAtLabel })}
             </span>
           ) : null}
         </p>
@@ -338,35 +360,37 @@ export function BookingRequestPanel() {
 
       <div className="space-y-3">
         <p className="text-sm text-stone-600 dark:text-stone-400">
-          活動日（香港）：{CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH} · 最多提前 {maxAdvanceDays} 個曆日預約 · 每隔 30
-          分鐘
+          {tr("booking.request.campaignLine", {
+            range: campaignRange,
+            maxAdvance: String(maxAdvanceDays),
+          })}
         </p>
         <button
           type="button"
           onClick={() => void loadMonthSlots()}
-          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800"
+          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-5 sm:px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800"
         >
-          重新整理
+          {t("booking.request.refresh")}
         </button>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-900">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-5 sm:px-4 py-2 text-sm text-red-900">
           {error}
         </div>
       )}
       {done && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-900">
-          預約已提交（參考編號：{done}）。主辦方審核後將以電郵通知。
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 sm:px-4 py-2 text-sm text-emerald-900">
+          {tr("booking.request.submitted", { id: done })}
           <Link href="/booking/history" className="ml-2 underline">
-            查看紀錄
+            {t("booking.request.viewHistory")}
           </Link>
         </div>
       )}
 
       {dailyCapHint && (
         <p
-          className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-900 motion-safe:animate-pulse"
+          className="rounded-lg border border-red-300 bg-red-50 px-5 sm:px-4 py-2 text-sm text-red-900 motion-safe:animate-pulse"
           role="status"
         >
           {dailyCapHint}
@@ -376,39 +400,53 @@ export function BookingRequestPanel() {
       <div className="space-y-3">
         <Link
           href="/booking/calendar"
-          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-emerald-950/30 bg-emerald-900 px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950 active:bg-emerald-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
+          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-emerald-950/30 bg-emerald-900 px-5 sm:px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950 active:bg-emerald-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
         >
-          月曆總覽（時間軸）
+          {t("booking.request.linkCalendarOverview")}
         </Link>
 
         {limits && (
-          <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-4 py-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm">
-            <p className="font-medium text-stone-900 dark:text-stone-50">節數追蹤（香港日期）</p>
+          <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm">
+            <p className="font-medium text-stone-900 dark:text-stone-50">{t("booking.request.limitsTitle")}</p>
             <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
-              今日（{limits.todayKey}）已用 {limits.todayCommitted} 節，尚可 {limits.todayRemaining} 節（每日上限{" "}
-              {limits.limits.dailyMax}）。身份層級：{limits.tier === "extended" ? "教學／延伸" : "一般"}。
+              {tr("booking.request.limitsToday", {
+                todayKey: limits.todayKey,
+                committed: String(limits.todayCommitted),
+                remaining: String(limits.todayRemaining),
+                dailyMax: String(limits.limits.dailyMax),
+                tier:
+                  limits.tier === "extended"
+                    ? t("booking.request.tierExtended")
+                    : t("booking.request.tierGeneral"),
+              })}
             </p>
             <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
-              您帳戶目前的每日選取上限為 {limits.limits.dailyMax}{" "}
-              格（每格 30 分鐘）。若於同一日已選滿上限後再選，將顯示紅色提示並無法加入。
+              {tr("booking.request.limitsPickHint", {
+                dailyMax: String(limits.limits.dailyMax),
+              })}
             </p>
             {selected.size > 0 &&
               (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling) && (
                 <p className="mt-2 text-sm font-medium text-red-800">
-                  目前所選時段會超出上限：
+                  {t("booking.request.wouldExceedTitle")}
                   {limits.provisional.wouldExceedDaily && (
                     <span className="block">
-                      同一日超過 {limits.limits.dailyMax} 節
-                      {limits.provisional.firstViolatingDate
-                        ? `（${limits.provisional.firstViolatingDate}）`
-                        : ""}
-                      。
+                      {tr("booking.request.exceedDaily", {
+                        dailyMax: String(limits.limits.dailyMax),
+                        datePart: limits.provisional.firstViolatingDate
+                          ? tr("booking.request.exceedDailyDate", {
+                              date: limits.provisional.firstViolatingDate,
+                            })
+                          : "",
+                      })}
                     </span>
                   )}
                   {limits.provisional.wouldExceedRolling && (
                     <span className="block">
-                      連續 3 個曆日內合計 {limits.provisional.rollingSum} 節，超過上限 {limits.limits.rollingMax}{" "}
-                      節。
+                      {tr("booking.request.exceedRolling", {
+                        rollingSum: String(limits.provisional.rollingSum),
+                        rollingMax: String(limits.limits.rollingMax),
+                      })}
                     </span>
                   )}
                 </p>
@@ -420,7 +458,10 @@ export function BookingRequestPanel() {
       <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-medium text-stone-900 dark:text-stone-50">
-            {viewYear} 年 {viewMonth} 月（香港）
+            {tr("booking.request.monthTitle", {
+              year: String(viewYear),
+              month: String(viewMonth),
+            })}
           </h2>
           <div className="flex gap-2">
             <button
@@ -433,7 +474,7 @@ export function BookingRequestPanel() {
               }}
               className="rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-1.5 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              上一個月
+              {t("booking.request.prevMonth")}
             </button>
             <button
               type="button"
@@ -445,7 +486,7 @@ export function BookingRequestPanel() {
               }}
               className="rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-1.5 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              下一個月
+              {t("booking.request.nextMonth")}
             </button>
           </div>
         </div>
@@ -503,11 +544,13 @@ export function BookingRequestPanel() {
                     className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
                       isSelected ? "bg-emerald-300" : "bg-emerald-500"
                     }`}
-                    title={`尚有 ${avail} 格可預約`}
+                    title={tr("booking.request.dotTitle", { n: String(avail) })}
                   />
                 )}
                 {bookingLive && bookable && avail === 0 && (
-                  <span className="mt-0.5 text-[9px] text-stone-400 dark:text-stone-500">滿</span>
+                  <span className="mt-0.5 text-[9px] text-stone-400 dark:text-stone-500">
+                    {t("booking.request.fullLabel")}
+                  </span>
                 )}
               </button>
             );
@@ -517,13 +560,18 @@ export function BookingRequestPanel() {
         <p className="mt-3 text-xs text-stone-500 dark:text-stone-500">
           {bookingLive ? (
             <>
-              請先選擇一日；綠點代表該日仍有可預約時段。可預約範圍：由今日起計最多 {maxAdvanceDays}{" "}
-              個曆日內，且不晚於 {lastBookableKey ?? "—"}。
+              {tr("booking.request.hintPickDayLive", {
+                maxAdvance: String(maxAdvanceDays),
+                lastDay: lastBookableKey ?? t("booking.request.dash"),
+              })}
             </>
           ) : (
             <>
-              開放預約前，可點選活動期（{CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH}）內任何一日，預覽該日時段（版面與正式開放後相同節奏，但不可選取）。正式開放後，僅可選擇由今日起計最多{" "}
-              {maxAdvanceDays} 個曆日內、且不晚於 {lastBookableKey ?? "—"} 的日子。
+              {tr("booking.request.hintPickDayPreview", {
+                range: campaignRange,
+                maxAdvance: String(maxAdvanceDays),
+                lastDay: lastBookableKey ?? t("booking.request.dash"),
+              })}
             </>
           )}
         </p>
@@ -533,21 +581,19 @@ export function BookingRequestPanel() {
         <h3 className="text-sm font-medium text-stone-800 dark:text-stone-200">
           {selectedDayKey
             ? bookingLive
-              ? `${selectedDayKey} 可選時段`
-              : `${selectedDayKey} 時段預覽（尚未開放選取）`
-            : "請在上面的月曆上選擇一日"}
+              ? tr("booking.request.slotsTitleLive", { day: selectedDayKey })
+              : tr("booking.request.slotsTitlePreview", { day: selectedDayKey })
+            : t("booking.request.slotsTitleNone")}
         </h3>
 
         {loading && bookingLive ? (
-          <p className="text-sm text-stone-500 dark:text-stone-500">載入時段中…</p>
+          <p className="text-sm text-stone-500 dark:text-stone-500">{t("booking.request.loadingSlots")}</p>
         ) : !selectedDayKey ? (
           <p className="text-sm text-stone-500 dark:text-stone-500">
-            {bookingLive
-              ? "選擇日期後，此處將列出該日所有仍可預約的時段。"
-              : "選擇活動日後，將列出該日 06:00–20:00（首日為 11:00–20:00）的 30 分鐘時段預覽，僅供體驗操作。"}
+            {bookingLive ? t("booking.request.emptyHintLive") : t("booking.request.emptyHintPreview")}
           </p>
         ) : slotsForSelectedDay.length === 0 ? (
-          <p className="text-sm text-stone-500 dark:text-stone-500">此日暫無可預約時段（或已全部滿額）。</p>
+          <p className="text-sm text-stone-500 dark:text-stone-500">{t("booking.request.noSlotsDay")}</p>
         ) : (
           <>
             <ul className="grid gap-2 sm:grid-cols-2">
@@ -559,13 +605,13 @@ export function BookingRequestPanel() {
                     <li key={s.id}>
                       <div className="w-full cursor-not-allowed rounded-lg border border-dashed border-stone-300 dark:border-stone-600 bg-stone-50 dark:bg-stone-900 px-3 py-3 text-left text-sm text-stone-600 dark:text-stone-400">
                         <span className="block font-medium text-stone-700 dark:text-stone-300">
-                          {formatSlotDateZhHk(s.startsAt)}
+                          {formatSlotDateForLocale(s.startsAt, locale)}
                         </span>
                         <span className="mt-0.5 block text-sm font-medium text-stone-800 dark:text-stone-200">
                           {formatSlotTimeRangeEn(s.startsAt, s.endsAt)}
                         </span>
                         <span className="mt-1 block text-xs text-stone-500 dark:text-stone-500">
-                          {displayVenueLabel(s.venueLabel)} · 預覽（未開放）
+                          {displayVenueLabel(s.venueLabel, locale)} · {t("booking.request.previewSlotSuffix")}
                         </span>
                       </div>
                     </li>
@@ -584,14 +630,15 @@ export function BookingRequestPanel() {
                           : "border-stone-200 dark:border-stone-700 bg-surface hover:border-stone-400 dark:border-stone-500"
                       }`}
                     >
-                      <span className="block font-medium">{formatSlotDateZhHk(s.startsAt)}</span>
+                      <span className="block font-medium">{formatSlotDateForLocale(s.startsAt, locale)}</span>
                       <span
                         className={`mt-0.5 block text-sm font-medium ${on ? "text-white" : "text-stone-800 dark:text-stone-200"}`}
                       >
                         {formatSlotTimeRangeEn(s.startsAt, s.endsAt)}
                       </span>
                       <span className={`mt-1 block text-xs ${on ? "text-stone-200" : "text-stone-500 dark:text-stone-500"}`}>
-                        {displayVenueLabel(s.venueLabel)} · 剩 {s.remaining}
+                        {displayVenueLabel(s.venueLabel, locale)} ·{" "}
+                        {tr("booking.request.remainingSlots", { n: String(s.remaining) })}
                       </span>
                     </button>
                   </li>
@@ -600,8 +647,11 @@ export function BookingRequestPanel() {
             </ul>
             {!bookingLive && selectedDayKey ? (
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
-                而家尚未開始預約，請留意正式開放時間
-                {bookingOpensAtLabelZh ? `：${bookingOpensAtLabelZh}` : "（請以主辦公布為準）"}。
+                {tr("booking.request.notOpenYet", {
+                  suffix: bookingOpensAtLabel
+                    ? `：${bookingOpensAtLabel}`
+                    : t("booking.request.notOpenFallback"),
+                })}
               </p>
             ) : null}
           </>
@@ -622,17 +672,16 @@ export function BookingRequestPanel() {
           onClick={() => void submit()}
           className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white disabled:opacity-40"
         >
-          {submitting ? "提交中…" : `提交預約（已選 ${selected.size} 節）`}
+          {submitting
+            ? t("booking.request.submitting")
+            : tr("booking.request.submitWithCount", { n: String(selected.size) })}
         </button>
         <Link href="/booking/history" className="text-sm text-stone-700 dark:text-stone-300 underline">
-          預約紀錄
+          {t("booking.request.linkHistory")}
         </Link>
       </div>
 
-      <p className="text-xs text-stone-500 dark:text-stone-500">
-        一般使用者：每日最多 3 格（1.5 小時）；教學／合資格延伸：每日最多 8 格（4
-        小時）。任何連續 3 個曆日亦有總節數上限（見上方「節數追蹤」）。實際批核視乎供應及主辦安排。
-      </p>
+      <p className="text-xs text-stone-500 dark:text-stone-500">{t("booking.request.footnote")}</p>
     </div>
   );
 }

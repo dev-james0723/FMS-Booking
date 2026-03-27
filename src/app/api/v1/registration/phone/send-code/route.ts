@@ -27,68 +27,78 @@ export async function POST(req: Request) {
     return jsonError("VALIDATION_ERROR", "Validation failed", 422, parsed.error.flatten());
   }
 
-  const phoneNorm = normalizePhoneForSms(parsed.data.phone);
-  if (!phoneNorm) {
-    return jsonError("INVALID_PHONE", "電話號碼格式不正確，請輸入有效手機號碼（例如 91234567 或 +852…）。", 400);
-  }
+  try {
+    const phoneNorm = normalizePhoneForSms(parsed.data.phone);
+    if (!phoneNorm) {
+      return jsonError("INVALID_PHONE", "電話號碼格式不正確，請輸入有效手機號碼（例如 91234567 或 +852…）。", 400);
+    }
 
-  const phoneTaken = await prisma.userProfile.findUnique({
-    where: { phone: phoneNorm },
-    select: { userId: true },
-  });
-  if (phoneTaken) {
+    const phoneTaken = await prisma.userProfile.findUnique({
+      where: { phone: phoneNorm },
+      select: { userId: true },
+    });
+    if (phoneTaken) {
+      return jsonError(
+        "PHONE_EXISTS",
+        "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+        409
+      );
+    }
+
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentSends = await prisma.phoneOtpChallenge.count({
+      where: { phoneNorm, createdAt: { gte: hourAgo } },
+    });
+    if (recentSends >= MAX_SENDS_PER_HOUR) {
+      return jsonError(
+        "RATE_LIMIT",
+        "此號碼短時間內已多次索取驗證碼，請 1 小時後再試。",
+        429
+      );
+    }
+
+    const latest = await prisma.phoneOtpChallenge.findFirst({
+      where: { phoneNorm, verifiedAt: null },
+      orderBy: { createdAt: "desc" },
+    });
+    if (latest && latest.createdAt.getTime() > Date.now() - SEND_COOLDOWN_MS) {
+      const waitSec = Math.ceil(
+        (SEND_COOLDOWN_MS - (Date.now() - latest.createdAt.getTime())) / 1000
+      );
+      return jsonError(
+        "COOLDOWN",
+        `請 ${waitSec} 秒後再索取驗證碼。`,
+        429
+      );
+    }
+
+    const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+    const codeHash = hashPhoneOtp(phoneNorm, code);
+    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+    const challenge = await prisma.phoneOtpChallenge.create({
+      data: {
+        phoneNorm,
+        codeHash,
+        expiresAt,
+      },
+    });
+
+    const smsBody = `【幻樂空間 / D Festival】你的登記驗證碼：${code}（10 分鐘內有效，請勿向他人透露。）`;
+    const sms = await sendSms({ toE164: phoneNorm, body: smsBody });
+
+    if (!sms.ok) {
+      await prisma.phoneOtpChallenge.delete({ where: { id: challenge.id } });
+      return jsonError("SMS_FAILED", sms.error, 502);
+    }
+
+    return jsonOk({ ok: true, smsDevMode: Boolean(sms.dev) });
+  } catch (e) {
+    console.error("[registration/phone/send-code]", e);
     return jsonError(
-      "PHONE_EXISTS",
-      "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
-      409
+      "INTERNAL",
+      "驗證碼發送時發生錯誤，請稍後再試。",
+      500
     );
   }
-
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const recentSends = await prisma.phoneOtpChallenge.count({
-    where: { phoneNorm, createdAt: { gte: hourAgo } },
-  });
-  if (recentSends >= MAX_SENDS_PER_HOUR) {
-    return jsonError(
-      "RATE_LIMIT",
-      "此號碼短時間內已多次索取驗證碼，請 1 小時後再試。",
-      429
-    );
-  }
-
-  const latest = await prisma.phoneOtpChallenge.findFirst({
-    where: { phoneNorm, verifiedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-  if (latest && latest.createdAt.getTime() > Date.now() - SEND_COOLDOWN_MS) {
-    const waitSec = Math.ceil(
-      (SEND_COOLDOWN_MS - (Date.now() - latest.createdAt.getTime())) / 1000
-    );
-    return jsonError(
-      "COOLDOWN",
-      `請 ${waitSec} 秒後再索取驗證碼。`,
-      429
-    );
-  }
-
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const codeHash = hashPhoneOtp(phoneNorm, code);
-  const expiresAt = new Date(Date.now() + OTP_TTL_MS);
-
-  await prisma.phoneOtpChallenge.create({
-    data: {
-      phoneNorm,
-      codeHash,
-      expiresAt,
-    },
-  });
-
-  const smsBody = `【幻樂空間 / D Festival】你的登記驗證碼：${code}（10 分鐘內有效，請勿向他人透露。）`;
-  const sms = await sendSms({ toE164: phoneNorm, body: smsBody });
-
-  if (!sms.ok) {
-    return jsonError("SMS_FAILED", sms.error, 502);
-  }
-
-  return jsonOk({ ok: true, smsDevMode: Boolean(sms.dev) });
 }

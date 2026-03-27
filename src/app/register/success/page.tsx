@@ -39,7 +39,7 @@ export default function RegisterSuccessPage() {
   const showDevPassword = Boolean(payload?.tempPassword);
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-24 text-center">
+    <main className="mx-auto max-w-lg px-5 sm:px-4 py-24 text-center">
       <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">登記成功</h1>
       {payload?.emailSent ? (
         <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
@@ -51,17 +51,17 @@ export default function RegisterSuccessPage() {
         </p>
       )}
       {payload?.devNote && (
-        <p className="mx-auto mt-3 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-950">
+        <p className="mx-auto mt-3 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-5 sm:px-4 py-3 text-left text-sm text-amber-950">
           {payload.devNote}
         </p>
       )}
       {payload?.emailError && !payload.emailSent && (
-        <p className="mx-auto mt-3 max-w-md rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left text-xs text-red-900">
+        <p className="mx-auto mt-3 max-w-md rounded-lg border border-red-200 bg-red-50 px-5 sm:px-4 py-3 text-left text-xs text-red-900">
           {payload.emailError}
         </p>
       )}
       {showDevPassword && (
-        <div className="mx-auto mt-6 max-w-md rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-4 py-4 text-left text-sm text-stone-800 dark:text-stone-200">
+        <div className="mx-auto mt-6 max-w-md rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-5 sm:px-4 py-4 text-left text-sm text-stone-800 dark:text-stone-200">
           <p className="font-medium text-stone-900 dark:text-stone-50">開發模式：臨時登入資料</p>
           <p className="mt-2">
             <span className="text-stone-600 dark:text-stone-400">登入帳號（Email）</span>
@@ -86,7 +86,7 @@ export default function RegisterSuccessPage() {
       {payload?.socialFollowOptIn && payload.socialFollowSetupToken ? (
         <SocialFollowSetupPanel token={payload.socialFollowSetupToken} />
       ) : payload?.socialFollowOptIn && !payload.socialFollowSetupToken ? (
-        <p className="mx-auto mt-8 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-950">
+        <p className="mx-auto mt-8 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-5 sm:px-4 py-3 text-left text-sm text-amber-950">
           已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。
         </p>
       ) : null}

@@ -21,7 +21,7 @@ export function AdminNav() {
 
   return (
     <header className="border-b border-slate-800 bg-slate-950 text-slate-100">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 sm:px-4 py-3">
         <div className="flex items-center gap-6">
           <Link href="/admin/bookings" className="font-semibold tracking-tight text-white">
             後台 · D Festival × 幻樂空間

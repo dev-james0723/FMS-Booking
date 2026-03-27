@@ -141,7 +141,7 @@ export function UserHubAvatarSection({ initialAnimal, initialImageDataUrl }: Pro
                 type="button"
                 disabled={busy}
                 onClick={() => void generate()}
-                className="rounded-full bg-violet-700 px-4 py-2 text-sm font-medium text-white shadow hover:bg-violet-800 disabled:opacity-50"
+                className="rounded-full bg-violet-700 px-5 sm:px-4 py-2 text-sm font-medium text-white shadow hover:bg-violet-800 disabled:opacity-50"
               >
                 {busy ? "處理中…" : "✨ AI 生成彈琴頭像"}
               </button>
@@ -149,7 +149,7 @@ export function UserHubAvatarSection({ initialAnimal, initialImageDataUrl }: Pro
                 type="button"
                 disabled={busy}
                 onClick={() => void applyBuiltinAvatar()}
-                className="rounded-full border border-violet-300 bg-surface px-4 py-2 text-sm text-violet-900 hover:bg-violet-50 disabled:opacity-50"
+                className="rounded-full border border-violet-300 bg-surface px-5 sm:px-4 py-2 text-sm text-violet-900 hover:bg-violet-50 disabled:opacity-50"
               >
                 使用內建插畫
               </button>

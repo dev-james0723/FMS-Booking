@@ -8,25 +8,39 @@ import { withBasePath } from "@/lib/base-path";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
-  CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH,
 } from "@/lib/booking/campaign-constants";
+import { useTranslation } from "@/lib/i18n/use-translation";
+import type { Locale } from "@/lib/i18n/types";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 
-const IDENTITY_OPTIONS = [
-  { value: "student", label: "學生" },
-  { value: "performer", label: "個人演奏者" },
-  { value: "freelancer", label: "自由工作者" },
-  { value: "private_teacher", label: "私人老師" },
-  { value: "music_tutor", label: "音樂導師" },
-  { value: "other", label: "其他" },
-];
+const IDENTITY_VALUES = [
+  "student",
+  "performer",
+  "freelancer",
+  "private_teacher",
+  "music_tutor",
+  "other",
+] as const;
 
-const PREFERRED_TIME_SLOTS = [
-  { id: "slot_6_9", label: "6 AM - 9 AM" },
-  { id: "slot_9_12", label: "9 AM - 12 NOON" },
-  { id: "slot_12_15", label: "12 NOON - 3 PM" },
-  { id: "slot_15_18", label: "3 PM - 6 PM" },
-  { id: "slot_18_20", label: "6 PM - 8 PM" },
+const PREFERRED_TIME_SLOT_IDS = [
+  "slot_6_9",
+  "slot_9_12",
+  "slot_12_15",
+  "slot_15_18",
+  "slot_18_20",
+] as const;
+
+const USAGE_KEY_LIST = [
+  "personal_practice",
+  "trial_play",
+  "audition_prep",
+  "competition_recording",
+  "rehearsal",
+  "creation",
+  "try_instrument",
+  "teaching",
+  "student_lesson",
+  "student_recording",
 ] as const;
 
 /** Optional; when unset, labels render as plain text (no outbound link). */
@@ -41,10 +55,10 @@ function isPreferredCampaignDateKey(iso: string): boolean {
   return iso >= CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY && iso <= CAMPAIGN_EXPERIENCE_LAST_DAY_KEY;
 }
 
-function formatHkPreferredDate(iso: string): string {
+function formatHkPreferredDate(iso: string, locale: Locale): string {
   const [y, mo, da] = iso.split("-").map((x) => parseInt(x, 10));
   if (!y || !mo || !da) return iso;
-  return new Date(y, mo - 1, da).toLocaleDateString("zh-HK", {
+  return new Date(y, mo - 1, da).toLocaleDateString(locale === "en" ? "en-GB" : "zh-HK", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -52,53 +66,12 @@ function formatHkPreferredDate(iso: string): string {
   });
 }
 
-const USAGE_KEYS = [
-  { key: "personal_practice", label: "個人練習" },
-  { key: "trial_play", label: "試奏" },
-  { key: "audition_prep", label: "audition 準備" },
-  { key: "competition_recording", label: "比賽錄影" },
-  { key: "rehearsal", label: "綵排" },
-  { key: "creation", label: "創作" },
-  { key: "try_instrument", label: "試琴" },
-  { key: "teaching", label: "教學" },
-  { key: "student_lesson", label: "帶學生上課" },
-  { key: "student_recording", label: "協助學生錄影" },
-] as const;
-
-const REGISTRATION_FIELD_LABELS: Record<string, string> = {
-  nameZh: "中文姓名",
-  nameEn: "英文姓名",
-  email: "Email",
-  phone: "聯絡電話",
-  age: "年齡",
-  phoneVerificationToken: "電話短訊驗證",
-  teacherRecommended: "是否由老師推薦",
-  teacherName: "推薦老師姓名",
-  teacherContact: "推薦老師聯絡方式",
-  userCategoryCode: "使用者類別",
-  instrumentField: "樂器／音樂領域",
-  identityFlags: "身份",
-  identityOtherText: "其他身份說明",
-  usagePurposes: "使用用途",
-  preferredDates: "希望使用日期",
-  preferredTimeText: "希望使用時段",
-  extraNotes: "補充說明",
-  interestDfestival: "D Festival 資訊",
-  interestDmasters: "D Masters 資訊",
-  marketingOptIn: "接收通知",
-  socialFollowClaimed: "追蹤承諾",
-  socialRepostClaimed: "轉發承諾",
-  wantsAmbassador: "D Ambassador",
-  agreedTerms: "活動條款",
-  agreedPrivacy: "資料收集安排",
-  agreedEmailNotifications: "系統通知（Email）",
-  referralCode: "推薦碼",
-  captchaToken: "我不是機械人驗證",
-  passkeyPreregToken: "生物認證（通行密鑰）",
-};
-
-function formatRegistrationApiError(payload: unknown): string {
-  const fallback = "驗證失敗";
+function formatRegistrationApiError(
+  payload: unknown,
+  t: (path: string) => string,
+  locale: Locale,
+): string {
+  const fallback = t("reg.validationFail");
   if (!payload || typeof payload !== "object") return fallback;
   const err = (payload as { error?: { message?: string; details?: unknown } }).error;
   const base = typeof err?.message === "string" ? err.message : fallback;
@@ -107,14 +80,17 @@ function formatRegistrationApiError(payload: unknown): string {
   const fieldErrors = (details as { fieldErrors?: Record<string, string[]> }).fieldErrors;
   if (!fieldErrors || typeof fieldErrors !== "object") return base;
 
+  const listSep = locale === "en" ? "; " : "；";
+  const kvSep = locale === "en" ? ": " : "：";
   const lines: string[] = [];
   for (const [key, msgs] of Object.entries(fieldErrors)) {
     if (!Array.isArray(msgs) || msgs.length === 0) continue;
-    const label = REGISTRATION_FIELD_LABELS[key] ?? key;
-    lines.push(`${label}：${msgs.join("；")}`);
+    const labelPath = `reg.fieldLabels.${key}`;
+    const label = t(labelPath) === labelPath ? key : t(labelPath);
+    lines.push(`${label}${kvSep}${msgs.join(listSep)}`);
   }
   if (lines.length === 0) return base;
-  return ["請修正以下項目：", ...lines].join("\n");
+  return [t("reg.validationFixPrefix"), ...lines].join("\n");
 }
 
 function RegistrationPreferredDateMonth(props: {
@@ -123,17 +99,17 @@ function RegistrationPreferredDateMonth(props: {
   month1: number;
   selectedPreferredDates: string[];
   onToggleDate: (iso: string) => void;
+  weekdays: string[];
 }) {
   const grid = useMemo(
     () => buildMonthGrid(props.year, props.month1),
     [props.year, props.month1]
   );
-  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
   return (
     <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 p-4 lg:flex-1">
       <p className="text-center text-sm font-medium text-stone-800 dark:text-stone-200">{props.title}</p>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-stone-500 dark:text-stone-500">
-        {weekdays.map((w) => (
+        {props.weekdays.map((w) => (
           <div key={w} className="py-1 font-medium">
             {w}
           </div>
@@ -177,6 +153,7 @@ function RegistrationPreferredDateMonth(props: {
 }
 
 export function RegistrationForm() {
+  const { t, tr, locale } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -226,6 +203,46 @@ export function RegistrationForm() {
   const skipRecaptcha = process.env.NEXT_PUBLIC_SKIP_RECAPTCHA === "true";
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
+  const identityOptions = useMemo(
+    () =>
+      IDENTITY_VALUES.map((value) => ({
+        value,
+        label: t(`reg.identity.${value}`),
+      })),
+    [t],
+  );
+
+  const usageKeys = useMemo(
+    () =>
+      USAGE_KEY_LIST.map((key) => ({
+        key,
+        label: t(`reg.usage.${key}`),
+      })),
+    [t],
+  );
+
+  const preferredSlots = useMemo(
+    () =>
+      PREFERRED_TIME_SLOT_IDS.map((id) => ({
+        id,
+        label: t(`reg.slot.${id}`),
+      })),
+    [t],
+  );
+
+  const calWeekdays = useMemo(
+    () => [
+      t("reg.weekday.sun"),
+      t("reg.weekday.mon"),
+      t("reg.weekday.tue"),
+      t("reg.weekday.wed"),
+      t("reg.weekday.thu"),
+      t("reg.weekday.fri"),
+      t("reg.weekday.sat"),
+    ],
+    [t],
+  );
+
   const interestCheckValues = [
     interestDfestival,
     interestDmasters,
@@ -273,7 +290,7 @@ export function RegistrationForm() {
     setError(null);
     const p = phone.trim();
     if (p.length < 8) {
-      setError("請先填寫有效聯絡電話。");
+      setError(t("reg.phoneRequired"));
       return;
     }
     setSmsBusy(true);
@@ -285,7 +302,7 @@ export function RegistrationForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "無法發送驗證碼");
+        setError(data?.error?.message ?? t("reg.smsSendFail"));
         return;
       }
       setPhoneVerificationToken(null);
@@ -293,7 +310,7 @@ export function RegistrationForm() {
       setSmsCode("");
       setSmsCooldown(60);
     } catch {
-      setError("網絡錯誤，請稍後再試。");
+      setError(t("reg.networkError"));
     } finally {
       setSmsBusy(false);
     }
@@ -303,7 +320,7 @@ export function RegistrationForm() {
     setError(null);
     const p = phone.trim();
     if (!/^\d{6}$/.test(smsCode.trim())) {
-      setError("請輸入 6 位數字驗證碼。");
+      setError(t("reg.codeSixDigits"));
       return;
     }
     setVerifyBusy(true);
@@ -315,20 +332,20 @@ export function RegistrationForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "驗證失敗");
+        setError(data?.error?.message ?? t("reg.verifyFail"));
         setPhoneVerified(false);
         setPhoneVerificationToken(null);
         return;
       }
       const tok = data?.phoneVerificationToken;
       if (typeof tok !== "string" || !tok) {
-        setError("驗證回應異常，請重試。");
+        setError(t("reg.verifyResponseBad"));
         return;
       }
       setPhoneVerificationToken(tok);
       setPhoneVerified(true);
     } catch {
-      setError("網絡錯誤，請稍後再試。");
+      setError(t("reg.networkError"));
     } finally {
       setVerifyBusy(false);
     }
@@ -337,11 +354,11 @@ export function RegistrationForm() {
   async function bindPasskey() {
     setError(null);
     if (!email.trim()) {
-      setError("請先填寫 Email（用作通行密鑰顯示名稱）。");
+      setError(t("reg.emailForPasskey"));
       return;
     }
     if (!phoneVerificationToken || !phoneVerified) {
-      setError("請先完成聯絡電話短訊驗證。");
+      setError(t("reg.phoneVerifyFirst"));
       return;
     }
     setPasskeyBusy(true);
@@ -361,14 +378,14 @@ export function RegistrationForm() {
         setError(
           typeof optData?.error?.message === "string"
             ? optData.error.message
-            : "無法開始生物認證"
+            : t("reg.passkeyStartFail")
         );
         return;
       }
       const options = optData?.options;
       const preregChallengeId = optData?.preregChallengeId;
       if (!options || typeof preregChallengeId !== "string") {
-        setError("伺服器回應異常，請稍後再試。");
+        setError(t("reg.serverErrorRetry"));
         return;
       }
       setPasskeyPreregToken(null);
@@ -377,9 +394,7 @@ export function RegistrationForm() {
         attResp = await startRegistration({ optionsJSON: options });
       } catch (e) {
         console.error(e);
-        setError(
-          "裝置或瀏覽器取消了驗證，或此環境不支援 Face ID／指紋（請使用 Safari／Chrome 並以 HTTPS 或 localhost 開啟）。"
-        );
+        setError(t("reg.passkeyEnv"));
         return;
       }
       const verRes = await fetch(withBasePath("/api/v1/registration/passkey/verify"), {
@@ -396,19 +411,19 @@ export function RegistrationForm() {
       const verData = await verRes.json().catch(() => ({}));
       if (!verRes.ok) {
         setError(
-          typeof verData?.error?.message === "string" ? verData.error.message : "綁定失敗"
+          typeof verData?.error?.message === "string" ? verData.error.message : t("reg.bindFail")
         );
         setPasskeyPreregToken(null);
         return;
       }
       const tok = verData?.passkeyPreregToken;
       if (typeof tok !== "string") {
-        setError("綁定回應異常，請重試。");
+        setError(t("reg.bindResponseBad"));
         return;
       }
       setPasskeyPreregToken(tok);
     } catch {
-      setError("網絡錯誤，請稍後再試。");
+      setError(t("reg.networkError"));
     } finally {
       setPasskeyBusy(false);
     }
@@ -441,41 +456,39 @@ export function RegistrationForm() {
     e.preventDefault();
     setError(null);
     if (identityFlags.length === 0) {
-      setError("請至少選擇一項身份。");
+      setError(t("reg.identityPickOne"));
       return;
     }
     if (identityFlags.includes("other") && !identityOtherText.trim()) {
-      setError("請填寫「其他」身份說明。");
+      setError(t("reg.identityOtherDetail"));
       return;
     }
     if (!socialFollowClaimed || !socialRepostClaimed) {
-      setError("請勾選「追蹤」及「轉發」兩項承諾，方可提交登記。");
+      setError(t("reg.errSocialPromise"));
       return;
     }
     if (!agreedTerms || !agreedPrivacy || !agreedEmailNotifications) {
-      setError("請勾選同意事項內全部三項：活動條款、資料收集安排及系統通知（Email）。");
+      setError(t("reg.consentThree"));
       return;
     }
     if (!Number.isFinite(age) || age < 1 || age > 120) {
-      setError("請填寫有效年齡（1–120）。");
+      setError(t("reg.errAge"));
       return;
     }
     if (!phoneVerificationToken || !phoneVerified) {
-      setError("請先完成聯絡電話短訊驗證（發送驗證碼並輸入 6 位數字）。");
+      setError(t("reg.phoneSmsPasskey"));
       return;
     }
     if (!webauthnSupported) {
-      setError(
-        "必須完成生物認證方可登記。請改用 Safari、Chrome 或 Edge 等支援通行密鑰的瀏覽器，並以 HTTPS 或 localhost 開啟本頁。"
-      );
+      setError(t("reg.errWebauthnBrowser"));
       return;
     }
     if (!passkeyPreregToken) {
-      setError("請先按「綁定 Face ID／指紋」並通過裝置驗證；生物認證為登記必要步驟。");
+      setError(t("reg.errPasskeyBeforeSubmit"));
       return;
     }
     if (recaptchaSiteKey && !skipRecaptcha && !captchaToken) {
-      setError("請完成「我不是機械人」驗證。");
+      setError(t("reg.errCaptcha"));
       return;
     }
     setLoading(true);
@@ -484,7 +497,7 @@ export function RegistrationForm() {
     if (usageOther.trim()) usagePurposes.otherText = usageOther.trim();
 
     const preferredDatesArr = selectedPreferredDates.length ? selectedPreferredDates : null;
-    const preferredTimeLines = PREFERRED_TIME_SLOTS.filter((s) =>
+    const preferredTimeLines = preferredSlots.filter((s) =>
       preferredTimeSlotIds.includes(s.id)
     ).map((s) => s.label);
     const preferredTimeTextOut =
@@ -534,10 +547,10 @@ export function RegistrationForm() {
       if (!res.ok) {
         let msg =
           res.status === 422
-            ? formatRegistrationApiError(data)
+            ? formatRegistrationApiError(data, t, locale)
             : typeof data?.error?.message === "string"
               ? data.error.message
-              : "提交失敗";
+              : t("reg.submitFail");
         const det = data?.error?.details;
         if (
           det &&
@@ -577,7 +590,7 @@ export function RegistrationForm() {
       }
       router.push("/register/success");
     } catch {
-      setError("網絡錯誤，請稍後再試。");
+      setError(t("reg.networkError"));
     }
     setLoading(false);
   }
@@ -585,36 +598,36 @@ export function RegistrationForm() {
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-2xl space-y-10 pb-24">
       {error && (
-        <div className="whitespace-pre-wrap rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <div className="whitespace-pre-wrap rounded-lg border border-red-200 bg-red-50 px-5 sm:px-4 py-3 text-sm text-red-900">
           {error}
         </div>
       )}
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">基本資料</h2>
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionBasic")}</h2>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">中文姓名（必填）</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.nameZh")}</span>
           <input
             required
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={nameZh}
             onChange={(e) => setNameZh(e.target.value)}
           />
         </label>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">英文姓名</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.nameEn")}</span>
           <input
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
           />
         </label>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">Email（必填，作為登入帳號）</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.email")}</span>
           <input
             required
             type="email"
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -622,28 +635,20 @@ export function RegistrationForm() {
             }}
           />
         </label>
-        <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-4 py-4">
+        <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-5 sm:px-4 py-4">
           <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50/90 px-3 py-3 text-xs text-emerald-950">
-            <p className="font-medium text-emerald-900">私隱與安全</p>
-            <p className="mt-2 leading-relaxed text-emerald-900/90">
-              於此部分所提供之<strong>聯絡電話</strong>及<strong>生物認證</strong>資料（例如 Face ID、指紋等），我們將視為個人資料並
-              <strong>嚴格保密</strong>，僅供身份驗證、防止重複註冊及維護帳戶安全之用，並依您已同意之私隱政策處理；不會用於與本服務無關之推廣，亦不會任意向第三方披露。
-            </p>
-            <p className="mt-2 leading-relaxed text-emerald-900/90">
-              Face ID、指紋等生物特徵資料<strong>主要保留於您的裝置</strong>；我們的伺服器僅儲存經加密處理之通行密鑰相關技術資料，以核實為本人操作，
-              <strong>無法還原您的容貌或指紋圖像</strong>。
-            </p>
+            <p className="font-medium text-emerald-900">{t("reg.privacyTitle")}</p>
+            <p className="mt-2 leading-relaxed text-emerald-900/90">{t("reg.privacyP1")}</p>
+            <p className="mt-2 leading-relaxed text-emerald-900/90">{t("reg.privacyP2")}</p>
           </div>
           <label className="block text-sm">
-            <span className="text-stone-700 dark:text-stone-300">
-              聯絡電話<span className="text-red-700">（必填）</span>
-            </span>
+            <span className="text-stone-700 dark:text-stone-300">{t("reg.phoneLabel")}</span>
             <span className="mt-1 block text-xs text-stone-500 dark:text-stone-500">
-              用作接收 SMS 驗證碼；每個電話號碼只可登記一個帳戶（防止重複註冊）。
+              {t("reg.phoneHint")}
             </span>
             <input
               required
-              className="mt-2 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+              className="mt-2 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
               value={phone}
               onChange={(e) => {
                 setPhone(e.target.value);
@@ -652,7 +657,7 @@ export function RegistrationForm() {
                 setSmsCode("");
                 setPasskeyPreregToken(null);
               }}
-              placeholder="例如 91234567 或 +85291234567"
+              placeholder={t("reg.phonePlaceholder")}
             />
           </label>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -660,22 +665,26 @@ export function RegistrationForm() {
               type="button"
               disabled={smsBusy || smsCooldown > 0 || !phone.trim()}
               onClick={() => void sendPhoneCode()}
-              className="rounded-lg bg-stone-800 px-4 py-2 text-sm text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-stone-800 px-5 sm:px-4 py-2 text-sm text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {smsCooldown > 0 ? `已發送（${smsCooldown}s 後可再發）` : smsBusy ? "發送中…" : "發送驗證碼"}
+              {smsCooldown > 0
+                ? tr("reg.smsSentWait", { seconds: String(smsCooldown) })
+                : smsBusy
+                  ? t("reg.smsSending")
+                  : t("reg.smsSend")}
             </button>
             {phoneVerified && (
-              <span className="text-sm font-medium text-emerald-700">✓ 電話已驗證</span>
+              <span className="text-sm font-medium text-emerald-700">{t("reg.phoneVerified")}</span>
             )}
           </div>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <label className="block text-sm">
-              <span className="text-stone-700 dark:text-stone-300">SMS 驗證碼（6 位數字）</span>
+              <span className="text-stone-700 dark:text-stone-300">{t("reg.smsCodeLabel")}</span>
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
-                className="mt-1 w-40 rounded-lg border border-stone-300 bg-surface-input px-3 py-2 font-mono text-foreground dark:border-stone-700 tracking-widest"
+                className="mt-1 w-40 rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 font-mono text-foreground dark:border-stone-700 tracking-widest"
                 value={smsCode}
                 onChange={(e) => setSmsCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="______"
@@ -685,21 +694,18 @@ export function RegistrationForm() {
               type="button"
               disabled={verifyBusy || smsCode.length !== 6 || !phone.trim()}
               onClick={() => void verifyPhoneCode()}
-              className="rounded-lg border border-stone-400 dark:border-stone-500 bg-surface px-4 py-2 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-stone-400 dark:border-stone-500 bg-surface px-5 sm:px-4 py-2 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {verifyBusy ? "驗證中…" : "確認驗證碼"}
+              {verifyBusy ? t("reg.verifying") : t("reg.verifyCode")}
             </button>
           </div>
           {phoneVerified && webauthnSupported && (
             <div className="mt-6 border-t border-stone-200 dark:border-stone-700 pt-4">
-              <p className="text-sm font-medium text-stone-800 dark:text-stone-200">生物認證</p>
-              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
-                登記前必須於本裝置完成 Face ID、Touch ID 或指紋等驗證（視乎裝置），以綁定通行密鑰；完成後亦可用同一方式登入，並仍可使用電郵及密碼登入。
-              </p>
+              <p className="text-sm font-medium text-stone-800 dark:text-stone-200">{t("reg.bioTitle")}</p>
+              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">{t("reg.bioHint")}</p>
               {!email.trim() && (
                 <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-                  請先在<strong className="font-semibold">上方「Email（作為登入帳號）」</strong>
-                  填寫有效電郵，然後再按「綁定 Face ID／指紋」。通行密鑰會與該電郵綁定。
+                  {t("reg.bioEmailFirst")}
                 </p>
               )}
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -707,34 +713,35 @@ export function RegistrationForm() {
                   type="button"
                   disabled={passkeyBusy}
                   onClick={() => void bindPasskey()}
-                  className="rounded-lg border border-stone-700 bg-surface px-4 py-2 text-sm text-stone-900 dark:text-stone-50 hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-stone-700 bg-surface px-5 sm:px-4 py-2 text-sm text-stone-900 dark:text-stone-50 hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {passkeyBusy ? "處理中…" : passkeyPreregToken ? "重新綁定 Face ID／指紋" : "綁定 Face ID／指紋"}
+                  {passkeyBusy
+                    ? t("reg.processing")
+                    : passkeyPreregToken
+                      ? t("reg.passkeyRebind")
+                      : t("reg.passkeyBind")}
                 </button>
                 {passkeyPreregToken && (
-                  <span className="text-sm font-medium text-emerald-700">✓ 已完成生物認證</span>
+                  <span className="text-sm font-medium text-emerald-700">{t("reg.passkeyDone")}</span>
                 )}
               </div>
             </div>
           )}
           {phoneVerified && !webauthnSupported && (
             <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-950">
-              <p className="font-medium">必須完成生物認證方可提交登記。</p>
-              <p className="mt-1 text-amber-900/90">
-                您目前使用的瀏覽器不支援通行密鑰（WebAuthn）。請改用 Safari、Chrome 或 Edge，並以
-                HTTPS 或 localhost 開啟本頁，然後重新驗證電話並綁定 Face ID／指紋。
-              </p>
+              <p className="font-medium">{t("reg.passkeyRequiredTitle")}</p>
+              <p className="mt-1 text-amber-900/90">{t("reg.passkeyBrowser")}</p>
             </div>
           )}
         </div>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">年齡</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.age")}</span>
           <input
             required
             type="number"
             min={1}
             max={120}
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={age}
             onChange={(e) => setAge(Number(e.target.value))}
           />
@@ -745,22 +752,22 @@ export function RegistrationForm() {
             checked={teacherRecommended}
             onChange={(e) => setTeacherRecommended(e.target.checked)}
           />
-          是否由老師推薦
+          {t("reg.teacherRecommended")}
         </label>
         {teacherRecommended && (
           <>
             <label className="block text-sm">
-              <span className="text-stone-700 dark:text-stone-300">推薦老師姓名</span>
+              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherName")}</span>
               <input
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
                 value={teacherName}
                 onChange={(e) => setTeacherName(e.target.value)}
               />
             </label>
             <label className="block text-sm">
-              <span className="text-stone-700 dark:text-stone-300">推薦老師聯絡方式</span>
+              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherContact")}</span>
               <input
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
                 value={teacherContact}
                 onChange={(e) => setTeacherContact(e.target.value)}
               />
@@ -770,31 +777,31 @@ export function RegistrationForm() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">使用者類別</h2>
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionUserType")}</h2>
         <select
-          className="w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-sm text-foreground dark:border-stone-700"
+          className="w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-sm text-foreground dark:border-stone-700"
           value={userCategoryCode}
           onChange={(e) => setUserCategoryCode(e.target.value as "personal" | "teaching")}
         >
-          <option value="personal">個人使用者</option>
-          <option value="teaching">教學 / 帶學生使用者</option>
+          <option value="personal">{t("reg.userCatPersonal")}</option>
+          <option value="teaching">{t("reg.userCatTeaching")}</option>
         </select>
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">音樂背景</h2>
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionMusic")}</h2>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">樂器 / 音樂領域</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.instrument")}</span>
           <input
             required
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={instrumentField}
             onChange={(e) => setInstrumentField(e.target.value)}
           />
         </label>
-        <p className="text-sm text-stone-700 dark:text-stone-300">身份（可複選）</p>
+        <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.identityHeading")}</p>
         <div className="flex flex-wrap gap-3">
-          {IDENTITY_OPTIONS.map((o) => (
+          {identityOptions.map((o) => (
             <label key={o.value} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -807,22 +814,22 @@ export function RegistrationForm() {
         </div>
         {identityFlags.includes("other") && (
           <label className="block text-sm">
-            <span className="text-stone-700 dark:text-stone-300">請說明你的身份（必填）</span>
+            <span className="text-stone-700 dark:text-stone-300">{t("reg.identityOtherExplain")}</span>
             <input
               required
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+              className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
               value={identityOtherText}
               onChange={(e) => setIdentityOtherText(e.target.value)}
-              placeholder="例如：音樂製作人、樂團成員…"
+              placeholder={t("reg.identityOtherPh")}
             />
           </label>
         )}
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">使用用途</h2>
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionUsage")}</h2>
         <div className="grid gap-2 sm:grid-cols-2">
-          {USAGE_KEYS.map((u) => (
+          {usageKeys.map((u) => (
             <label key={u.key} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -834,9 +841,9 @@ export function RegistrationForm() {
           ))}
         </div>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">其他用途說明</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.usageOther")}</span>
           <input
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={usageOther}
             onChange={(e) => setUsageOther(e.target.value)}
           />
@@ -844,37 +851,37 @@ export function RegistrationForm() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">初步預約意向</h2>
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.intentTitle")}</h2>
         <div>
-          <p className="text-sm text-stone-700 dark:text-stone-300">希望使用日期（可複選）</p>
+          <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.prefDates")}</p>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
-            可選範圍為 {CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH}（香港日期）。單擊日子可選取，再單擊可取消；灰色日子不在活動期內。
+            {tr("reg.prefDatesHint", { campaignRange: t("campaign.dateRange") })}
           </p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-start">
             <RegistrationPreferredDateMonth
-              title="2026 年 4 月"
+              title={t("reg.monthApr")}
               year={2026}
               month1={4}
               selectedPreferredDates={selectedPreferredDates}
               onToggleDate={togglePreferredDate}
+              weekdays={calWeekdays}
             />
             <RegistrationPreferredDateMonth
-              title="2026 年 5 月（活動尾段）"
+              title={t("reg.monthMay")}
               year={2026}
               month1={5}
               selectedPreferredDates={selectedPreferredDates}
               onToggleDate={togglePreferredDate}
+              weekdays={calWeekdays}
             />
-            <div className="min-h-[8rem] flex-1 rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-4 py-3">
-              <p className="text-sm font-medium text-stone-800 dark:text-stone-200">已選日期</p>
+            <div className="min-h-[8rem] flex-1 rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3">
+              <p className="text-sm font-medium text-stone-800 dark:text-stone-200">{t("reg.selectedDates")}</p>
               {selectedPreferredDates.length === 0 ? (
-                <p className="mt-2 text-sm text-stone-500 dark:text-stone-500">
-                  「尚未選擇」，請在日曆點選日子。
-                </p>
+                <p className="mt-2 text-sm text-stone-500 dark:text-stone-500">{t("reg.noneSelected")}</p>
               ) : (
                 <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-stone-700 dark:text-stone-300">
                   {selectedPreferredDates.map((iso) => (
-                    <li key={iso}>{formatHkPreferredDate(iso)}</li>
+                    <li key={iso}>{formatHkPreferredDate(iso, locale)}</li>
                   ))}
                 </ul>
               )}
@@ -882,9 +889,9 @@ export function RegistrationForm() {
           </div>
         </div>
         <div>
-          <p className="text-sm text-stone-700 dark:text-stone-300">希望使用時段（可複選）</p>
+          <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.prefSlots")}</p>
           <div className="mt-2 space-y-2">
-            {PREFERRED_TIME_SLOTS.map((s) => (
+            {preferredSlots.map((s) => (
               <label
                 key={s.id}
                 className="flex cursor-pointer items-center gap-3 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/60 dark:bg-stone-900/60 px-3 py-2.5 text-sm hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800/80"
@@ -900,9 +907,9 @@ export function RegistrationForm() {
           </div>
         </div>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">補充說明</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.extraNotes")}</span>
           <textarea
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             rows={3}
             value={extraNotes}
             onChange={(e) => setExtraNotes(e.target.value)}
@@ -912,7 +919,7 @@ export function RegistrationForm() {
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">興趣與協議</h2>
+          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionInterest")}</h2>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
             <input
               ref={interestSelectAllRef}
@@ -928,7 +935,7 @@ export function RegistrationForm() {
                 setWantsAmbassador(v);
               }}
             />
-            全部選取
+            {t("reg.selectAll")}
           </label>
         </div>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
@@ -939,7 +946,6 @@ export function RegistrationForm() {
             onChange={(e) => setInterestDfestival(e.target.checked)}
           />
           <span>
-            有興趣了解 2026{" "}
             {DFESTIVAL_INFO_URL ? (
               <a
                 href={DFESTIVAL_INFO_URL}
@@ -948,10 +954,10 @@ export function RegistrationForm() {
                 className={interestLinkClass}
                 onClick={(e) => e.stopPropagation()}
               >
-                D Festival 青年鋼琴家藝術節
+                {t("reg.interestDf")}
               </a>
             ) : (
-              <span className={interestPlainClass}>D Festival 青年鋼琴家藝術節</span>
+              <span className={interestPlainClass}>{t("reg.interestDf")}</span>
             )}
           </span>
         </label>
@@ -963,7 +969,6 @@ export function RegistrationForm() {
             onChange={(e) => setInterestDmasters(e.target.checked)}
           />
           <span>
-            有興趣了解 2026{" "}
             {DMASTERS_INFO_URL ? (
               <a
                 href={DMASTERS_INFO_URL}
@@ -972,10 +977,10 @@ export function RegistrationForm() {
                 className={interestLinkClass}
                 onClick={(e) => e.stopPropagation()}
               >
-                D Masters 國際鋼琴比賽
+                {t("reg.interestDm")}
               </a>
             ) : (
-              <span className={interestPlainClass}>D Masters 國際鋼琴比賽</span>
+              <span className={interestPlainClass}>{t("reg.interestDm")}</span>
             )}
           </span>
         </label>
@@ -985,7 +990,7 @@ export function RegistrationForm() {
             checked={marketingOptIn}
             onChange={(e) => setMarketingOptIn(e.target.checked)}
           />
-          願意接收活動資訊與通知
+          {t("reg.marketingOptIn")}
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -995,7 +1000,7 @@ export function RegistrationForm() {
             checked={socialFollowClaimed}
             onChange={(e) => setSocialFollowClaimed(e.target.checked)}
           />
-          <span>我承諾並願意追蹤指定社交媒體帳號，以獲取社群獎勵</span>
+          <span>{t("reg.socialFollow")}</span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1005,10 +1010,7 @@ export function RegistrationForm() {
             checked={socialRepostClaimed}
             onChange={(e) => setSocialRepostClaimed(e.target.checked)}
           />
-          <span>
-            我承諾並願意轉發 D Festival 青年鋼琴藝術節的指定兩則貼文，並標註 D Festival
-            青年鋼琴家藝術節及幻樂空間 Fantasia Music Space 的 Instagram 和 Facebook 帳號
-          </span>
+          <span>{t("reg.socialRepost")}</span>
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -1016,12 +1018,12 @@ export function RegistrationForm() {
             checked={wantsAmbassador}
             onChange={(e) => setWantsAmbassador(e.target.checked)}
           />
-          希望成為 D Ambassador / 分享優惠
+          {t("reg.ambassador")}
         </label>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">推薦碼（如有）</span>
+          <span className="text-stone-700 dark:text-stone-300">{t("reg.referral")}</span>
           <input
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-3 py-2 text-foreground dark:border-stone-700"
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={referralCode}
             onChange={(e) => setReferralCode(e.target.value)}
           />
@@ -1030,7 +1032,7 @@ export function RegistrationForm() {
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">同意事項</h2>
+          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionConsent")}</h2>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
             <input
               ref={consentSelectAllRef}
@@ -1043,7 +1045,7 @@ export function RegistrationForm() {
                 setAgreedEmailNotifications(v);
               }}
             />
-            全部選取
+            {t("reg.selectAll")}
           </label>
         </div>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
@@ -1054,7 +1056,7 @@ export function RegistrationForm() {
             checked={agreedTerms}
             onChange={(e) => setAgreedTerms(e.target.checked)}
           />
-          <span>已閱讀並同意活動條款</span>
+          <span>{t("reg.agreeTerms")}</span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1064,7 +1066,7 @@ export function RegistrationForm() {
             checked={agreedPrivacy}
             onChange={(e) => setAgreedPrivacy(e.target.checked)}
           />
-          <span>已閱讀並同意資料收集安排</span>
+          <span>{t("reg.agreePrivacy")}</span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1074,13 +1076,13 @@ export function RegistrationForm() {
             checked={agreedEmailNotifications}
             onChange={(e) => setAgreedEmailNotifications(e.target.checked)}
           />
-          <span>同意透過 Email 收取系統通知</span>
+          <span>{t("reg.agreeEmail")}</span>
         </label>
       </section>
 
       {recaptchaSiteKey && !skipRecaptcha ? (
-        <section className="space-y-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-4 py-4">
-          <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">安全驗證</h2>
+        <section className="space-y-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-5 sm:px-4 py-4">
+          <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">{t("reg.sectionSecurity")}</h2>
           <RecaptchaV2
             ref={recaptchaRef}
             siteKey={recaptchaSiteKey}
@@ -1094,7 +1096,7 @@ export function RegistrationForm() {
         disabled={loading}
         className="w-full rounded-full bg-stone-900 py-3 text-white transition hover:bg-stone-800 disabled:opacity-60"
       >
-        {loading ? "提交中…" : "提交登記"}
+        {loading ? t("reg.submitting") : t("reg.submit")}
       </button>
     </form>
   );

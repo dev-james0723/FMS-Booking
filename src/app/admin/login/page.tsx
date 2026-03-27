@@ -40,7 +40,7 @@ function AdminLoginForm() {
   }
 
   return (
-    <main className="flex min-h-[80vh] flex-col items-center justify-center px-4">
+    <main className="flex min-h-[80vh] flex-col items-center justify-center px-5 sm:px-4">
       <form
         onSubmit={onSubmit}
         className="w-full max-w-sm space-y-4 rounded-xl border border-slate-700 bg-slate-950 p-8 shadow-xl"

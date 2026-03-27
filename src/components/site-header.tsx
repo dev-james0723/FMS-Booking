@@ -2,18 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { InfoMenuDropdown } from "@/components/info-menu-dropdown";
+import { LanguageSwitchIcon } from "@/components/language-switch-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTranslation } from "@/lib/i18n/use-translation";
 import { navIconButtonMdHome, navIconButtonSmHome } from "@/lib/nav-icon-button-classes";
 import { withBasePath } from "@/lib/base-path";
 
 const btnOutline =
-  "inline-flex min-h-[44px] items-center justify-center rounded-full border border-stone-300 dark:border-stone-600 px-4 py-2 text-sm text-stone-800 dark:text-stone-200 transition hover:border-stone-900 hover:bg-stone-50 dark:hover:border-stone-400 dark:hover:bg-stone-800";
+  "inline-flex min-h-[44px] items-center justify-center rounded-full border border-stone-300 dark:border-stone-600 px-5 sm:px-4 py-2 text-sm text-stone-800 dark:text-stone-200 transition hover:border-stone-900 hover:bg-stone-50 dark:hover:border-stone-400 dark:hover:bg-stone-800";
 const btnSolid =
-  "inline-flex min-h-[44px] items-center justify-center rounded-full bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800";
+  "inline-flex min-h-[44px] items-center justify-center rounded-full bg-stone-900 px-5 sm:px-4 py-2 text-sm text-white transition hover:bg-stone-800";
 const linkPlain =
   "inline-flex min-h-[44px] items-center text-sm text-stone-600 dark:text-stone-400 transition hover:text-stone-900 dark:text-stone-50";
-
-const homeAriaLabel = "限時免費琴室體驗預約（主頁）";
 
 const REGISTRATION_BANNER_DISMISSED_KEY = "fms-registration-banner-dismissed";
 const REGISTRATION_BANNER_STORE_EVENT = "fms-registration-banner-dismissed-change";
@@ -111,6 +112,8 @@ function MobileNavZipItem({
 }
 
 export function SiteHeader() {
+  const { t, locale, toggleLocale } = useTranslation();
+  const homeAriaLabel = t("nav.homeAria");
   const [menuOpen, setMenuOpen] = useState(false);
   const [me, setMe] = useState<MePayload | undefined>(undefined);
   const registrationBannerDismissed = useSyncExternalStore(
@@ -148,25 +151,25 @@ export function SiteHeader() {
   return (
     <>
       <header className="border-b border-stone-200 bg-[color:var(--chrome-bg)] backdrop-blur-md dark:border-stone-800">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 md:gap-4 md:py-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 sm:px-4 py-3 md:gap-4 md:py-4">
           <Link
             href="/"
             className="min-w-0 shrink font-serif text-base leading-tight tracking-tight text-stone-900 dark:text-stone-50 sm:text-lg"
           >
-            <span className="block truncate sm:whitespace-normal">D Festival × 幻樂空間</span>
+            <span className="block truncate sm:whitespace-normal">{t("brand.festivalLine")}</span>
           </Link>
 
           <nav
             className="hidden md:flex md:items-center md:gap-3"
-            aria-label="主選單（桌面）"
+            aria-label={t("nav.mainNavDesktop")}
           >
             {!me?.user && (
               <>
                 <Link href="/register" className={btnOutline}>
-                  登記資料及建立帳戶
+                  {t("nav.registerCta")}
                 </Link>
                 <Link href="/login?next=/account" className={btnSolid}>
-                  預約系統登入
+                  {t("nav.loginBooking")}
                 </Link>
               </>
             )}
@@ -175,7 +178,7 @@ export function SiteHeader() {
                 <Link
                   href="/account"
                   className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-violet-300 bg-violet-50 text-violet-900 transition hover:border-violet-500 hover:bg-violet-100 dark:border-violet-500/60 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:border-violet-400 dark:hover:bg-violet-900/60"
-                  aria-label="我的帳戶"
+                  aria-label={t("nav.myAccount")}
                 >
                   <UserIcon className="h-5 w-5" />
                 </Link>
@@ -183,15 +186,13 @@ export function SiteHeader() {
                   href="/booking"
                   className="text-center text-[11px] font-medium leading-tight text-violet-800 underline decoration-violet-400 underline-offset-2 hover:text-violet-950 dark:text-violet-300 dark:decoration-violet-500 dark:hover:text-violet-100"
                 >
-                  預約時段
+                  {t("nav.bookingSlots")}
                 </Link>
               </div>
             )}
-            <Link href="/faq" className={`${linkPlain} whitespace-nowrap`}>
-              FAQ
-            </Link>
+            <InfoMenuDropdown />
             <Link href="/contact" className={`${linkPlain} whitespace-nowrap`}>
-              聯絡
+              {t("nav.contact")}
             </Link>
             <ThemeToggle />
             <Link href="/" className={navIconButtonMdHome} aria-label={homeAriaLabel}>
@@ -204,7 +205,7 @@ export function SiteHeader() {
               <Link
                 href="/account"
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-300 bg-violet-50 text-violet-900 transition hover:border-violet-500 hover:bg-violet-100 dark:border-violet-500/60 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:border-violet-400 dark:hover:bg-violet-900/60"
-                aria-label="我的帳戶"
+                aria-label={t("nav.myAccount")}
               >
                 <UserIcon className="h-4 w-4" />
               </Link>
@@ -220,7 +221,7 @@ export function SiteHeader() {
               aria-controls="site-mobile-nav"
               onClick={() => setMenuOpen((o) => !o)}
             >
-              <span className="sr-only">{menuOpen ? "關閉選單" : "開啟選單"}</span>
+              <span className="sr-only">{menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}</span>
               {menuOpen ? (
                 <svg
                   className="h-5 w-5"
@@ -259,8 +260,8 @@ export function SiteHeader() {
         >
           <div className="min-h-0 overflow-hidden" inert={!menuOpen}>
             <nav
-              className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3"
-              aria-label="主選單（手機）"
+              className="mx-auto flex max-w-5xl flex-col gap-2 px-5 sm:px-4 py-3"
+              aria-label={t("nav.mainNavMobile")}
             >
               {!me?.user && (
                 <>
@@ -270,7 +271,7 @@ export function SiteHeader() {
                       className={`${btnOutline} w-full text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      登記資料及建立帳戶
+                      {t("nav.registerCta")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={1}>
@@ -279,7 +280,7 @@ export function SiteHeader() {
                       className={`${btnSolid} w-full text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      預約系統登入
+                      {t("nav.loginBooking")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={2} className="my-1 border-t border-stone-100 pt-2 dark:border-stone-800">
@@ -288,16 +289,38 @@ export function SiteHeader() {
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      FAQ
+                      {t("nav.faq")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={3}>
+                    <Link
+                      href="/about-d-festival"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.aboutDfestival2026")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={4}>
+                    <button
+                      type="button"
+                      className={`${linkPlain} w-full justify-center gap-2 py-2`}
+                      onClick={() => {
+                        toggleLocale();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <LanguageSwitchIcon className="h-5 w-5 shrink-0 opacity-80" />
+                      {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
+                    </button>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      聯絡
+                      {t("nav.contact")}
                     </Link>
                   </MobileNavZipItem>
                 </>
@@ -310,7 +333,7 @@ export function SiteHeader() {
                       className={`${btnSolid} w-full text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      預約時段
+                      {t("nav.bookingSlots")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={1}>
@@ -319,16 +342,16 @@ export function SiteHeader() {
                       className={`${btnOutline} w-full text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      我的帳戶
+                      {t("nav.myAccount")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={2}>
                     <Link
                       href="/about-d-festival"
-                      className="flex w-full items-center justify-center rounded-full border border-amber-600/35 bg-gradient-to-b from-[#c9a227] via-[#a67c1a] to-[#6b4e14] px-4 py-3 text-center text-sm font-semibold leading-snug text-white shadow-[0_6px_20px_rgba(107,78,20,0.35)] ring-1 ring-amber-300/40 transition hover:from-[#d4ae32] hover:via-[#b88922] hover:to-[#7a5a18] hover:ring-amber-200/50"
+                      className="flex w-full items-center justify-center rounded-full border border-amber-600/35 bg-gradient-to-b from-[#c9a227] via-[#a67c1a] to-[#6b4e14] px-5 sm:px-4 py-3 text-center text-sm font-semibold leading-snug text-white shadow-[0_6px_20px_rgba(107,78,20,0.35)] ring-1 ring-amber-300/40 transition hover:from-[#d4ae32] hover:via-[#b88922] hover:to-[#7a5a18] hover:ring-amber-200/50"
                       onClick={() => setMenuOpen(false)}
                     >
-                      關於 2026 D Festival 青年鋼琴家藝術節
+                      {t("nav.aboutDfestival2026")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={3} className="my-1 border-t border-stone-100 pt-2 dark:border-stone-800">
@@ -337,16 +360,29 @@ export function SiteHeader() {
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      FAQ
+                      {t("nav.faq")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
+                    <button
+                      type="button"
+                      className={`${linkPlain} w-full justify-center gap-2 py-2`}
+                      onClick={() => {
+                        toggleLocale();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <LanguageSwitchIcon className="h-5 w-5 shrink-0 opacity-80" />
+                      {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
+                    </button>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      聯絡
+                      {t("nav.contact")}
                     </Link>
                   </MobileNavZipItem>
                 </>
@@ -363,17 +399,17 @@ export function SiteHeader() {
         />
       ) : (
         <div
-          className="relative border-b border-[#2a1845] bg-gradient-to-r from-[#3d2463] via-[#4a2d75] to-[#3d2463] px-4 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:pr-11 sm:text-xs sm:leading-snug"
+          className="relative border-b border-[#2a1845] bg-gradient-to-r from-[#3d2463] via-[#4a2d75] to-[#3d2463] px-5 sm:px-4 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:pr-11 sm:text-xs sm:leading-snug"
           role="note"
         >
           <p className="mx-auto max-w-3xl">
-            所有使用者必須先完成資料登記及帳戶建立，方可進入預約系統。
+            {t("banner.registrationNote")}
           </p>
           <button
             type="button"
             onClick={dismissRegistrationBanner}
             className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-white/90 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80 sm:right-3"
-            aria-label="關閉此提示"
+            aria-label={t("banner.dismiss")}
           >
             <CloseIconSm className="h-3.5 w-3.5" />
           </button>
