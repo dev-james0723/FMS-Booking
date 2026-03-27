@@ -16,12 +16,25 @@ type Props = {
   locale: Locale;
   /** When reopening the modal, restore the last confirmed instrument in the dropdown. */
   initialInstrumentId?: string | null;
+  /**
+   * User is already on open-space (large-instrument) registration (`?for=open-space`).
+   * Allow confirming larger-than-cello instruments without redirecting to the separate info page.
+   */
+  forOpenSpaceRegistration?: boolean;
   onClose: () => void;
   onConfirm: (instrumentId: string, label: string) => void;
   t: (path: string) => string;
 };
 
-export function InstrumentOtherModal({ open, locale, initialInstrumentId, onClose, onConfirm, t }: Props) {
+export function InstrumentOtherModal({
+  open,
+  locale,
+  initialInstrumentId,
+  forOpenSpaceRegistration = false,
+  onClose,
+  onConfirm,
+  t,
+}: Props) {
   const titleId = useId();
   const [selectedId, setSelectedId] = useState("");
 
@@ -53,10 +66,11 @@ export function InstrumentOtherModal({ open, locale, initialInstrumentId, onClos
 
   const selected = selectedId ? getOrchestraInstrument(selectedId) : undefined;
   const large = selectedId ? isLargerThanCello(selectedId) : false;
+  const mustRedirectForLarge = large && !forOpenSpaceRegistration;
 
   function handleConfirm() {
     if (!selected) return;
-    if (large) return;
+    if (mustRedirectForLarge) return;
     onConfirm(selectedId, instrumentLabel(selected, locale));
   }
 
@@ -92,7 +106,9 @@ export function InstrumentOtherModal({ open, locale, initialInstrumentId, onClos
           {t("reg.instrumentPercussionNote")}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-          {t("reg.instrumentModalSpaceNote")}
+          {forOpenSpaceRegistration
+            ? t("reg.instrumentModalSpaceNoteWhenOpenSpace")
+            : t("reg.instrumentModalSpaceNote")}
         </p>
 
         <label className="mt-4 block text-sm">
@@ -116,7 +132,7 @@ export function InstrumentOtherModal({ open, locale, initialInstrumentId, onClos
           </select>
         </label>
 
-        {large && selected && (
+        {mustRedirectForLarge && selected && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 dark:border-amber-900/50 dark:bg-amber-950/40">
             <Link
               href={withBasePath("/register/large-instrument")}
@@ -138,7 +154,7 @@ export function InstrumentOtherModal({ open, locale, initialInstrumentId, onClos
           </button>
           <button
             type="button"
-            disabled={!selected || large}
+            disabled={!selected || mustRedirectForLarge}
             onClick={handleConfirm}
             className="rounded-lg bg-stone-800 px-4 py-2 text-sm text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-stone-200 dark:text-stone-900 dark:hover:bg-white"
           >

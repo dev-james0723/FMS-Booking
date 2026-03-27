@@ -88,12 +88,15 @@ export const regEn = {
   instrument: "Instrument / musical field",
   instrumentPiano: "Piano",
   instrumentOther: "Other instruments",
+  instrumentOpenSpaceTrigger: "Please select your instrument",
   instrumentModalTitle: "Select your instrument",
   instrumentModalClose: "Close",
   instrumentPercussionNote:
     "Due to venue limitations, percussion players cannot take part in this programme.",
   instrumentModalSpaceNote:
     "Fantasia Music Space currently offers one studio room for this experience, and space is limited. To keep sessions running smoothly, each slot can host up to 3 people in total, including the pianist. If you play a larger instrument or one that needs more room (e.g. cello, double bass, harp, trombone, tuba), choose it from the list below and follow the prompt to register on the separate page.",
+  instrumentModalSpaceNoteWhenOpenSpace:
+    "You are on the Open Space (large-instrument) registration. The studio room holds up to 3 people per slot including the pianist. Pick your instrument from the list below and tap Confirm — you are already on the correct registration page.",
   instrumentSelectLabel: "Instrument",
   instrumentSelectPlaceholder: "Choose…",
   instrumentLargeCta:
@@ -104,6 +107,8 @@ export const regEn = {
   instrumentConfirm: "Confirm selection",
   instrumentRequired:
     "Please choose an instrument: tap Piano or Other instruments and complete your selection.",
+  instrumentRequiredOpenSpace:
+    "Please choose an instrument: tap the button and complete your selection in the dialog.",
   instrumentCat: {
     strings: "Strings",
     woodwind: "Woodwinds",

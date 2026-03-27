@@ -71,6 +71,7 @@ export function AdminCalendarTimelinePanel() {
     capacityTotal: s.capacityTotal,
     isOpen: s.isOpen,
     venueLabel: s.venueLabel,
+    bookerEmails: s.bookings.map((b) => b.email),
   }));
 
   const summaryText = summarizeDaySlotsText(date, timelineSlots);

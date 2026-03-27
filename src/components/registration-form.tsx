@@ -524,7 +524,9 @@ export function RegistrationForm() {
       return;
     }
     if (!instrumentField.trim()) {
-      setError(t("reg.instrumentRequired"));
+      setError(
+        registerForOpenSpace ? t("reg.instrumentRequiredOpenSpace") : t("reg.instrumentRequired")
+      );
       return;
     }
     if (!socialFollowClaimed || !socialRepostClaimed) {
@@ -677,27 +679,33 @@ export function RegistrationForm() {
           <RedRequiredStarLead>
             <span className="text-stone-700 dark:text-stone-300">{t("reg.instrument")}</span>
           </RedRequiredStarLead>
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              aria-pressed={instrumentMode === "piano"}
-              onClick={() => {
-                setInstrumentMode("piano");
-                setInstrumentField(t("reg.instrumentPiano"));
-                setOtherInstrumentId(null);
-                setOtherInstrumentOpen(false);
-              }}
-              className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
-                instrumentMode === "piano"
-                  ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
-                  : "border-stone-300 bg-surface text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
-              }`}
-            >
-              <span className="inline-flex items-center justify-center gap-1.5">
-                <span aria-hidden>🎹</span>
-                {t("reg.instrumentPiano")}
-              </span>
-            </button>
+          <div
+            className={
+              registerForOpenSpace ? "mt-2 grid grid-cols-1 gap-3" : "mt-2 grid grid-cols-2 gap-3"
+            }
+          >
+            {!registerForOpenSpace && (
+              <button
+                type="button"
+                aria-pressed={instrumentMode === "piano"}
+                onClick={() => {
+                  setInstrumentMode("piano");
+                  setInstrumentField(t("reg.instrumentPiano"));
+                  setOtherInstrumentId(null);
+                  setOtherInstrumentOpen(false);
+                }}
+                className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
+                  instrumentMode === "piano"
+                    ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                    : "border-stone-300 bg-surface text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+                }`}
+              >
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <span aria-hidden>🎹</span>
+                  {t("reg.instrumentPiano")}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               aria-pressed={instrumentMode === "other"}
@@ -717,7 +725,9 @@ export function RegistrationForm() {
                 <span className="min-w-0 break-words">
                   {instrumentMode === "other" && instrumentField.trim()
                     ? instrumentField
-                    : t("reg.instrumentOther")}
+                    : registerForOpenSpace
+                      ? t("reg.instrumentOpenSpaceTrigger")
+                      : t("reg.instrumentOther")}
                 </span>
               </span>
             </button>
@@ -740,6 +750,7 @@ export function RegistrationForm() {
           open={otherInstrumentOpen}
           locale={locale}
           initialInstrumentId={otherInstrumentId}
+          forOpenSpaceRegistration={registerForOpenSpace}
           onClose={() => setOtherInstrumentOpen(false)}
           onConfirm={(id, label) => {
             setInstrumentField(label);

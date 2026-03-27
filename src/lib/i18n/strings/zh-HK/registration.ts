@@ -87,12 +87,17 @@ export const regZhHK = {
   instrument: "樂器 / 音樂領域",
   instrumentPiano: "鋼琴",
   instrumentOther: "其他樂器",
+  /** 大型樂器／開放空間登記：僅顯示樂器選擇按鈕時的標籤 */
+  instrumentOpenSpaceTrigger: "請選擇你的樂器",
   instrumentModalTitle: "選擇你的樂器",
   instrumentModalClose: "關閉",
   instrumentPercussionNote:
     "由於場地限制，恕不接受敲擊樂器使用者參與本次計劃。",
   instrumentModalSpaceNote:
     "由於幻樂空間目前僅開放一間琴室供體驗活動使用，且房間空間有限。為確保活動安排順暢及良好的使用體驗，每節時段最多可容納 3 人，當中包括鋼琴彈奏者。如使用體積較大或需較多演奏空間之樂器（如大提琴、低音大提琴、豎琴、長號、大號等），請於下列列表選取你的樂器，再根據提示到另一頁面進行登記。",
+  /** 與 instrumentModalSpaceNote 相同情境，但用戶已身處大型樂器／開放空間登記頁（?for=open-space） */
+  instrumentModalSpaceNoteWhenOpenSpace:
+    "由於幻樂空間目前僅開放一間琴室供體驗活動使用，且房間空間有限，每節時段最多可容納 3 人（包括鋼琴彈奏者）。你正使用「大型樂器／開放空間」登記連結，請於下列列表選取你的樂器，然後按「確認選擇」即可。",
   instrumentSelectLabel: "樂器",
   instrumentSelectPlaceholder: "請選擇…",
   instrumentLargeCta:
@@ -102,6 +107,7 @@ export const regZhHK = {
   instrumentCancel: "取消",
   instrumentConfirm: "確認選擇",
   instrumentRequired: "請選擇樂器：請按「鋼琴」或「其他樂器」，並在後者完成選取。",
+  instrumentRequiredOpenSpace: "請選擇樂器：請按「請選擇你的樂器」並在視窗內完成選取。",
   instrumentCat: {
     strings: "弦樂",
     woodwind: "木管樂",

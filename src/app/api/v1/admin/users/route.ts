@@ -129,10 +129,11 @@ export async function GET() {
     });
   } catch (e) {
     console.error("[admin/users GET]", e);
-    return jsonError(
-      "ADMIN_USERS_FAILED",
-      e instanceof Error ? e.message : "Failed to load users",
-      500
-    );
+    const raw = e instanceof Error ? e.message : "Failed to load users";
+    const message =
+      raw.includes("__TURBOPACK__") || raw.includes("$5b$project$5d")
+        ? "無法載入用戶列表：資料庫結構可能未更新，請在伺服器執行 prisma migrate deploy 後重試。"
+        : raw;
+    return jsonError("ADMIN_USERS_FAILED", message, 500);
   }
 }

@@ -46,16 +46,8 @@ type BookingReq = {
   }[];
 };
 
-/** Sticky 首三欄寬度需與 left 偏移一致（橫向捲動時凍結）。 */
-const STICKY = {
-  name: "10rem",
-  phone: "8.5rem",
-  cat: "7.5rem",
-  /** cumulative left for 電話欄 */
-  leftPhone: "10rem",
-  /** cumulative left for 類別欄（中文名 + 電話） */
-  leftCat: "18.5rem",
-} as const;
+/** 橫向捲動時僅凍結「中文名」欄；寬度需與 sticky left 一致。 */
+const STICKY_NAME_COL = "10rem" as const;
 
 type UserRow = {
   id: string;
@@ -212,23 +204,13 @@ export function AdminUsersPanel() {
           <thead className="border-b border-slate-700 bg-slate-950 text-slate-400">
             <tr>
               <th
-                style={{ width: STICKY.name, minWidth: STICKY.name, left: 0 }}
-                className="sticky z-30 box-border bg-slate-950 px-3 py-2 align-top shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
+                style={{ width: STICKY_NAME_COL, minWidth: STICKY_NAME_COL, left: 0 }}
+                className="sticky z-30 box-border border-r border-slate-600 bg-slate-950 px-3 py-2 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)]"
               >
                 中文名
               </th>
-              <th
-                style={{ width: STICKY.phone, minWidth: STICKY.phone, left: STICKY.leftPhone }}
-                className="sticky z-30 box-border bg-slate-950 px-3 py-2 align-top shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
-              >
-                電話
-              </th>
-              <th
-                style={{ width: STICKY.cat, minWidth: STICKY.cat, left: STICKY.leftCat }}
-                className="sticky z-30 box-border border-r border-slate-600 bg-slate-950 px-3 py-2 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)]"
-              >
-                類別
-              </th>
+              <th className="min-w-[8.5rem] px-3 py-2">電話</th>
+              <th className="min-w-[7.5rem] px-3 py-2">類別</th>
               <th className="min-w-[11rem] px-3 py-2">配額／資格</th>
               <th className="px-3 py-2">英文名</th>
               <th className="px-3 py-2">Email</th>
@@ -253,8 +235,8 @@ export function AdminUsersPanel() {
                   className={`border-b border-slate-800 ${isHi ? "bg-slate-800/80 ring-1 ring-amber-500/60" : ""}`}
                 >
                   <td
-                    style={{ width: STICKY.name, minWidth: STICKY.name, left: 0 }}
-                    className={`sticky z-20 box-border px-3 py-3 align-top shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)] ${stickyBg} text-slate-200`}
+                    style={{ width: STICKY_NAME_COL, minWidth: STICKY_NAME_COL, left: 0 }}
+                    className={`sticky z-20 box-border border-r border-slate-600 px-3 py-3 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)] ${stickyBg} text-slate-200`}
                   >
                     <div className="break-words">{p?.nameZh ?? "—"}</div>
                     <details className="mt-2 text-[11px] text-slate-500">
@@ -316,16 +298,10 @@ export function AdminUsersPanel() {
                       </div>
                     </details>
                   </td>
-                  <td
-                    style={{ width: STICKY.phone, minWidth: STICKY.phone, left: STICKY.leftPhone }}
-                    className={`sticky z-20 box-border whitespace-nowrap px-3 py-3 align-top shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)] ${stickyBg} text-slate-300`}
-                  >
+                  <td className="whitespace-nowrap px-3 py-3 align-top text-slate-300">
                     {p?.phone ?? "—"}
                   </td>
-                  <td
-                    style={{ width: STICKY.cat, minWidth: STICKY.cat, left: STICKY.leftCat }}
-                    className={`sticky z-20 box-border border-r border-slate-600 px-3 py-3 align-top text-xs shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)] ${stickyBg} text-slate-400`}
-                  >
+                  <td className="max-w-[7.5rem] px-3 py-3 align-top text-xs text-slate-400">
                     <span className="line-clamp-4 break-words">{u.category?.nameZh ?? "—"}</span>
                   </td>
                   <td className="max-w-[13rem] px-3 py-3 align-top text-[11px] leading-snug text-slate-300">
@@ -433,8 +409,8 @@ export function AdminUsersPanel() {
       )}
 
       <p className="text-xs text-slate-500">
-        提示：橫向捲動時，「中文名、電話、類別」三欄會固定顯示，方便對照右側「預約紀錄」與「聯動」。日曆頁面可查看每格時段的整體佔用與預約者
-        Email。
+        提示：橫向捲動時僅「中文名」欄固定顯示，方便對照右側「預約紀錄」與「聯動」。日曆「Calendar
+        時間軸」每格會顯示名額佔用（已用／總數）及預約者 Email。
       </p>
     </div>
   );

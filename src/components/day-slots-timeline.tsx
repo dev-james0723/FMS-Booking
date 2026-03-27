@@ -17,6 +17,8 @@ export type TimelineSlotInput = {
   capacityTotal: number;
   isOpen: boolean;
   venueLabel?: string | null;
+  /** Admin timeline: booker emails to show inside each slot cell. */
+  bookerEmails?: string[];
 };
 
 function hkDateKeyFromIso(iso: string): string {
@@ -36,7 +38,7 @@ export function DaySlotsTimeline({
   slots: TimelineSlotInput[];
   variant?: "user" | "admin";
 }) {
-  const { t, tr } = useTranslation();
+  const { t } = useTranslation();
   const daySlots = slots.filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey);
 
   const hourTicks: number[] = [];
@@ -105,6 +107,10 @@ export function DaySlotsTimeline({
             : s.remaining <= 0
               ? t("booking.timeline.statusFull")
               : t("booking.timeline.statusOpen");
+          const used = Math.max(0, s.capacityTotal - s.remaining);
+          const emails = s.bookerEmails?.filter((e) => e.trim() !== "") ?? [];
+          const titleExtra =
+            isAdmin && emails.length > 0 ? ` · ${emails.join(" · ")}` : "";
           return (
             <div
               key={s.id}
@@ -113,25 +119,28 @@ export function DaySlotsTimeline({
                 top: `${clip.topPct}%`,
                 height: `${clip.heightPct}%`,
               }}
-              title={`${fullRange} · ${statusLabel}`}
+              title={`${fullRange} · ${statusLabel}${
+                isAdmin ? ` · 名額 ${used}/${s.capacityTotal}` : ""
+              }${titleExtra}`}
             >
-              <div className="text-center font-semibold tabular-nums">{fullRange}</div>
-              {variant === "admin" && s.remaining <= 0 && s.isOpen && (
-                <div className="text-center text-[11px] opacity-95 sm:text-xs">
-                  {t("booking.timeline.bookedThis")}
-                </div>
-              )}
-              {variant === "admin" && s.remaining > 0 && s.isOpen && (
-                <div className="text-center text-[11px] opacity-95 sm:text-xs">
-                  {tr("booking.timeline.canBookRemaining", {
-                    remaining: String(s.remaining),
-                    capacity: String(s.capacityTotal),
-                  })}
+              <div className="shrink-0 text-center font-semibold tabular-nums">{fullRange}</div>
+              {isAdmin && (
+                <div className="shrink-0 text-center text-[10px] font-medium tabular-nums opacity-95 sm:text-[11px]">
+                  名額 {used}/{s.capacityTotal}
                 </div>
               )}
               {s.venueLabel && (
-                <div className="truncate text-center text-[11px] opacity-90 sm:text-xs">
+                <div className="shrink-0 truncate text-center text-[10px] opacity-90 sm:text-[11px]">
                   {s.venueLabel}
+                </div>
+              )}
+              {isAdmin && emails.length > 0 && (
+                <div className="mt-0.5 min-h-0 max-h-[4.5rem] flex-1 overflow-y-auto overscroll-contain text-center text-[9px] leading-tight opacity-95 sm:text-[10px]">
+                  {emails.map((em, i) => (
+                    <div key={`${s.id}-em-${i}`} className="truncate px-0.5" title={em}>
+                      {em}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
