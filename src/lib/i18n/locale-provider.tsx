@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { writeClientLocaleCookie } from "@/lib/i18n/locale-cookie";
 import {
   FMS_LOCALE_EVENT,
   FMS_LOCALE_STORAGE_KEY,
@@ -32,13 +33,31 @@ function readLocaleFromStorage(): Locale {
   }
 }
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  /** SSR and first client paint stay zh-HK to match server HTML; then sync from storage. */
-  const [locale, setLocaleState] = useState<Locale>("zh-HK");
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  /** From root layout (cookie); keeps SSR and first client render aligned. */
+  initialLocale: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    queueMicrotask(() => setLocaleState(readLocaleFromStorage()));
-    const onChange = () => setLocaleState(readLocaleFromStorage());
+    setLocaleState(initialLocale);
+  }, [initialLocale]);
+
+  useEffect(() => {
+    const stored = readLocaleFromStorage();
+    writeClientLocaleCookie(stored);
+    queueMicrotask(() => {
+      setLocaleState((current) => (stored !== current ? stored : current));
+    });
+    const onChange = () => {
+      const next = readLocaleFromStorage();
+      writeClientLocaleCookie(next);
+      setLocaleState(next);
+    };
     window.addEventListener("storage", onChange);
     window.addEventListener(FMS_LOCALE_EVENT, onChange);
     return () => {
@@ -53,6 +72,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
+    writeClientLocaleCookie(next);
     setLocaleState(next);
     window.dispatchEvent(new Event(FMS_LOCALE_EVENT));
   }, []);

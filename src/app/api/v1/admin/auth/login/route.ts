@@ -47,6 +47,8 @@ export async function POST(req: Request) {
     const res = jsonOk({
       ok: true,
       admin: { id: admin.id, email: admin.email, role: admin.role },
+      /** Same JWT as Set-Cookie; use `Authorization: Bearer` for passkey bind if the cookie is not stored (e.g. HTTP + secure cookie). */
+      sessionToken: token,
     });
     return attachAdminSessionCookie(res, token);
   } catch (e) {

@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:clear-customers": "tsx scripts/clear-customer-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

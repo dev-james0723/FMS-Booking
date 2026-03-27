@@ -3,7 +3,7 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { signPasskeyPreregToken } from "@/lib/passkey-prereg-token";
 import { normalizePhoneForSms } from "@/lib/phone-normalize";
 import { requirePhoneVerifiedForRegistration } from "@/lib/registration/require-phone-verified";
-import { getWebAuthnSettings } from "@/lib/webauthn/config";
+import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { z } from "zod";
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { rpID, origin } = getWebAuthnSettings();
+  const { rpID, origin } = await getWebAuthnSettingsForRequest();
   const credential = parsed.data.credential as unknown as RegistrationResponseJSON;
 
   let verified;

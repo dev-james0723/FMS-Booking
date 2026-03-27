@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { getWebAuthnSettings } from "@/lib/webauthn/config";
+import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { z } from "zod";
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { rpID, origin } = getWebAuthnSettings();
+  const { rpID, origin } = await getWebAuthnSettingsForRequest();
 
   const options = await generateAuthenticationOptions({
     rpID,

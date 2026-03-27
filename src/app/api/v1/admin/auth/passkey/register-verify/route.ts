@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { requireUserSession } from "@/lib/auth/require-session";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
@@ -12,7 +12,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const auth = await requireUserSession();
+  const auth = await requireAdminSession();
   if (!auth.ok) return auth.response;
 
   let body: unknown;
@@ -27,17 +27,17 @@ export async function POST(req: Request) {
     return jsonError("VALIDATION_ERROR", "Validation failed", 422, parsed.error.flatten());
   }
 
-  const row = await prisma.passkeyEnrollmentChallenge.findFirst({
+  const row = await prisma.adminPasskeyEnrollmentChallenge.findFirst({
     where: {
       id: parsed.data.enrollmentChallengeId,
-      userId: auth.userId,
+      adminUserId: auth.adminId,
       expiresAt: { gt: new Date() },
     },
   });
   if (!row) {
     return jsonError(
       "ENROLLMENT_EXPIRED",
-      "新增通行密鑰流程已逾時，請重新按「新增通行密鑰」。",
+      "綁定流程已逾時，請重新按「綁定 Face ID／Touch ID」。",
       400
     );
   }
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       expectedRPID: rpID,
     });
   } catch (e) {
-    console.error("[passkey enrollment verify]", e);
+    console.error("[admin passkey enrollment verify]", e);
     return jsonError(
       "PASSKEY_VERIFY_FAILED",
       "無法驗證此裝置，請重試或使用其他瀏覽器。",
@@ -67,22 +67,24 @@ export async function POST(req: Request) {
   }
 
   const regCred = verified.registrationInfo.credential;
-  const dup = await prisma.webAuthnCredential.findUnique({
+
+  const dupUser = await prisma.webAuthnCredential.findUnique({
     where: { credentialId: regCred.id },
     select: { userId: true },
   });
-  if (dup) {
-    await prisma.passkeyEnrollmentChallenge.delete({ where: { id: row.id } });
-    if (dup.userId === auth.userId) {
-      return jsonError(
-        "CREDENTIAL_EXISTS",
-        "此通行密鑰已存在於你的帳戶。",
-        409
-      );
+  const dupAdmin = await prisma.adminWebAuthnCredential.findUnique({
+    where: { credentialId: regCred.id },
+    select: { adminUserId: true },
+  });
+
+  if (dupUser || dupAdmin) {
+    await prisma.adminPasskeyEnrollmentChallenge.delete({ where: { id: row.id } });
+    if (dupAdmin?.adminUserId === auth.adminId) {
+      return jsonError("CREDENTIAL_EXISTS", "此通行密鑰已綁定至你的管理員帳戶。", 409);
     }
     return jsonError(
       "CREDENTIAL_IN_USE",
-      "此裝置的通行密鑰已綁定另一帳戶。",
+      "此裝置的通行密鑰已用於其他帳戶。",
       409
     );
   }
@@ -93,16 +95,16 @@ export async function POST(req: Request) {
       : null;
 
   await prisma.$transaction([
-    prisma.webAuthnCredential.create({
+    prisma.adminWebAuthnCredential.create({
       data: {
-        userId: auth.userId,
+        adminUserId: auth.adminId,
         credentialId: regCred.id,
         publicKey: Buffer.from(regCred.publicKey),
         counter: BigInt(regCred.counter),
         transports: transports ?? undefined,
       },
     }),
-    prisma.passkeyEnrollmentChallenge.delete({ where: { id: row.id } }),
+    prisma.adminPasskeyEnrollmentChallenge.delete({ where: { id: row.id } }),
   ]);
 
   return jsonOk({ ok: true });

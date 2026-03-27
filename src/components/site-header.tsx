@@ -6,7 +6,7 @@ import { InfoMenuDropdown } from "@/components/info-menu-dropdown";
 import { LanguageSwitchIcon } from "@/components/language-switch-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "@/lib/i18n/use-translation";
-import { navIconButtonMdHome, navIconButtonSmHome } from "@/lib/nav-icon-button-classes";
+import { navDfestivalCtaClass, navIconButtonMdHome, navIconButtonSmHome } from "@/lib/nav-icon-button-classes";
 import { withBasePath } from "@/lib/base-path";
 
 const btnOutline =
@@ -283,22 +283,22 @@ export function SiteHeader() {
                       {t("nav.loginBooking")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={2} className="my-1 border-t border-stone-100 pt-2 dark:border-stone-800">
+                  <MobileNavZipItem index={2}>
+                    <Link
+                      href="/about-d-festival"
+                      className={`${navDfestivalCtaClass} text-center`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.aboutDfestival2026")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={3} className="my-1 border-t border-stone-100 pt-2 dark:border-stone-800">
                     <Link
                       href="/faq"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
                     >
                       {t("nav.faq")}
-                    </Link>
-                  </MobileNavZipItem>
-                  <MobileNavZipItem index={3}>
-                    <Link
-                      href="/about-d-festival"
-                      className={`${linkPlain} w-full justify-center py-2`}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {t("nav.aboutDfestival2026")}
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
@@ -348,7 +348,7 @@ export function SiteHeader() {
                   <MobileNavZipItem index={2}>
                     <Link
                       href="/about-d-festival"
-                      className="flex w-full items-center justify-center rounded-full border border-amber-600/35 bg-gradient-to-b from-[#c9a227] via-[#a67c1a] to-[#6b4e14] px-5 sm:px-4 py-3 text-center text-sm font-semibold leading-snug text-white shadow-[0_6px_20px_rgba(107,78,20,0.35)] ring-1 ring-amber-300/40 transition hover:from-[#d4ae32] hover:via-[#b88922] hover:to-[#7a5a18] hover:ring-amber-200/50"
+                      className={`${navDfestivalCtaClass} text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
                       {t("nav.aboutDfestival2026")}

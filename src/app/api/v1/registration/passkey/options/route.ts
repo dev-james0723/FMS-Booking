@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { normalizePhoneForSms } from "@/lib/phone-normalize";
 import { requirePhoneVerifiedForRegistration } from "@/lib/registration/require-phone-verified";
-import { getWebAuthnSettings } from "@/lib/webauthn/config";
+import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     where: { emailNorm, phoneNorm },
   });
 
-  const { rpName, rpID, origin } = getWebAuthnSettings();
+  const { rpName, rpID, origin } = await getWebAuthnSettingsForRequest();
   const userID = new Uint8Array(randomBytes(32));
   const display =
     parsed.data.displayName && parsed.data.displayName.length > 0

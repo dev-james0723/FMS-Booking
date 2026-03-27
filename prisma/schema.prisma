@@ -637,9 +637,51 @@ model AdminUser {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  auditLogs AuditLog[]
+  auditLogs                     AuditLog[]
+  webAuthnCredentials           AdminWebAuthnCredential[]
+  passkeyEnrollmentChallenges   AdminPasskeyEnrollmentChallenge[]
 
   @@map("admin_users")
+}
+
+/// Admin passkeys (Face ID, Touch ID, etc.) — separate from end-user WebAuthnCredential.
+model AdminWebAuthnCredential {
+  id           String   @id @default(uuid())
+  adminUserId  String   @map("admin_user_id")
+  credentialId String   @unique @map("credential_id")
+  publicKey    Bytes    @map("public_key")
+  counter      BigInt   @default(0)
+  transports   Json?    @map("transports")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("admin_webauthn_credentials")
+}
+
+/// Discoverable admin passkey login — challenge not tied to admin until verify.
+model AdminPasskeyLoginChallenge {
+  id           String   @id @default(uuid())
+  challengeB64 String   @map("challenge_b64")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("admin_passkey_login_challenges")
+}
+
+model AdminPasskeyEnrollmentChallenge {
+  id           String   @id @default(uuid())
+  adminUserId  String   @map("admin_user_id")
+  challengeB64 String   @map("challenge_b64")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, expiresAt])
+  @@map("admin_passkey_enrollment_challenges")
 }
 
 model AuditLog {

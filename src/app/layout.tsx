@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import Script from "next/script";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
+import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
+import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 
 /** Avoid Prisma at build time when DB is unavailable (CI / local build without Postgres). */
 export const dynamic = "force-dynamic";
@@ -25,22 +29,28 @@ export const metadata: Metadata = {
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=false;if(t==="dark")d=true;else if(t!=="light")d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jar = await cookies();
+  const initialLocale = localeFromCookieValue(jar.get(FMS_LOCALE_STORAGE_KEY)?.value);
+  const htmlLang = initialLocale === "en" ? "en" : "zh-HK";
+
   return (
     <html
-      lang="zh-HK"
+      lang={htmlLang}
       suppressHydrationWarning
       className={`${display.variable} ${sans.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <SiteChrome>{children}</SiteChrome>
+        <Script
+          id="fms-theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+        <SiteChrome initialLocale={initialLocale}>{children}</SiteChrome>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
-import { getWebAuthnSettings } from "@/lib/webauthn/config";
+import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 
@@ -28,7 +28,7 @@ export async function POST() {
     where: { userId: auth.userId },
   });
 
-  const { rpName, rpID, origin } = getWebAuthnSettings();
+  const { rpName, rpID, origin } = await getWebAuthnSettingsForRequest();
   const displayName = user.profile?.nameZh?.trim() || user.email;
   const userID = new TextEncoder().encode(user.id);
 
