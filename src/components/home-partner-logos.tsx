@@ -31,7 +31,7 @@ export function HomePartnerLogos() {
             alt={t("partner.dfestivalAlt")}
             width={1600}
             height={539}
-            className="h-auto max-h-[5.5rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[6.5rem]"
+            className="h-auto max-h-[6rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7rem]"
             priority
           />
         </div>
@@ -48,7 +48,7 @@ export function HomePartnerLogos() {
             alt={t("partner.fmsAlt")}
             width={1024}
             height={1024}
-            className="h-auto max-h-[6rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7rem]"
+            className="h-auto max-h-[6.5rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7.5rem]"
             priority
           />
         </div>

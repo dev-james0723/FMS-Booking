@@ -100,7 +100,7 @@ export const regEn = {
   instrumentSelectLabel: "Instrument",
   instrumentSelectPlaceholder: "Choose…",
   instrumentLargeCta:
-    "Your instrument needs more space — please continue on the page below to complete registration",
+    "Your instrument needs more space — tap here to open the separate registration page.",
   openSpaceRegistrationBanner:
     "You are registering through the Open Space (large-instrument) link. After completion, your account will only use the Open Space booking pool, separate from the studio room slots.",
   instrumentCancel: "Cancel",

@@ -12,6 +12,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/account";
+  const loginTitle =
+    next.includes("/open-space") ? t("login.titleOpenSpace") : next.startsWith("/booking") ? t("login.titlePianoStudio") : t("login.title");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -111,7 +113,7 @@ function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-8 shadow-sm">
-      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">{t("login.title")}</h1>
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">{loginTitle}</h1>
       <p className="text-xs text-stone-500 dark:text-stone-500">{t("login.hint")}</p>
       {error && (
         <p className="text-sm text-red-700 dark:text-red-400">{error}</p>

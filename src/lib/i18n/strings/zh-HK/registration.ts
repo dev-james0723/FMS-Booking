@@ -101,7 +101,7 @@ export const regZhHK = {
   instrumentSelectLabel: "樂器",
   instrumentSelectPlaceholder: "請選擇…",
   instrumentLargeCta:
-    "由於你選擇的樂器體積較大，請到以下頁面進行登記",
+    "由於你選擇的樂器體積較大，請按此到另一頁面進行登記。",
   openSpaceRegistrationBanner:
     "你正使用「大型樂器／開放空間」登記連結。完成後，帳戶只會進入開放空間預約系統（與琴室時段分開）。",
   instrumentCancel: "取消",

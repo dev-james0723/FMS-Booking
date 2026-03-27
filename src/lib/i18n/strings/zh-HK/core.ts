@@ -11,6 +11,8 @@ export const coreZhHK = {
     mainNavMobile: "主選單（手機）",
     registerCta: "登記資料及建立帳戶",
     loginBooking: "預約系統登入",
+    loginBookingPianoStudio: "琴室預約系統登入",
+    loginBookingOpenSpace: "開放空間預約系統登入",
     myAccount: "我的帳戶",
     bookingSlots: "預約時段",
     contact: "聯絡資訊",
@@ -148,6 +150,8 @@ export const coreZhHK = {
   },
   login: {
     title: "登入",
+    titlePianoStudio: "琴室預約系統登入",
+    titleOpenSpace: "開放空間預約系統登入",
     hint: "使用登記時的 Email 及郵件內的臨時密碼。",
     password: "密碼",
     signingIn: "登入中…",

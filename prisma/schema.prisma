@@ -603,6 +603,8 @@ model ReferralCode {
   id                 String    @id @default(uuid())
   ambassadorUserId   String    @map("ambassador_user_id")
   code               String    @unique
+  /// Landing visits with `?ref=` (one increment per browser cookie session).
+  openCount          Int       @default(0) @map("open_count")
   maxUses            Int?      @map("max_uses")
   expiresAt          DateTime? @map("expires_at")
 

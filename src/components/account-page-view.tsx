@@ -9,6 +9,7 @@ import { displayVenueLabel } from "@/lib/booking-slot-display";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
+import { AccountAmbassadorReferralSection } from "@/components/account-ambassador-referral-section";
 import { AccountGoogleCalendarPanel } from "@/components/account-google-calendar-panel";
 import {
   BookingIconCalendarRolling,
@@ -88,6 +89,10 @@ export type AccountPageViewProps = {
   googleCalendarOAuthReady: boolean;
   googleCalendarLinked: boolean;
   googleCalendarFlash: string | null;
+  /** D Ambassador display name when this account registered via a referral link. */
+  referrerNameZh: string | null;
+  /** Registration / account opt-in to D Ambassador (loads referral tools when true). */
+  wantsAmbassador: boolean;
 };
 
 const EXAMPLE_DATE_ISOS = ["2026-04-05", "2026-04-06", "2026-04-07"] as const;
@@ -403,6 +408,19 @@ export function AccountPageView(props: AccountPageViewProps) {
         initialAnimal={props.favoriteAvatarAnimal}
         initialImageDataUrl={props.avatarImageDataUrl}
       />
+
+      {props.referrerNameZh ? (
+        <section
+          className="rounded-2xl border border-violet-200/80 bg-violet-50/90 p-5 shadow-sm dark:border-violet-800/50 dark:bg-violet-950/40"
+          aria-label={t("account.referrerBannerAria")}
+        >
+          <p className="text-sm font-medium text-violet-950 dark:text-violet-100">
+            {tr("account.referrerBanner", { name: props.referrerNameZh })}
+          </p>
+        </section>
+      ) : null}
+
+      <AccountAmbassadorReferralSection wantsAmbassador={props.wantsAmbassador} />
 
       <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.limitsTitle")}</h2>

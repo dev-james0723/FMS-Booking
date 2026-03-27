@@ -9,6 +9,7 @@ import { getQuotaNumericLimits } from "@/lib/booking/booking-rules";
 import { mergeConsecutiveSlots } from "@/lib/booking/merge-slots";
 import { parseBookingNumericSettings } from "@/lib/booking/settings";
 import { prisma } from "@/lib/prisma";
+import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
 import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 import { isUnreachableDbError } from "@/lib/settings-fallback";
 import { hkDateKey } from "@/lib/time";
@@ -157,6 +158,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       },
     });
 
+    const referrerNameZh = await resolveReferrerDisplayForUser(
+      prisma,
+      user.referralAttributionCode
+    );
+
     const bookingsPayload = bookings.map((b) => {
       const slots = b.allocations.map((a) => ({
         startsAt: a.slot.startsAt,
@@ -203,6 +209,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         googleCalendarOAuthReady={isGoogleCalendarUserOAuthConfigured()}
         googleCalendarLinked={Boolean(user.googleCalendarRefreshToken?.trim())}
         googleCalendarFlash={googleCalendarFlash}
+        referrerNameZh={referrerNameZh}
+        wantsAmbassador={user.profile.wantsAmbassador === true}
       />
     );
   } catch (e) {

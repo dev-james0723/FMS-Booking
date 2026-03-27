@@ -96,4 +96,40 @@ export const accountEn = {
     music_tutor: "Music tutor",
     other: "Other",
   },
+  ambassadorPlanTitle: "D Ambassador referral programme",
+  ambassadorSectionIntro:
+    "Share your personal link or QR code. Visits are counted when someone opens the link; when they complete registration through your channel, eligible ambassadors earn bonus 30-minute slots (subject to programme rules and slot availability).",
+  ambassadorRewardRules:
+    "Each successful new registration you refer can earn 1 bonus 30-minute slot, up to 25 slots during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash.",
+  ambassadorShareLink: "Your share link",
+  ambassadorCopyLink: "Copy link",
+  ambassadorLinkCopied: "Copied",
+  ambassadorQrLoading: "Generating QR…",
+  ambassadorQrCaption: "Scan to open your referral link.",
+  ambassadorStatOpens: "Link opens recorded",
+  ambassadorStatRegisters: "Registrations completed",
+  ambassadorStatRewards: "Rewards",
+  ambassadorStatRewardsValue: "{times} time(s) · {slots} bonus slot(s) granted",
+  ambassadorLoading: "Loading your referral tools…",
+  ambassadorOptInIntro:
+    "If you did not opt in during registration, you can still join here. Once you confirm, we generate your personal share link and QR code and start tracking opens and referred registrations.",
+  ambassadorOptInButton: "I want to become a D Ambassador",
+  ambassadorOptInBusy: "Working…",
+  ambassadorError: "Could not load referral data. Refresh and try again.",
+  referrerBanner: 'You registered through D Ambassador “{name}”.',
+  referrerBannerAria: "Referrer",
+  ambassadorPopupTitle: "Referral invitation",
+  ambassadorPopupIntro:
+    "D Ambassador “{name}” invites you to the free experience programme. You may use the following when registering through this channel:",
+  ambassadorPopupDfestival:
+    "D Festival Young Pianist Program — 50% off the application fee; your promo code will be sent automatically to your registration email.",
+  ambassadorPopupDmasters:
+    "D Masters International Piano Competition — 50% off the preliminary application fee; your promo code will be sent automatically to your registration email.",
+  ambassadorPopupNote:
+    "All extra booking slots must be used after 3 May 2026. After this free experience programme ends, the organiser will progressively notify users who earned extra Time Slots when they may book. D Festival and D Masters offers remain subject to the organiser’s terms.",
+  ambassadorPopupCopyAll: "Copy offer details",
+  ambassadorPopupCopied: "Copied",
+  ambassadorPopupClose: "Close",
+  ambassadorPopupCopyLeadEn: "D Ambassador {name} invites you to the free experience programme. You may use:",
+  ambassadorPopupCopyLeadZh: "D Ambassador {name} invites you to the free experience programme.",
 };

@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
+import {
+  findReferralCodeByRaw,
+  finalizeAmbassadorReferralForNewUser,
+} from "@/lib/referral/ambassador";
 import { registrationSchema } from "@/lib/validation/registration";
 import { hashPassword } from "@/lib/password";
 import {
@@ -12,6 +16,7 @@ import { verifyPhoneRegistrationProof } from "@/lib/phone-registration-proof";
 import { AccountStatus, Prisma, RegistrationSubmissionStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { deriveRegistrationProfile } from "@/lib/registration/profile-kind";
+import { getAllSettings } from "@/lib/settings";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -144,6 +149,13 @@ export async function POST(req: Request) {
     return jsonError("INVALID_CATEGORY", "User category not found", 500);
   }
 
+  const referralRaw = data.referralCode?.trim() || null;
+  const resolvedReferral = referralRaw
+    ? await findReferralCodeByRaw(prisma, referralRaw)
+    : null;
+  const allSettings = await getAllSettings();
+  const referralAttributionCode = resolvedReferral ? resolvedReferral.code : null;
+
   const tempPassword = nanoid(14);
   const passwordHash = await hashPassword(tempPassword);
 
@@ -163,108 +175,123 @@ export async function POST(req: Request) {
   ) as Prisma.InputJsonValue;
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email,
-          accountStatus: AccountStatus.active,
-          hasCompletedRegistration: true,
-          category: { connect: { id: category.id } },
-          quotaTier: derived.quotaTier,
-          referralAttributionCode: data.referralCode?.trim() || null,
-          socialFollowSetupToken: data.socialFollowClaimed ? nanoid(32) : null,
-        },
-      });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            email,
+            accountStatus: AccountStatus.active,
+            hasCompletedRegistration: true,
+            category: { connect: { id: category.id } },
+            quotaTier: derived.quotaTier,
+            referralAttributionCode: referralAttributionCode,
+            socialFollowSetupToken: data.socialFollowClaimed ? nanoid(32) : null,
+          },
+        });
 
-      await tx.userProfile.create({
-        data: {
-          userId: user.id,
-          nameZh: data.nameZh.trim(),
-          nameEn: data.nameEn?.trim() || null,
-          phone: phoneNorm,
-          age: data.age,
-          isAge17OrAbove: true,
-          teacherRecommended: derived.teacherRecommended,
-          teacherName: data.teacherName?.trim() || null,
-          teacherContact: data.teacherContact?.trim() || null,
-          individualEligible: derived.individualEligible,
-          teachingEligible: derived.teachingEligible,
-          identityFlags: data.identityFlags as Prisma.InputJsonValue,
-          identityOtherText:
-            data.identityFlags.includes("other") && data.identityOtherText?.trim()
-              ? data.identityOtherText.trim()
-              : null,
-          instrumentField: data.instrumentField.trim(),
-          bookingVenueKind: data.bookingVenueKind,
-          usagePurposes: data.usagePurposes as Prisma.InputJsonValue,
-          preferredDates: (data.preferredDates ?? undefined) as Prisma.InputJsonValue | undefined,
-          preferredTimeText: data.preferredTimeText?.trim() || null,
-          wantsConsecutiveSlots: null,
-          extraNotes: data.extraNotes?.trim() || null,
-          interestDfestival: data.interestDfestival,
-          interestDmasters: data.interestDmasters,
-          marketingOptIn: data.marketingOptIn,
-          socialFollowClaimed: data.socialFollowClaimed,
-          socialFollowLinkClicks: {},
-          socialFollowVerified: false,
-          socialRepostClaimed: data.socialRepostClaimed,
-          wantsAmbassador: data.wantsAmbassador,
-          agreedTerms: data.agreedTerms,
-          agreedPrivacy: data.agreedPrivacy,
-          agreedEmailNotifications: data.agreedEmailNotifications,
-        },
-      });
+        await tx.userProfile.create({
+          data: {
+            userId: user.id,
+            nameZh: data.nameZh.trim(),
+            nameEn: data.nameEn?.trim() || null,
+            phone: phoneNorm,
+            age: data.age,
+            isAge17OrAbove: true,
+            teacherRecommended: derived.teacherRecommended,
+            teacherName: data.teacherName?.trim() || null,
+            teacherContact: data.teacherContact?.trim() || null,
+            individualEligible: derived.individualEligible,
+            teachingEligible: derived.teachingEligible,
+            identityFlags: data.identityFlags as Prisma.InputJsonValue,
+            identityOtherText:
+              data.identityFlags.includes("other") && data.identityOtherText?.trim()
+                ? data.identityOtherText.trim()
+                : null,
+            instrumentField: data.instrumentField.trim(),
+            bookingVenueKind: data.bookingVenueKind,
+            usagePurposes: data.usagePurposes as Prisma.InputJsonValue,
+            preferredDates: (data.preferredDates ?? undefined) as Prisma.InputJsonValue | undefined,
+            preferredTimeText: data.preferredTimeText?.trim() || null,
+            wantsConsecutiveSlots: null,
+            extraNotes: data.extraNotes?.trim() || null,
+            interestDfestival: data.interestDfestival,
+            interestDmasters: data.interestDmasters,
+            marketingOptIn: data.marketingOptIn,
+            socialFollowClaimed: data.socialFollowClaimed,
+            socialFollowLinkClicks: {},
+            socialFollowVerified: false,
+            socialRepostClaimed: data.socialRepostClaimed,
+            wantsAmbassador: data.wantsAmbassador,
+            agreedTerms: data.agreedTerms,
+            agreedPrivacy: data.agreedPrivacy,
+            agreedEmailNotifications: data.agreedEmailNotifications,
+          },
+        });
 
-      await tx.loginCredential.create({
-        data: {
-          userId: user.id,
-          passwordHash,
-          mustChangePassword: true,
-        },
-      });
+        await tx.loginCredential.create({
+          data: {
+            userId: user.id,
+            passwordHash,
+            mustChangePassword: true,
+          },
+        });
 
-      await tx.webAuthnCredential.create({
-        data: {
-          userId: user.id,
-          credentialId: passkeyPrereg.credentialId,
-          publicKey: passkeyPrereg.publicKey,
-          counter: passkeyPrereg.counter,
-          transports:
-            passkeyPrereg.transports === null || passkeyPrereg.transports === undefined
-              ? undefined
-              : (passkeyPrereg.transports as Prisma.InputJsonValue),
-        },
-      });
-      await tx.passkeyPreregChallenge.delete({
-        where: { id: passkeyPrereg.id },
-      });
+        await tx.webAuthnCredential.create({
+          data: {
+            userId: user.id,
+            credentialId: passkeyPrereg.credentialId,
+            publicKey: passkeyPrereg.publicKey,
+            counter: passkeyPrereg.counter,
+            transports:
+              passkeyPrereg.transports === null || passkeyPrereg.transports === undefined
+                ? undefined
+                : (passkeyPrereg.transports as Prisma.InputJsonValue),
+          },
+        });
+        await tx.passkeyPreregChallenge.delete({
+          where: { id: passkeyPrereg.id },
+        });
 
-      await tx.registrationSubmission.create({
-        data: {
-          userId: user.id,
-          email,
-          payloadSnapshot,
-          status: RegistrationSubmissionStatus.processed,
-          idempotencyKey: idempotencyKey ?? null,
-          clientIp: clientIp ?? null,
-        },
-      });
+        await tx.registrationSubmission.create({
+          data: {
+            userId: user.id,
+            email,
+            payloadSnapshot,
+            status: RegistrationSubmissionStatus.processed,
+            idempotencyKey: idempotencyKey ?? null,
+            clientIp: clientIp ?? null,
+          },
+        });
 
-      const consumed = await tx.phoneOtpChallenge.updateMany({
-        where: {
-          id: phoneProof.challengeId,
-          phoneNorm,
-          verifiedAt: { not: null },
-          registrationConsumedAt: null,
-        },
-        data: { registrationConsumedAt: new Date() },
-      });
-      if (consumed.count !== 1) {
-        throw new Error("PHONE_VERIFICATION_ALREADY_USED");
+        const consumed = await tx.phoneOtpChallenge.updateMany({
+          where: {
+            id: phoneProof.challengeId,
+            phoneNorm,
+            verifiedAt: { not: null },
+            registrationConsumedAt: null,
+          },
+          data: { registrationConsumedAt: new Date() },
+        });
+        if (consumed.count !== 1) {
+          throw new Error("PHONE_VERIFICATION_ALREADY_USED");
+        }
+
+        if (resolvedReferral) {
+          await finalizeAmbassadorReferralForNewUser(
+            tx,
+            allSettings,
+            user.id,
+            resolvedReferral
+          );
+        }
+
+        return user;
+      },
+      {
+        maxWait: 10_000,
+        timeout: 20_000,
       }
-
-      return user;
-    });
+    );
 
     let emailOutcome: Awaited<ReturnType<typeof sendRegistrationConfirmation>>;
     try {

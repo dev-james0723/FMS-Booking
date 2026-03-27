@@ -95,4 +95,38 @@ export const accountZhHK = {
     music_tutor: "音樂導師",
     other: "其他",
   },
+  ambassadorPlanTitle: "D Ambassador 推薦計劃",
+  ambassadorSectionIntro:
+    "請分享下方專屬連結或 QR code。親友開啟連結時系統會記錄次數；若對方經你的推薦通道完成登記，合資格 Ambassador 可獲額外 30 分鐘獎勵節數（受活動條款及名額所限）。",
+  ambassadorRewardRules:
+    "推薦獎賞：每成功推薦 1 位新登記者可獲 1 節 30 分鐘 bonus slot，本活動期間每位 Ambassador 最多 25 節（25 名推薦人）；須視乎名額及時段供應，不可轉讓、不可兌換現金。",
+  ambassadorShareLink: "專屬分享連結",
+  ambassadorCopyLink: "複製連結",
+  ambassadorLinkCopied: "已複製",
+  ambassadorQrLoading: "正在產生 QR code…",
+  ambassadorQrCaption: "掃描後會開啟同一條專屬連結。",
+  ambassadorStatOpens: "連結開啟次數（已記錄）",
+  ambassadorStatRegisters: "經推薦完成登記人數",
+  ambassadorStatRewards: "已獲獎勵",
+  ambassadorStatRewardsValue: "共 {times} 次 · 累計 {slots} 節獎勵",
+  ambassadorLoading: "載入推薦工具中…",
+  ambassadorOptInIntro:
+    "登記時未選擇成為 D Ambassador 的話，你仍可在此加入計劃。確認後系統會即時為你產生專屬分享連結、QR code，並開始統計連結開啟與推薦登記。",
+  ambassadorOptInButton: "我想成為 D Ambassador",
+  ambassadorOptInBusy: "處理中…",
+  ambassadorError: "無法載入推薦資料，請重新整理頁面再試。",
+  referrerBanner: "你經 D Ambassador「{name}」的推薦通道完成登記。",
+  referrerBannerAria: "推薦人資料",
+  ambassadorPopupTitle: "推薦邀請",
+  ambassadorPopupIntro:
+    "D Ambassador「{name}」向你推薦了免費體驗活動，你可以享有以下禮遇：",
+  ambassadorPopupDfestival: "D Festival 青年鋼琴家藝術節：報名費半價；優惠碼將自動發送至你的登記電郵。",
+  ambassadorPopupDmasters: "D Masters 國際鋼琴比賽：初賽報名費半價；優惠碼將自動發送至你的登記電郵。",
+  ambassadorPopupNote:
+    "注意：所有額外預約時段須於 2026 年 5 月 3 日後使用。是次免費體驗活動結束後，主辦方將逐步通知獲取額外 Time Slots 之用戶何時可預約。D Festival／D Masters 報名優惠之使用須遵守主辦方條款。",
+  ambassadorPopupCopyAll: "一鍵複製禮遇及優惠碼",
+  ambassadorPopupCopied: "已複製",
+  ambassadorPopupClose: "關閉",
+  ambassadorPopupCopyLeadEn: "",
+  ambassadorPopupCopyLeadZh: "D Ambassador {name} 向你推薦了免費體驗活動。你可以享有以下禮遇：",
 };

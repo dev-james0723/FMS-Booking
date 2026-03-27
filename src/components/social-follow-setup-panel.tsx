@@ -90,10 +90,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
     <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-violet-200 bg-violet-50/50 px-5 sm:px-4 py-6 text-left">
       <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤官方帳戶（登記承諾）</h2>
       <p className="mt-2 text-sm font-medium text-stone-800 dark:text-stone-200">
-        參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶；完成本步驟不會獲得任何額外預約時段。
-      </p>
-      <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-        請點擊下列六個按鈕各一次；會在新分頁開啟對應官方頁面並於此頁記錄進度。重複點擊同一按鈕不會重複計算；六個都曾點擊即視為完成追蹤承諾之系統記錄。
+        參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶。
       </p>
       {missingUrlCount > 0 && (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">

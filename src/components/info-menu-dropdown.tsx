@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { LanguageSwitchIcon } from "@/components/language-switch-icon";
 import { useTranslation } from "@/lib/i18n/use-translation";
-import { navDfestivalCtaClass } from "@/lib/nav-icon-button-classes";
-
 const panelClass =
   "absolute right-0 z-50 mt-1 min-w-[min(100vw-2rem,18rem)] rounded-xl border border-stone-200 bg-[color:var(--chrome-bg)] py-1 shadow-lg dark:border-stone-700";
 
@@ -63,16 +61,6 @@ export function InfoMenuDropdown() {
       </button>
       {open ? (
         <div className={panelClass} role="menu">
-          <div className="px-2 py-1.5" role="none">
-            <Link
-              href="/about-d-festival"
-              className={navDfestivalCtaClass}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-            >
-              {t("nav.aboutDfestival2026")}
-            </Link>
-          </div>
           <Link
             href="/faq"
             className={itemClass}

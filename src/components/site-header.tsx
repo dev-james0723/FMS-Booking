@@ -6,15 +6,24 @@ import { InfoMenuDropdown } from "@/components/info-menu-dropdown";
 import { LanguageSwitchIcon } from "@/components/language-switch-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "@/lib/i18n/use-translation";
-import { navDfestivalCtaClass, navIconButtonMdHome, navIconButtonSmHome } from "@/lib/nav-icon-button-classes";
+import {
+  navDfestivalCtaClass,
+  navDfestivalCtaHeaderInlineClass,
+  navIconButtonMdHome,
+  navIconButtonSmHome,
+} from "@/lib/nav-icon-button-classes";
 import { withBasePath } from "@/lib/base-path";
 
 const btnOutline =
   "inline-flex min-h-[44px] items-center justify-center rounded-full border border-stone-300 dark:border-stone-600 px-5 sm:px-4 py-2 text-sm text-stone-800 dark:text-stone-200 transition hover:border-stone-900 hover:bg-stone-50 dark:hover:border-stone-400 dark:hover:bg-stone-800";
 const btnSolid =
   "inline-flex min-h-[44px] items-center justify-center rounded-full bg-stone-900 px-5 sm:px-4 py-2 text-sm text-white transition hover:bg-stone-800";
+const btnLoginPiano =
+  "inline-flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-full bg-blue-900 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white shadow-sm transition hover:bg-blue-950 sm:px-3 sm:text-xs md:flex-none md:px-4 md:text-sm dark:bg-blue-950 dark:hover:bg-blue-900";
+const btnLoginOpenSpace =
+  "inline-flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-full bg-sky-400 px-2 py-2 text-center text-[11px] font-medium leading-snug text-blue-950 shadow-sm transition hover:bg-sky-300 sm:px-3 sm:text-xs md:flex-none md:px-4 md:text-sm dark:bg-sky-500 dark:text-sky-950 dark:hover:bg-sky-400";
 const linkPlain =
-  "inline-flex min-h-[44px] items-center text-sm text-stone-600 dark:text-stone-400 transition hover:text-stone-900 dark:text-stone-50";
+  "inline-flex min-h-[44px] items-center text-sm text-stone-600 transition hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-50";
 
 const REGISTRATION_BANNER_DISMISSED_KEY = "fms-registration-banner-dismissed";
 const REGISTRATION_BANNER_STORE_EVENT = "fms-registration-banner-dismissed-change";
@@ -153,7 +162,7 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="border-b border-stone-200 bg-[color:var(--chrome-bg)] backdrop-blur-md dark:border-stone-800">
+      <header className="relative z-20 border-b border-stone-200 bg-[color:var(--chrome-bg)] backdrop-blur-md dark:border-stone-800">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 sm:px-4 py-3 md:gap-4 md:py-4">
           <Link
             href="/"
@@ -171,27 +180,40 @@ export function SiteHeader() {
                 <Link href="/register" className={btnOutline}>
                   {t("nav.registerCta")}
                 </Link>
-                <Link href="/login?next=/account" className={btnSolid}>
-                  {t("nav.loginBooking")}
+                <div className="flex min-w-0 shrink gap-2">
+                  <Link href="/login?next=/booking" className={btnLoginPiano}>
+                    {t("nav.loginBookingPianoStudio")}
+                  </Link>
+                  <Link href="/login?next=/booking/open-space" className={btnLoginOpenSpace}>
+                    {t("nav.loginBookingOpenSpace")}
+                  </Link>
+                </div>
+                <Link href="/about-d-festival" className={navDfestivalCtaHeaderInlineClass}>
+                  {t("nav.aboutDfestival2026")}
                 </Link>
               </>
             )}
             {me?.user && (
-              <div className="flex flex-col items-center gap-1">
-                <Link
-                  href="/account"
-                  className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-violet-300 bg-violet-50 text-violet-900 transition hover:border-violet-500 hover:bg-violet-100 dark:border-violet-500/60 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:border-violet-400 dark:hover:bg-violet-900/60"
-                  aria-label={t("nav.myAccount")}
-                >
-                  <UserIcon className="h-5 w-5" />
+              <>
+                <Link href="/about-d-festival" className={navDfestivalCtaHeaderInlineClass}>
+                  {t("nav.aboutDfestival2026")}
                 </Link>
-                <Link
-                  href={bookingHref}
-                  className="text-center text-[11px] font-medium leading-tight text-violet-800 underline decoration-violet-400 underline-offset-2 hover:text-violet-950 dark:text-violet-300 dark:decoration-violet-500 dark:hover:text-violet-100"
-                >
-                  {t("nav.bookingSlots")}
-                </Link>
-              </div>
+                <div className="flex flex-col items-center gap-1">
+                  <Link
+                    href="/account"
+                    className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-violet-300 bg-violet-50 text-violet-900 transition hover:border-violet-500 hover:bg-violet-100 dark:border-violet-500/60 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:border-violet-400 dark:hover:bg-violet-900/60"
+                    aria-label={t("nav.myAccount")}
+                  >
+                    <UserIcon className="h-5 w-5" />
+                  </Link>
+                  <Link
+                    href={bookingHref}
+                    className="text-center text-[11px] font-medium leading-tight text-violet-800 underline decoration-violet-400 underline-offset-2 hover:text-violet-950 dark:text-violet-300 dark:decoration-violet-500 dark:hover:text-violet-100"
+                  >
+                    {t("nav.bookingSlots")}
+                  </Link>
+                </div>
+              </>
             )}
             <InfoMenuDropdown />
             <ThemeToggle />
@@ -275,13 +297,22 @@ export function SiteHeader() {
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={1}>
-                    <Link
-                      href="/login?next=/account"
-                      className={`${btnSolid} w-full text-center`}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {t("nav.loginBooking")}
-                    </Link>
+                    <div className="flex w-full gap-2">
+                      <Link
+                        href="/login?next=/booking"
+                        className={`${btnLoginPiano} sm:flex-1`}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {t("nav.loginBookingPianoStudio")}
+                      </Link>
+                      <Link
+                        href="/login?next=/booking/open-space"
+                        className={`${btnLoginOpenSpace} sm:flex-1`}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {t("nav.loginBookingOpenSpace")}
+                      </Link>
+                    </div>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={2}>
                     <Link
@@ -453,7 +484,7 @@ export function SiteHeader() {
         />
       ) : (
         <div
-          className="relative border-b border-[#2a1845] bg-gradient-to-r from-[#3d2463] via-[#4a2d75] to-[#3d2463] px-5 sm:px-4 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:pr-11 sm:text-xs sm:leading-snug"
+          className="relative z-10 border-b border-[#2a1845] bg-gradient-to-r from-[#3d2463] via-[#4a2d75] to-[#3d2463] px-5 sm:px-4 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:pr-11 sm:text-xs sm:leading-snug"
           role="note"
         >
           <p className="mx-auto max-w-3xl">

@@ -24,7 +24,7 @@ export const FALLBACK_SYSTEM_SETTINGS_ROWS: { key: string; value: unknown }[] = 
   { key: "teaching_max_slots_any_3_consecutive_days", value: 16 },
   { key: "max_advance_booking_days", value: 2 },
   { key: "no_show_grace_minutes", value: 15 },
-  { key: "ambassador_bonus_slot_cap_per_user", value: 2 },
+  { key: "ambassador_bonus_slot_cap_per_user", value: 25 },
 ];
 
 export const FALLBACK_SYSTEM_SETTINGS: Record<string, unknown> = Object.fromEntries(

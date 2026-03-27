@@ -137,7 +137,7 @@ export function InstrumentOtherModal({
             <Link
               href={withBasePath("/register/large-instrument")}
               onClick={onClose}
-              className="flex w-full items-center justify-center rounded-lg bg-stone-900 px-3 py-2.5 text-center text-sm font-medium leading-snug text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+              className="motion-safe:animate-cta-attention flex w-full origin-center items-center justify-center rounded-[15px] bg-stone-900 px-3 py-2.5 text-center text-sm font-medium leading-snug text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
             >
               {t("reg.instrumentLargeCta")}
             </Link>

@@ -43,6 +43,7 @@ html {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-display), ui-serif, Georgia, serif;
   --animate-memo-drift: memo-drift 5.5s ease-in-out infinite;
+  --animate-cta-attention: cta-attention-pulse 2.4s ease-in-out infinite;
 }
 
 /* Memo only: pivot at top-centre so the pin (sibling, not animated) stays put */
@@ -56,9 +57,29 @@ html {
   }
 }
 
+/* Large-instrument CTA in modal: subtle scale pulse (respects motion-safe) */
+@keyframes cta-attention-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.018);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Dark mode: `hover:text-stone-900` and similar light-theme hovers still apply under `.dark`
+   and can override `dark:text-*`, making links nearly invisible. `dark:hover:text-*` utilities
+   beat this rule (higher class count). Globe lightbox CTAs stay on their own colours. */
+@media (hover: hover) {
+  .dark :is(a[href]):hover:not(.mdw-globe-btn--cta):not(.mdw-globe-btn--ghost) {
+    color: var(--foreground);
+  }
 }
 
 .font-serif {

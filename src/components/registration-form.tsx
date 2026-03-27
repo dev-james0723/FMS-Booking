@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 import { withBasePath } from "@/lib/base-path";
+import { PENDING_REFERRAL_SESSION_KEY } from "@/lib/referral/constants";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
@@ -230,6 +231,16 @@ export function RegistrationForm() {
 
   const interestSelectAllRef = useRef<HTMLInputElement>(null);
   const consentSelectAllRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const ref = searchParams.get("ref")?.trim().toLowerCase() ?? "";
+    if (!ref) return;
+    try {
+      sessionStorage.setItem(PENDING_REFERRAL_SESSION_KEY, ref);
+    } catch {
+      /* ignore */
+    }
+  }, [searchParams]);
 
   const identityOptions = useMemo(
     () =>
@@ -571,6 +582,16 @@ export function RegistrationForm() {
     const preferredTimeTextOut =
       preferredTimeLines.length > 0 ? preferredTimeLines.join("\n") : null;
 
+    let referralCode: string | null = searchParams.get("ref")?.trim().toLowerCase() ?? null;
+    if (!referralCode) {
+      try {
+        const stored = sessionStorage.getItem(PENDING_REFERRAL_SESSION_KEY)?.trim().toLowerCase() ?? "";
+        referralCode = stored.length > 0 ? stored : null;
+      } catch {
+        referralCode = null;
+      }
+    }
+
     const body = {
       nameZh: nameZh.trim(),
       nameEn: nameEn.trim() || null,
@@ -599,7 +620,7 @@ export function RegistrationForm() {
       agreedTerms,
       agreedPrivacy,
       agreedEmailNotifications,
-      referralCode: null,
+      referralCode,
       passkeyPreregToken,
       bookingVenueKind: registerForOpenSpace ? "open_space" : "studio_room",
     };

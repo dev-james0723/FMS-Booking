@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
+import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
 import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 
@@ -35,6 +36,10 @@ export async function GET() {
     user.credentials.mustChangePassword === false;
 
   const p = user.profile;
+  const referrerNameZh = await resolveReferrerDisplayForUser(
+    prisma,
+    user.referralAttributionCode
+  );
 
   return jsonOk({
     user: {
@@ -47,6 +52,7 @@ export async function GET() {
       bookingVenueKind: p?.bookingVenueKind ?? "studio_room",
       profile: user.profile,
       category: user.category,
+      referrerNameZh,
       bookingEligibility:
         p != null
           ? {
