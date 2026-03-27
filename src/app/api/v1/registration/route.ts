@@ -2,11 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { registrationSchema } from "@/lib/validation/registration";
 import { hashPassword } from "@/lib/password";
-import { sendRegistrationConfirmation } from "@/lib/email";
+import {
+  sendRegistrationAdminNotification,
+  sendRegistrationConfirmation,
+} from "@/lib/email";
 import { normalizePhoneForSms } from "@/lib/phone-normalize";
 import { verifyPasskeyPreregToken } from "@/lib/passkey-prereg-token";
 import { verifyPhoneRegistrationProof } from "@/lib/phone-registration-proof";
-import { verifyRecaptchaResponse } from "@/lib/recaptcha/verify";
 import { AccountStatus, Prisma, RegistrationSubmissionStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 
@@ -74,30 +76,6 @@ export async function POST(req: Request) {
       "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
       409
     );
-  }
-
-  const skipRecaptchaVerify = process.env.SKIP_RECAPTCHA_VERIFICATION === "true";
-  if (!skipRecaptchaVerify) {
-    const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY?.trim();
-    if (recaptchaSecret) {
-      const captchaOk = await verifyRecaptchaResponse(
-        data.captchaToken ?? undefined,
-        clientIp
-      );
-      if (!captchaOk) {
-        return jsonError(
-          "CAPTCHA_FAILED",
-          "請完成「我不是機械人」驗證，或重新整理頁面後再試。",
-          400
-        );
-      }
-    } else if (process.env.REQUIRE_CAPTCHA === "true") {
-      return jsonError(
-        "CAPTCHA_MISCONFIG",
-        "已啟用 REQUIRE_CAPTCHA，但伺服器未設定 RECAPTCHA_SECRET_KEY。",
-        500
-      );
-    }
   }
 
   const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
@@ -170,7 +148,6 @@ export async function POST(req: Request) {
   const snapshotFields: Record<string, unknown> = { ...data };
   delete snapshotFields.phoneVerificationToken;
   delete snapshotFields.passkeyPreregToken;
-  delete snapshotFields.captchaToken;
   const payloadSnapshot = JSON.parse(
     JSON.stringify({
       ...snapshotFields,
@@ -295,6 +272,17 @@ export async function POST(req: Request) {
         error:
           emailErr instanceof Error ? emailErr.message : String(emailErr),
       };
+    }
+
+    try {
+      await sendRegistrationAdminNotification({
+        userId: result.id,
+        registrantEmail: email,
+        payloadSnapshot: payloadSnapshot as Record<string, unknown>,
+        clientIp: clientIp ?? null,
+      });
+    } catch (adminNotifyErr) {
+      console.error("[registration] admin registration notify email", adminNotifyErr);
     }
 
     const base = {

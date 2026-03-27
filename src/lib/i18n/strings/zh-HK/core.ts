@@ -2,7 +2,7 @@ export const coreZhHK = {
   brand: {
     festivalLine: "D Festival × 幻樂空間",
     fantasiaSpace: "幻樂空間",
-    managementCompany: "香港幻樂國際音樂管理公司",
+    managementCompany: "香港幻樂國際有限公司",
     youngPianistProgram: "D Festival 青年鋼琴家藝術節",
     dmastersCompetition: "D Masters 國際鋼琴比賽",
   },
@@ -14,8 +14,10 @@ export const coreZhHK = {
     myAccount: "我的帳戶",
     bookingSlots: "預約時段",
     contact: "聯絡",
-    infoMenu: "資訊",
+    infoMenu: "聯絡",
     faq: "常見問題（FAQ）",
+    privacyPolicy: "私隱條例",
+    termsAndConditions: "條款與細則",
     switchToEnglish: "English",
     switchToZh: "繁體中文",
     language: "語言",
@@ -30,17 +32,23 @@ export const coreZhHK = {
     dismiss: "關閉此提示",
   },
   footer: {
-    line: "© {year} 香港幻樂國際音樂管理公司 · D Festival · 幻樂空間",
+    line: "© {year} 香港幻樂國際有限公司 - 版權所有",
+    sitemapAria: "網站地圖",
+    groupAccount: "帳戶與預約",
+    groupInfo: "活動與政策",
+    home: "主頁",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",
     title: "限時免費琴室體驗預約",
     lead:
-      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際音樂管理公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。首日（4 月 3 日）場地開放時間為 11:00–20:00，其餘活動日為 06:00–20:00（香港時間）。",
+      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際有限公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。首日（4 月 3 日）場地開放時間為 11:00–20:00，其餘活動日為 06:00–20:00（香港時間）。",
     registerCta: "登記資料及建立帳戶",
     loginCta: "預約系統登入",
     loginDisabledHint:
       "預約將於開放時間後啟用；您仍可先完成登記及建立帳戶。",
+    sponsorLogoAlt: "香港華樂國際音樂管理公司",
+    sponsorCaption: "全力贊助",
   },
   campaign: {
     dateRange: "2026 年 4 月 3 日至 5 月 3 日",

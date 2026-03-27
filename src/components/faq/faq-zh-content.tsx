@@ -42,7 +42,7 @@ export function FaqZhContent() {
           <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">活動與流程概覽</h2>
           <p className="mt-3">
             「<strong>D Festival 青年鋼琴藝術節</strong>」與「<strong>幻樂空間</strong>」聯合推出之
-            <strong>限時免費琴室體驗</strong>，由香港幻樂國際音樂文化管理有限公司贊助，對象為本地音樂工作者及學習者。
+            <strong>限時免費琴室體驗</strong>，由香港幻樂國際有限公司贊助，對象為本地音樂工作者及學習者。
           </p>
           <ul className="mt-3 list-disc space-y-2 pl-5">
             <li>
@@ -182,7 +182,7 @@ export function FaqZhContent() {
               <ol className="mt-2 list-decimal space-y-1 pl-5 text-stone-700 dark:text-stone-300">
                 <li>D Festival 青年鋼琴家藝術節</li>
                 <li>Fantasia Music Space 幻樂空間</li>
-                <li>香港幻樂國際音樂管理公司（Hong Kong Fantasia International Music Management Ltd.）</li>
+                <li>香港幻樂國際有限公司（Hong Kong Fantasia International Music Management Ltd.）</li>
               </ol>
             </article>
 

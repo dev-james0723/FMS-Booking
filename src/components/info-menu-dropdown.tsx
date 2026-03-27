@@ -96,6 +96,30 @@ export function InfoMenuDropdown() {
               {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
             </span>
           </button>
+          <Link
+            href="/privacy"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.privacyPolicy")}
+          </Link>
+          <Link
+            href="/terms"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.termsAndConditions")}
+          </Link>
+          <Link
+            href="/contact"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.contact")}
+          </Link>
         </div>
       ) : null}
     </div>

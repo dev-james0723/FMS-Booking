@@ -56,7 +56,6 @@ export const registrationSchema = z
     agreedEmailNotifications: z
       .boolean()
       .refine((v) => v === true, { message: "請勾選同意透過 Email 收取系統通知" }),
-    captchaToken: z.string().optional().nullable(),
     referralCode: z.string().max(64).optional().nullable(),
     /** JWT from POST /api/v1/registration/passkey/verify — required to complete registration. */
     passkeyPreregToken: z.string().trim().min(20).max(4096),

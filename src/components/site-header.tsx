@@ -191,9 +191,6 @@ export function SiteHeader() {
               </div>
             )}
             <InfoMenuDropdown />
-            <Link href="/contact" className={`${linkPlain} whitespace-nowrap`}>
-              {t("nav.contact")}
-            </Link>
             <ThemeToggle />
             <Link href="/" className={navIconButtonMdHome} aria-label={homeAriaLabel}>
               <HomeIcon className="h-5 w-5" />
@@ -316,6 +313,24 @@ export function SiteHeader() {
                   </MobileNavZipItem>
                   <MobileNavZipItem index={5}>
                     <Link
+                      href="/privacy"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.privacyPolicy")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={6}>
+                    <Link
+                      href="/terms"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.termsAndConditions")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={7}>
+                    <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
@@ -377,6 +392,24 @@ export function SiteHeader() {
                     </button>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={5}>
+                    <Link
+                      href="/privacy"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.privacyPolicy")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={6}>
+                    <Link
+                      href="/terms"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.termsAndConditions")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={7}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}

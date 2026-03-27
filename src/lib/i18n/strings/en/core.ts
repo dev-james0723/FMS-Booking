@@ -2,7 +2,7 @@ export const coreEn = {
   brand: {
     festivalLine: "D Festival × Fantasia Music Space",
     fantasiaSpace: "Fantasia Music Space",
-    managementCompany: "Fantasia International Music Management Limited",
+    managementCompany: "Hong Kong Fantasia International Music Management Ltd.",
     youngPianistProgram: "D Festival Young Pianist Program",
     dmastersCompetition: "D Masters International Piano Competition",
   },
@@ -14,8 +14,10 @@ export const coreEn = {
     myAccount: "My account",
     bookingSlots: "Book a slot",
     contact: "Contact",
-    infoMenu: "Information",
+    infoMenu: "Contact",
     faq: "FAQ",
+    privacyPolicy: "Privacy policy",
+    termsAndConditions: "Terms & conditions",
     switchToEnglish: "English",
     switchToZh: "Traditional Chinese",
     language: "Language",
@@ -30,17 +32,23 @@ export const coreEn = {
     dismiss: "Dismiss this notice",
   },
   footer: {
-    line: "© {year} Fantasia International Music Management Limited · D Festival · Fantasia Music Space",
+    line: "© {year} Hong Kong Fantasia International Music Management Ltd. — All rights reserved.",
+    sitemapAria: "Site map",
+    groupAccount: "Account & booking",
+    groupInfo: "Programme & policies",
+    home: "Home",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",
     title: "Limited-time free piano studio experience",
     lead:
-      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Fantasia International Music Management Limited. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. On the first day (3 April), the venue is open 11:00–20:00; on all other campaign days, 06:00–20:00 (Hong Kong time).",
+      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Hong Kong Fantasia International Music Management Ltd. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. On the first day (3 April), the venue is open 11:00–20:00; on all other campaign days, 06:00–20:00 (Hong Kong time).",
     registerCta: "Register & create account",
     loginCta: "Booking login",
     loginDisabledHint:
       "Booking activates after the opening time; you can still register and create an account first.",
+    sponsorLogoAlt: "Hong Kong Huayue International Music Management Company",
+    sponsorCaption: "Proud sponsor",
   },
   campaign: {
     dateRange: "3 April to 3 May 2026",

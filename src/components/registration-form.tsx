@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
-import { RecaptchaV2, type RecaptchaV2Handle } from "@/components/recaptcha-v2";
 import { withBasePath } from "@/lib/base-path";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
@@ -43,13 +42,23 @@ const USAGE_KEY_LIST = [
   "student_recording",
 ] as const;
 
-/** Optional; when unset, labels render as plain text (no outbound link). */
-const DFESTIVAL_INFO_URL = process.env.NEXT_PUBLIC_DFESTIVAL_INFO_URL?.trim() ?? "";
-const DMASTERS_INFO_URL = process.env.NEXT_PUBLIC_DMASTERS_INFO_URL?.trim() ?? "";
-
 const interestLinkClass =
   "font-medium text-amber-600 underline decoration-amber-600/70 underline-offset-2 hover:text-amber-500";
 const interestPlainClass = "font-medium text-stone-800 dark:text-stone-200";
+
+function RedRequiredStarLead({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-start gap-0">
+      <span
+        className="mt-0.5 shrink-0 text-[0.65rem] font-bold leading-none text-red-600"
+        aria-hidden
+      >
+        *
+      </span>
+      <span>{children}</span>
+    </span>
+  );
+}
 
 function isPreferredCampaignDateKey(iso: string): boolean {
   return iso >= CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY && iso <= CAMPAIGN_EXPERIENCE_LAST_DAY_KEY;
@@ -154,6 +163,12 @@ function RegistrationPreferredDateMonth(props: {
 
 export function RegistrationForm() {
   const { t, tr, locale } = useTranslation();
+  const dfestivalInfoUrl =
+    locale === "en" ? "https://d-festival.org/en-us" : "https://d-festival.org/zh-hk";
+  const dmastersInfoUrl =
+    locale === "en"
+      ? "https://d-festival.org/dmasters/en-us"
+      : "https://d-festival.org/zh-hk/dmasters";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,15 +208,9 @@ export function RegistrationForm() {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const [agreedEmailNotifications, setAgreedEmailNotifications] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
 
   const interestSelectAllRef = useRef<HTMLInputElement>(null);
   const consentSelectAllRef = useRef<HTMLInputElement>(null);
-  const recaptchaRef = useRef<RecaptchaV2Handle>(null);
-
-  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
-  const skipRecaptcha = process.env.NEXT_PUBLIC_SKIP_RECAPTCHA === "true";
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const identityOptions = useMemo(
     () =>
@@ -487,10 +496,6 @@ export function RegistrationForm() {
       setError(t("reg.errPasskeyBeforeSubmit"));
       return;
     }
-    if (recaptchaSiteKey && !skipRecaptcha && !captchaToken) {
-      setError(t("reg.errCaptcha"));
-      return;
-    }
     setLoading(true);
 
     const usagePurposes: Record<string, boolean | string> = { ...usage };
@@ -532,8 +537,7 @@ export function RegistrationForm() {
       agreedTerms,
       agreedPrivacy,
       agreedEmailNotifications,
-      referralCode: referralCode.trim() || null,
-      captchaToken: captchaToken ?? null,
+      referralCode: null,
       passkeyPreregToken,
     };
 
@@ -563,8 +567,6 @@ export function RegistrationForm() {
           msg += `\n\n（開發用）${(det as { devMessage: string }).devMessage}`;
         }
         setError(msg);
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
         setLoading(false);
         return;
       }
@@ -918,25 +920,30 @@ export function RegistrationForm() {
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionInterest")}</h2>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
-            <input
-              ref={interestSelectAllRef}
-              type="checkbox"
-              checked={allInterestSelected}
-              onChange={(e) => {
-                const v = e.target.checked;
-                setInterestDfestival(v);
-                setInterestDmasters(v);
-                setMarketingOptIn(v);
-                setSocialFollowClaimed(v);
-                setSocialRepostClaimed(v);
-                setWantsAmbassador(v);
-              }}
-            />
-            {t("reg.selectAll")}
-          </label>
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">
+              {t("reg.sectionInterest")}
+            </h2>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
+              <input
+                ref={interestSelectAllRef}
+                type="checkbox"
+                checked={allInterestSelected}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setInterestDfestival(v);
+                  setInterestDmasters(v);
+                  setMarketingOptIn(v);
+                  setSocialFollowClaimed(v);
+                  setSocialRepostClaimed(v);
+                  setWantsAmbassador(v);
+                }}
+              />
+              {t("reg.selectAll")}
+            </label>
+          </div>
+          <p className="mt-1 text-xs text-red-600">{t("reg.sectionRequiredHint")}</p>
         </div>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -946,19 +953,16 @@ export function RegistrationForm() {
             onChange={(e) => setInterestDfestival(e.target.checked)}
           />
           <span>
-            {DFESTIVAL_INFO_URL ? (
-              <a
-                href={DFESTIVAL_INFO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={interestLinkClass}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t("reg.interestDf")}
-              </a>
-            ) : (
-              <span className={interestPlainClass}>{t("reg.interestDf")}</span>
-            )}
+            <span className={interestPlainClass}>{t("reg.interestDfPrefix")}</span>
+            <a
+              href={dfestivalInfoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={interestLinkClass}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("reg.interestDfLink")}
+            </a>
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
@@ -969,19 +973,16 @@ export function RegistrationForm() {
             onChange={(e) => setInterestDmasters(e.target.checked)}
           />
           <span>
-            {DMASTERS_INFO_URL ? (
-              <a
-                href={DMASTERS_INFO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={interestLinkClass}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t("reg.interestDm")}
-              </a>
-            ) : (
-              <span className={interestPlainClass}>{t("reg.interestDm")}</span>
-            )}
+            <span className={interestPlainClass}>{t("reg.interestDmPrefix")}</span>
+            <a
+              href={dmastersInfoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={interestLinkClass}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("reg.interestDmLink")}
+            </a>
           </span>
         </label>
         <label className="flex items-center gap-2 text-sm">
@@ -1000,7 +1001,9 @@ export function RegistrationForm() {
             checked={socialFollowClaimed}
             onChange={(e) => setSocialFollowClaimed(e.target.checked)}
           />
-          <span>{t("reg.socialFollow")}</span>
+          <span>
+            <RedRequiredStarLead>{t("reg.socialFollow")}</RedRequiredStarLead>
+          </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1010,7 +1013,9 @@ export function RegistrationForm() {
             checked={socialRepostClaimed}
             onChange={(e) => setSocialRepostClaimed(e.target.checked)}
           />
-          <span>{t("reg.socialRepost")}</span>
+          <span>
+            <RedRequiredStarLead>{t("reg.socialRepost")}</RedRequiredStarLead>
+          </span>
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -1020,33 +1025,28 @@ export function RegistrationForm() {
           />
           {t("reg.ambassador")}
         </label>
-        <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">{t("reg.referral")}</span>
-          <input
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
-            value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value)}
-          />
-        </label>
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionConsent")}</h2>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
-            <input
-              ref={consentSelectAllRef}
-              type="checkbox"
-              checked={allConsentSelected}
-              onChange={(e) => {
-                const v = e.target.checked;
-                setAgreedTerms(v);
-                setAgreedPrivacy(v);
-                setAgreedEmailNotifications(v);
-              }}
-            />
-            {t("reg.selectAll")}
-          </label>
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionConsent")}</h2>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-400">
+              <input
+                ref={consentSelectAllRef}
+                type="checkbox"
+                checked={allConsentSelected}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setAgreedTerms(v);
+                  setAgreedPrivacy(v);
+                  setAgreedEmailNotifications(v);
+                }}
+              />
+              {t("reg.selectAll")}
+            </label>
+          </div>
+          <p className="mt-1 text-xs text-red-600">{t("reg.sectionRequiredHint")}</p>
         </div>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1056,7 +1056,9 @@ export function RegistrationForm() {
             checked={agreedTerms}
             onChange={(e) => setAgreedTerms(e.target.checked)}
           />
-          <span>{t("reg.agreeTerms")}</span>
+          <span>
+            <RedRequiredStarLead>{t("reg.agreeTerms")}</RedRequiredStarLead>
+          </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1066,7 +1068,9 @@ export function RegistrationForm() {
             checked={agreedPrivacy}
             onChange={(e) => setAgreedPrivacy(e.target.checked)}
           />
-          <span>{t("reg.agreePrivacy")}</span>
+          <span>
+            <RedRequiredStarLead>{t("reg.agreePrivacy")}</RedRequiredStarLead>
+          </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
           <input
@@ -1076,20 +1080,11 @@ export function RegistrationForm() {
             checked={agreedEmailNotifications}
             onChange={(e) => setAgreedEmailNotifications(e.target.checked)}
           />
-          <span>{t("reg.agreeEmail")}</span>
+          <span>
+            <RedRequiredStarLead>{t("reg.agreeEmail")}</RedRequiredStarLead>
+          </span>
         </label>
       </section>
-
-      {recaptchaSiteKey && !skipRecaptcha ? (
-        <section className="space-y-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-5 sm:px-4 py-4">
-          <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">{t("reg.sectionSecurity")}</h2>
-          <RecaptchaV2
-            ref={recaptchaRef}
-            siteKey={recaptchaSiteKey}
-            onTokenChange={setCaptchaToken}
-          />
-        </section>
-      ) : null}
 
       <button
         type="submit"

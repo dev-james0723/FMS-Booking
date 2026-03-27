@@ -42,8 +42,8 @@ export function FaqEnContent() {
           <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">Programme & process overview</h2>
           <p className="mt-3">
             The <strong>D Festival Young Pianist Program</strong> and <strong>Fantasia Music Space</strong> jointly
-            present this <strong>limited-time free piano studio experience</strong>, sponsored by Fantasia
-            International Music Management Limited, for local music practitioners and learners.
+            present this <strong>limited-time free piano studio experience</strong>, sponsored by Hong Kong Fantasia
+            International Music Management Ltd., for local music practitioners and learners.
           </p>
           <ul className="mt-3 list-disc space-y-2 pl-5">
             <li>
@@ -199,7 +199,7 @@ export function FaqEnContent() {
               <ol className="mt-2 list-decimal space-y-1 pl-5 text-stone-700 dark:text-stone-300">
                 <li>D Festival Young Pianist Program</li>
                 <li>Fantasia Music Space</li>
-                <li>Fantasia International Music Management Limited</li>
+                <li>Hong Kong Fantasia International Music Management Ltd.</li>
               </ol>
             </article>
 

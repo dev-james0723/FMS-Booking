@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { BookingCountdown } from "@/components/booking-countdown";
 import { BookingOpensCalendarReminder } from "@/components/booking-opens-calendar-reminder";
 import { HomePartnerLogos } from "@/components/home-partner-logos";
+import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
 
 type Props = {
@@ -69,9 +71,25 @@ export function HomePageMain({
         </Link>
       </div>
       {!bookingLive && (
-        <p className="mt-4 text-center text-xs text-stone-500 dark:text-stone-500">
-          {t("home.loginDisabledHint")}
-        </p>
+        <>
+          <p className="mt-4 text-center text-xs text-stone-500 dark:text-stone-500">
+            {t("home.loginDisabledHint")}
+          </p>
+          <div className="mt-8 flex w-full justify-center px-2">
+            <figure className="w-full max-w-lg">
+              <Image
+                src={withBasePath("/branding/hkfimm-ltd.png")}
+                alt={t("home.sponsorLogoAlt")}
+                width={2048}
+                height={776}
+                className="mx-auto block h-auto w-full max-h-28 object-contain object-center sm:max-h-32"
+              />
+              <figcaption className="mt-2 text-center text-[10px] leading-snug tracking-wide text-stone-500 dark:text-stone-500 sm:text-[11px]">
+                {t("home.sponsorCaption")}
+              </figcaption>
+            </figure>
+          </div>
+        </>
       )}
     </main>
   );

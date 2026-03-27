@@ -18,7 +18,7 @@ export const SOCIAL_FOLLOW_ACCOUNTS: {
     keys: { ig: "dfestival_ig", fb: "dfestival_fb" },
   },
   {
-    columnTitle: "香港幻樂國際音樂管理公司",
+    columnTitle: "香港幻樂國際有限公司",
     keys: { ig: "hk_fantasia_mgmt_ig", fb: "hk_fantasia_mgmt_fb" },
   },
   {
