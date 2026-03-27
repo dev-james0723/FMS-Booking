@@ -5,11 +5,16 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
+import { bookingIdentityTypeLabelZh } from "@/lib/identity-labels";
+
+type VenueTab = "studio_room" | "open_space";
 
 type BookingRow = {
   id: string;
   status: string;
   requestedAt: string;
+  venueKind?: string;
+  bookingIdentityType: string;
   user: { id: string; email: string; nameZh: string | null };
   slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
@@ -18,6 +23,9 @@ export function AdminBookingsPanel() {
   const searchParams = useSearchParams();
   const userIdFilter = searchParams.get("userId")?.trim() ?? "";
 
+  const [venueTab, setVenueTab] = useState<VenueTab>(() =>
+    searchParams.get("venue") === "open_space" ? "open_space" : "studio_room"
+  );
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [filter, setFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +34,10 @@ export function AdminBookingsPanel() {
   const load = useCallback(async () => {
     setError(null);
     const params = new URLSearchParams();
+    params.set("venue", venueTab);
     if (filter) params.set("status", filter);
     if (userIdFilter) params.set("userId", userIdFilter);
-    const q = params.toString() ? `?${params.toString()}` : "";
+    const q = `?${params.toString()}`;
     const res = await fetch(withBasePath(`/api/v1/admin/bookings${q}`));
     const data = await res.json();
     if (!res.ok) {
@@ -36,7 +45,7 @@ export function AdminBookingsPanel() {
       return;
     }
     setRows(data.bookings ?? []);
-  }, [filter, userIdFilter]);
+  }, [filter, userIdFilter, venueTab]);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -81,6 +90,32 @@ export function AdminBookingsPanel() {
           </Link>
         </div>
       )}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-700 bg-slate-950/80 p-2">
+        <span className="text-xs text-slate-500">場地</span>
+        <button
+          type="button"
+          onClick={() => setVenueTab("studio_room")}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            venueTab === "studio_room"
+              ? "bg-sky-700 text-white"
+              : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          }`}
+        >
+          第一間房（琴室）
+        </button>
+        <button
+          type="button"
+          onClick={() => setVenueTab("open_space")}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            venueTab === "open_space"
+              ? "bg-amber-700 text-white"
+              : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          }`}
+        >
+          第二間／開放空間
+        </button>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm text-slate-400">
           狀態篩選
@@ -113,6 +148,7 @@ export function AdminBookingsPanel() {
             <tr>
               <th className="px-3 py-2">用戶</th>
               <th className="px-3 py-2">狀態</th>
+              <th className="px-3 py-2">今次預約身份</th>
               <th className="px-3 py-2">時段</th>
               <th className="px-3 py-2">操作</th>
             </tr>
@@ -133,6 +169,9 @@ export function AdminBookingsPanel() {
                 </td>
                 <td className="px-3 py-3 align-top">
                   <span className="rounded bg-slate-800 px-2 py-0.5 text-xs">{r.status}</span>
+                </td>
+                <td className="px-3 py-3 align-top text-xs text-slate-300">
+                  {bookingIdentityTypeLabelZh(r.bookingIdentityType)}
                 </td>
                 <td className="px-3 py-3 align-top text-xs text-slate-300">
                   <ul className="space-y-1">

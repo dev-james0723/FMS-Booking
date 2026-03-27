@@ -13,10 +13,8 @@ import {
   CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN,
   CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH,
 } from "@/lib/booking/campaign-constants";
-import {
-  TIMELINE_END_HOUR,
-  timelineStartHourForHkDateKey,
-} from "@/lib/booking/day-timeline";
+import { TIMELINE_END_HOUR, TIMELINE_START_HOUR } from "@/lib/booking/day-timeline";
+import { buildCampaignPreviewTimelineSlots } from "@/lib/booking/preview-slots";
 import { withBasePath } from "@/lib/base-path";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
@@ -140,8 +138,13 @@ function MonthCalendarBlock(props: {
   );
 }
 
-export function BookingCalendarOverviewPanel() {
+export function BookingCalendarOverviewPanel(props: {
+  venueKind: "studio_room" | "open_space";
+  bookingPathPrefix: string;
+}) {
+  const { venueKind, bookingPathPrefix } = props;
   const { t, tr, locale } = useTranslation();
+  const overviewIntro = t("booking.cal.overviewIntro");
   const campaignRange =
     locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
   const weekdays = useMemo(
@@ -161,12 +164,20 @@ export function BookingCalendarOverviewPanel() {
   );
 
   const [selected, setSelected] = useState(defaultSelectedDay);
-  const [slots, setSlots] = useState<TimelineSlotInput[]>([]);
+  const [bookingLive, setBookingLive] = useState(true);
+  const [apiSlots, setApiSlots] = useState<TimelineSlotInput[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const previewSlots = useMemo(() => buildCampaignPreviewTimelineSlots(), []);
+
+  const displaySlots = useMemo((): TimelineSlotInput[] => {
+    if (!bookingLive) return previewSlots;
+    return apiSlots;
+  }, [apiSlots, bookingLive, previewSlots]);
+
   const fetchOverviewData = useCallback(async () => {
-    const q = new URLSearchParams({ from: range.from, to: range.to });
+    const q = new URLSearchParams({ from: range.from, to: range.to, venue: venueKind });
     const res = await fetch(withBasePath(`/api/v1/booking/calendar-overview?${q}`));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -175,8 +186,13 @@ export function BookingCalendarOverviewPanel() {
         message: String(data?.error?.message ?? t("booking.cal.loadError")),
       };
     }
-    return { ok: true as const, slots: (data.slots ?? []) as TimelineSlotInput[] };
-  }, [range.from, range.to, t]);
+    const live = Boolean(data.booking_live);
+    return {
+      ok: true as const,
+      bookingLive: live,
+      slots: (data.slots ?? []) as TimelineSlotInput[],
+    };
+  }, [range.from, range.to, t, venueKind]);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,12 +201,13 @@ export function BookingCalendarOverviewPanel() {
       if (cancelled) return;
       if (!result.ok) {
         setError(result.message);
-        setSlots([]);
+        setApiSlots([]);
         setLoading(false);
         return;
       }
       setError(null);
-      setSlots(result.slots);
+      setBookingLive(result.bookingLive);
+      setApiSlots(result.slots);
       setLoading(false);
     })();
     return () => {
@@ -205,25 +222,20 @@ export function BookingCalendarOverviewPanel() {
       const result = await fetchOverviewData();
       if (!result.ok) {
         setError(result.message);
-        setSlots([]);
+        setApiSlots([]);
         setLoading(false);
         return;
       }
-      setSlots(result.slots);
+      setBookingLive(result.bookingLive);
+      setApiSlots(result.slots);
       setLoading(false);
     })();
   }, [fetchOverviewData]);
 
-  const lineTr = useCallback(
-    (path: string, vars: Record<string, string>) => tr(path, vars),
-    [tr]
-  );
   const summaryText = useMemo(
-    () => summarizeDaySlotsText(selected, slots, lineTr),
-    [selected, slots, lineTr]
+    () => summarizeDaySlotsText(selected, displaySlots),
+    [selected, displaySlots]
   );
-
-  const windowStart = timelineStartHourForHkDateKey(selected);
 
   return (
     <div className="space-y-10">
@@ -232,9 +244,9 @@ export function BookingCalendarOverviewPanel() {
           <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">
             {tr("booking.cal.overviewTitle", { range: campaignRange })}
           </h2>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            {t("booking.cal.overviewIntro")}
-          </p>
+          {overviewIntro.trim() ? (
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">{overviewIntro}</p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -258,13 +270,13 @@ export function BookingCalendarOverviewPanel() {
           title={t("booking.cal.monthApr")}
           year={APRIL_2026.year}
           month1={APRIL_2026.month1}
-          slots={slots}
+          slots={displaySlots}
           selected={selected}
           onSelect={setSelected}
           weekdays={weekdays}
           footer={
             <Link
-              href="/booking"
+              href={bookingPathPrefix}
               className="flex w-full min-h-12 items-center justify-center rounded-lg border border-stone-800 bg-surface px-5 sm:px-4 py-3 text-center text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 dark:border-stone-600 dark:text-stone-50 dark:hover:bg-neutral-800 dark:focus-visible:outline-stone-400 sm:min-h-[3rem] sm:text-base"
             >
               {t("booking.cal.leaveOverview")}
@@ -275,7 +287,7 @@ export function BookingCalendarOverviewPanel() {
           title={t("booking.cal.monthMay")}
           year={MAY_2026.year}
           month1={MAY_2026.month1}
-          slots={slots}
+          slots={displaySlots}
           selected={selected}
           onSelect={setSelected}
           weekdays={weekdays}
@@ -292,11 +304,11 @@ export function BookingCalendarOverviewPanel() {
         </h3>
         <p className="text-xs text-stone-500 dark:text-stone-500">
           {tr("booking.cal.timelineRange", {
-            start: String(windowStart),
+            start: String(TIMELINE_START_HOUR),
             end: String(TIMELINE_END_HOUR),
           })}
         </p>
-        <DaySlotsTimeline dateKey={selected} slots={slots} variant="user" />
+        <DaySlotsTimeline dateKey={selected} slots={displaySlots} variant="user" />
       </section>
 
       <section className="space-y-4 rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-5 text-sm text-stone-800 dark:text-stone-200">
@@ -348,7 +360,7 @@ export function BookingCalendarOverviewPanel() {
 
       <div className="flex justify-center border-t border-stone-200 dark:border-stone-700 pt-8">
         <Link
-          href="/booking"
+          href={bookingPathPrefix}
           className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-stone-900 px-8 py-3 text-sm font-medium text-white hover:bg-stone-800"
         >
           {t("booking.cal.ctaBooking")}

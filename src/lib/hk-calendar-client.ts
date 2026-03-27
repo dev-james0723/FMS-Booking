@@ -66,15 +66,20 @@ export function parseCampaignDateKeysFromSettings(
   };
 }
 
+/**
+ * Live booking: only HK calendar dates within the rolling window (inclusive count from today).
+ * @param rollingWindowCalendarDays e.g. 3 → today and the next two days
+ */
 export function isHkDayBookable(params: {
   dateKey: string;
   todayKey: string;
   campaignStart: string;
   campaignEnd: string;
-  maxAdvanceDays: number;
+  rollingWindowCalendarDays: number;
 }): boolean {
-  const { dateKey, todayKey, campaignStart, campaignEnd, maxAdvanceDays } = params;
+  const { dateKey, todayKey, campaignStart, campaignEnd, rollingWindowCalendarDays } = params;
   if (dateKey < campaignStart || dateKey > campaignEnd) return false;
   if (dateKey < todayKey) return false;
-  return dateKeysDaysApart(todayKey, dateKey) <= maxAdvanceDays;
+  const apart = dateKeysDaysApart(todayKey, dateKey);
+  return apart >= 0 && apart < rollingWindowCalendarDays;
 }

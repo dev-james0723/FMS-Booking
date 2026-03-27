@@ -1,5 +1,5 @@
 /**
- * Copy for calendar exports (.ics / Google). Prefer env; no secrets in client bundles.
+ * Copy for calendar exports / deep links. Prefer env; no secrets in client bundles.
  */
 export function getVenueCalendarEnv(): {
   address: string;
@@ -112,31 +112,3 @@ export function buildPublicEventIcsCalendar(params: {
   ].join("\r\n");
 }
 
-export function buildBookingsIcsCalendar(params: {
-  events: { uid: string; title: string; start: Date; end: Date; description: string }[];
-}): string {
-  const lines: string[] = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//FMS Booking//ZH//",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-  ];
-  const desc = buildBookingCalendarDescription();
-  for (const ev of params.events) {
-    const fullDesc = [ev.description, "", desc].filter(Boolean).join("\n");
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:${icsEscapeText(ev.uid)}@fms-booking`,
-      `DTSTAMP:${formatIcsUtc(new Date())}`,
-      `DTSTART:${formatIcsUtc(ev.start)}`,
-      `DTEND:${formatIcsUtc(ev.end)}`,
-      `SUMMARY:${icsEscapeText(ev.title)}`,
-      `DESCRIPTION:${icsEscapeText(fullDesc)}`,
-      `LOCATION:${icsEscapeText(getVenueCalendarEnv().address)}`,
-      "END:VEVENT"
-    );
-  }
-  lines.push("END:VCALENDAR");
-  return lines.join("\r\n");
-}

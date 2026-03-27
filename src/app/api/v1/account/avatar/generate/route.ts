@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, type GenerateContentResponse } from "@google/genai";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import {
@@ -35,39 +35,51 @@ function buildPrompt(animal: AvatarAnimal): string {
   ].join(" ");
 }
 
+function imageDataUrlFromResponse(response: GenerateContentResponse): string | null {
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  for (const p of parts) {
+    const id = p.inlineData;
+    if (
+      id &&
+      typeof id.mimeType === "string" &&
+      id.mimeType.startsWith("image/") &&
+      typeof id.data === "string" &&
+      id.data.length > 0
+    ) {
+      return `data:${id.mimeType};base64,${id.data}`;
+    }
+  }
+  return null;
+}
+
+/** 使用 @google/genai（官方現行 SDK）；舊版 @google/generative-ai 對圖像模型請求不完整。 */
 async function tryGeminiImage(
   apiKey: string,
   animal: AvatarAnimal
 ): Promise<string | null> {
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const ai = new GoogleGenAI({ apiKey });
+  const prompt = buildPrompt(animal);
   const modelNames = [
+    "gemini-2.5-flash-image",
+    "gemini-3.1-flash-image-preview",
     "gemini-2.0-flash-preview-image-generation",
     "gemini-2.0-flash-exp-image-generation",
   ];
-  for (const modelName of modelNames) {
+  for (const model of modelNames) {
     try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-          // @ts-expect-error responseModalities 用於圖像輸出模型；SDK 型別尚未跟上
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
           responseModalities: ["TEXT", "IMAGE"],
+          imageConfig: { aspectRatio: "1:1", imageSize: "1K" },
         },
       });
-      const result = await model.generateContent([{ text: buildPrompt(animal) }]);
-      const parts = result.response?.candidates?.[0]?.content?.parts ?? [];
-      for (const p of parts) {
-        const id = p.inlineData;
-        if (
-          id &&
-          typeof id.mimeType === "string" &&
-          id.mimeType.startsWith("image/") &&
-          typeof id.data === "string"
-        ) {
-          return `data:${id.mimeType};base64,${id.data}`;
-        }
-      }
-    } catch {
-      /* try next model */
+      const dataUrl = imageDataUrlFromResponse(response);
+      if (dataUrl) return dataUrl;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn(`[avatar/generate] Gemini model ${model} failed:`, msg);
     }
   }
   return null;

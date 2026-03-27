@@ -11,11 +11,48 @@ export const bookingEn = {
   portal: {
     title: "Booking",
     intro:
-      "Choose slots and submit a request. All bookings are reviewed by the organiser and are not confirmed automatically.",
+      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); limits use a single quota tier per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
     linkHome: "Home",
+  },
+  openSpacePortal: {
+    title: "Fantasia Music Space — Open Space sessions",
+    intro:
+      "This booking pool is separate from the soundproof studio room slots. Quota rules and account limits work the same way as the main booking system. Please read the venue notes below before choosing times.",
+    linkCalendar: "Calendar overview (timeline)",
+    linkHistory: "Booking history",
+    linkAccount: "My account",
+    linkHome: "Home",
+    imageEntranceAlt: "Open Space near the Fantasia Music Space entrance",
+    imageCorridorAlt: "Open Space in the Fantasia Music Space corridor",
+  },
+  openSpace: {
+    infoCardAudienceIcon: "🎻",
+    infoCardAudienceTitle: "Who this is for",
+    infoCardAudienceBody:
+      "The Open Space is mainly for players of larger instruments (for example, larger than a cello) booking practice time. Other non-piano instruments (such as violin, clarinet, oboe, etc.) may also use this Open Space, especially when studio room bookings are fully taken.",
+    infoCardVenueIcon: "🚪",
+    infoCardVenueTitle: "Where you practise",
+    infoCardVenueBody:
+      "Because space is limited, larger instruments must be used in the Open Space, not inside the soundproof piano studio.",
+    infoCardAreasIcon: "📍",
+    infoCardAreasTitle: "What counts as Open Space",
+    infoCardAreasBody:
+      "Two physical areas: (1) near the Fantasia Music Space studio entrance; (2) the interior corridor walkway.",
+    infoCardRuleIcon: "👤",
+    infoCardRuleTitle: "Usage rules",
+    infoCardRuleBody:
+      "Both areas are one booking zone: they cannot be used at the same time. Each slot is for one user or one group under the same booking only.",
+    infoCardNoticeIcon: "⚠️",
+    infoCardNoticeTitle: "Noise and foot traffic",
+    infoCardNoticeBody:
+      "Expect some movement and sound at the main door and along the corridor, which may affect quietness and privacy. If you are sensitive to noise or foot traffic, please decide carefully before booking.",
+    infoPageLead:
+      "This is the same information linked from the site menu under “Open Space booking info”. Accounts registered for the Open Space programme should use the Open Space booking entry after login.",
+    ctaRegister: "Register for Open Space (new account)",
+    ctaBooking: "Open Space booking (logged in)",
   },
   historyPage: {
     title: "Booking history",
@@ -24,8 +61,7 @@ export const bookingEn = {
   },
   calendarPage: {
     title: "Booking calendar overview",
-    intro:
-      "See 3 April – 3 May 2026 at a glance on the calendar and timeline (first day from 11:00, other days from 06:00, Hong Kong time). Full slots are red; available slots are green.",
+    intro: "",
     backBooking: "Back to booking",
     linkHistory: "Booking history",
     linkAccount: "My account",
@@ -45,7 +81,56 @@ export const bookingEn = {
       "Booking is not open yet. Tap a day within the campaign to preview 30-minute slots; slots stay locked until opening and cannot be selected or submitted.",
     bookingOpensLine: "Booking opens (Hong Kong): {time}",
     campaignLine:
-      "Campaign days (Hong Kong): {range} · book up to {maxAdvance} calendar days ahead · 30-minute slots",
+      "Campaign days (Hong Kong): {range} · rolling booking — only the next {windowDays} calendar days (inclusive) are selectable · 30-minute slots",
+    rulesAtAGlance: "Quick guide",
+    ruleCardRollingTitle: "Rolling bookable dates",
+    ruleCardRollingSummary:
+      "You may only book slots in the next {windowDays} calendar days from today (inclusive).",
+    ruleRollingExpand: "Examples & diagram",
+    ruleRollingIntro1: "Booking always opens on a rolling basis.",
+    ruleRollingIntro2:
+      "You may only book slots within the next {windowDays} calendar days in Hong Kong time (including today).",
+    ruleRollingVisTitle: "Diagram: 3-day rolling window",
+    ruleRollingVisSchematicCaption:
+      "Whatever day is “today”, you can always pick three consecutive calendar days starting from today.",
+    ruleRollingVisRollHint: "Each new day, the window shifts forward by one.",
+    ruleRollingVisDay0: "Today",
+    ruleRollingVisDay1: "+1 day",
+    ruleRollingVisDay2: "+2 days",
+    ruleRollingLabelToday: "Today",
+    ruleRollingLabelBookable: "Bookable",
+    ruleRollingLabelBlocked: "Not bookable",
+    ruleRollingExamplesTitle: "Examples (fixed dates)",
+    ruleRollingEx1Caption: "If today is 1 April 2026",
+    ruleRollingEx2Caption: "If today is 2 April 2026",
+    ruleCardSlotTitle: "Session length",
+    ruleCardSlotSummary: "Each slot is 30 minutes (one pick = one session).",
+    ruleCardIndividualTitle: "Individual quota tier",
+    ruleCardIndividualSummary:
+      "Personal practice / general individual users, or teacher-referred students — up to 5 sessions per day; up to 7 in any 3 consecutive calendar days.",
+    ruleCardTeachingTitle: "Teaching quota tier",
+    ruleCardTeachingSummary:
+      "Teaching, with students, or both teaching and practice on the account — up to 8 per day; up to 16 in any 3 consecutive calendar days.",
+    ruleCardCooldownTitle: "Submission cooldown",
+    ruleCardCooldownSummary: "After each successful submission, wait 3 hours before submitting again.",
+    ruleCardIdentityTitle: "Dual eligibility",
+    ruleCardIdentitySummary:
+      "If you have both individual and teaching eligibility, pick which identity applies to this booking (for the organiser and reporting).",
+    ruleCardBucketTitle: "One cap per account",
+    ruleCardBucketSummary:
+      "Even with dual eligibility, all sessions count toward a single quota tier — limits are not doubled.",
+    ruleSlotLen: "Each slot is 30 minutes.",
+    ruleQuotaIndividual:
+      "Individual users and teacher-referred students (individual quota tier): up to 5 sessions per day (2.5 hours); up to 7 sessions in any 3 consecutive calendar days.",
+    ruleQuotaTeaching:
+      "Teaching / with-students users (teaching quota tier): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days.",
+    ruleQuotaDual:
+      "Users with both teaching and practice needs (teaching quota tier on the account): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days.",
+    ruleCooldown: "After each successful booking submission, wait 3 hours before submitting another.",
+    ruleDualPick:
+      "If you have both individual and teaching eligibility, pick which applies to this booking (for the organiser and reporting).",
+    ruleSingleQuota:
+      "Even with dual eligibility, all sessions count toward one quota tier — limits are not doubled.",
     refresh: "Refresh",
     submitted:
       "Request submitted (reference: {id}). You will be notified by email after review.",
@@ -53,11 +138,32 @@ export const bookingEn = {
     linkCalendarOverview: "Calendar overview (timeline)",
     limitsTitle: "Session usage (Hong Kong dates)",
     limitsToday:
-      "Today ({todayKey}): {committed} sessions used, {remaining} left (daily cap {dailyMax}). Tier: {tier}.",
-    tierExtended: "Teaching / extended",
-    tierGeneral: "General",
+      "Today ({todayKey}): {committed} sessions used, {remaining} left (daily cap {dailyMax}). Quota tier: {tier}.",
+    limitsCardToday: "Today",
+    limitsCardRolling: "Rolling 3 calendar days",
+    limitsUsedLabel: "Used",
+    limitsLeftLabel: "Left",
+    limitsSessionsUnit: "sessions",
+    limitsDailyCapShort: "Daily cap",
+    limitsRollingCapShort: "Window cap",
+    limitsWindowLabel: "Bookable dates (Hong Kong)",
+    limitsEligibilityLabel: "Eligibility",
+    limitsEligibilityIndividual: "Individual",
+    limitsEligibilityTeaching: "Teaching",
+    limitsMeterAriaToday:
+      "Hong Kong date {date}: {used} of {max} sessions used, {remaining} remaining.",
+    limitsMeterAriaRolling:
+      "Rolling three calendar days: {used} of {max} sessions counted, {remaining} remaining.",
+    tierTeachingQuota: "Teaching quota tier",
+    tierIndividualQuota: "Individual quota tier",
+    limitsRollingCommitted: "Rolling 3-day window: {sum} / {max} sessions counted.",
+    limitsRollingWindow: "Current rolling bookable range (HK dates): {start} – {end}.",
+    limitsEligibility: "Eligibility — individual: {ind} · teaching: {tea}",
+    yes: "Yes",
+    no: "No",
+    cooldownLine: "Booking cooldown active — you can submit again after {until} (Hong Kong time).",
     limitsPickHint:
-      "Your daily selection cap is {dailyMax} slots (30 minutes each). If a day is full, further picks show a red hint and cannot be added.",
+      "30 minutes per slot. After {dailyMax} picks on one day, further picks show a red hint and cannot be added.",
     wouldExceedTitle: "Current selection would exceed limits:",
     exceedDaily: "More than {dailyMax} sessions on one day{datePart}.",
     exceedDailyDate: " ({date})",
@@ -69,16 +175,16 @@ export const bookingEn = {
     dotTitle: "{n} slots available",
     fullLabel: "Full",
     hintPickDayLive:
-      "Pick a day first; a green dot means slots are still available. You can book within {maxAdvance} calendar days from today, and not after {lastDay}.",
+      "Pick a day first; a green dot means slots are still available. Live booking: only the next {windowDays} calendar days from today (inclusive), not after {lastDay}.",
     hintPickDayPreview:
-      "Before booking opens, tap any day in the campaign ({range}) to preview that day’s slots (same rhythm as when live, but not selectable). After opening, only days within {maxAdvance} calendar days from today and on or before {lastDay} can be chosen.",
+      "Before booking opens, tap any day in the campaign ({range}) to preview. After opening, only the next {windowDays} calendar days (inclusive), not after {lastDay}.",
     slotsTitleLive: "{day} · available slots",
     slotsTitlePreview: "{day} · slot preview (not selectable yet)",
     slotsTitleNone: "Choose a day on the calendar above",
     loadingSlots: "Loading slots…",
     emptyHintLive: "After you pick a date, remaining bookable slots for that day appear here.",
     emptyHintPreview:
-      "After you pick a campaign day, a preview of 30-minute slots (06:00–20:00, 11:00–20:00 on the first day) appears here for practice only.",
+      "After you pick a campaign day, a preview of 30-minute bookable slots appears here (3 Apr 11:00–20:00; all other campaign days 06:00–20:00), for practice only.",
     noSlotsDay: "No bookable slots for this day (or all full).",
     previewSlotSuffix: "Preview (not open)",
     remainingSlots: "{n} left",
@@ -88,13 +194,15 @@ export const bookingEn = {
     submitWithCount: "Submit request ({n} sessions)",
     linkHistory: "Booking history",
     footnote:
-      "General users: up to 3 slots (1.5 hours) per day; teaching / eligible extended: up to 8 slots (4 hours). Rolling 3-day caps also apply (see “Session usage” above). Approval depends on availability and the organiser.",
+      "Quotas follow the guide above; approval still depends on availability and the organiser.",
+    thisBookingIdentityTitle: "Identity for this booking (required)",
+    identityIndividual: "Individual (practice / personal use)",
+    identityTeaching: "Teaching / with students",
     dash: "—",
   },
   cal: {
     overviewTitle: "{range} · overview",
-    overviewIntro:
-      "Tap a day to see its timeline: 3 April is 11:00–20:00; other campaign days are 6:00–20:00 (Hong Kong time). Green means available, red means full or taken, grey means closed or outside the campaign.",
+    overviewIntro: "",
     refresh: "Refresh",
     loading: "Loading…",
     loadError: "Could not load calendar data",
@@ -105,15 +213,12 @@ export const bookingEn = {
       "Green: still has bookable slots · Red: all open slots full · Grey: no slots or outside free experience dates",
     selectedDate: "Selected date: {date} (Hong Kong time)",
     timelineRange: "Timeline: {start}:00 – {end}:00 (Hong Kong time)",
-    textListTitle: "Slots (text list)",
+    textListTitle: "Slots today",
     sectionBooked: "Full / taken",
     sectionAvailable: "Available",
     sectionClosed: "Closed",
     noSlotData: "No slot data for this day.",
     ctaBooking: "Go to booking to choose slots and submit",
-    summaryLineClosed: "{range} (closed)",
-    summaryLineBooked: "{range} (full)",
-    summaryLineAvailable: "{range} (available · {remaining}/{capacity} left)",
   },
   timeline: {
     statusClosed: "Closed",

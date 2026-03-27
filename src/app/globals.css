@@ -1,6 +1,16 @@
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/dm-sans/400.css";
+
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Self-hosted fonts (avoids next/font/google network fetch — fixes local 500 when Google Fonts is blocked). */
+html {
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
 
 /* Demo (light): warm page, pure white cards — original scheme */
 :root {
@@ -32,6 +42,18 @@
   --color-surface-input: var(--surface-input);
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-display), ui-serif, Georgia, serif;
+  --animate-memo-drift: memo-drift 5.5s ease-in-out infinite;
+}
+
+/* Memo only: pivot at top-centre so the pin (sibling, not animated) stays put */
+@keyframes memo-drift {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
 }
 
 body {
@@ -450,5 +472,23 @@ html:has(.mdw-globe-lightbox.is-open) body {
 @media (prefers-reduced-motion: reduce) {
   .dg-arrow__icon {
     animation: none !important;
+  }
+}
+
+/* Registration: instrument preview circle below piano / other buttons */
+@keyframes registration-instrument-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .registration-instrument-pop {
+    animation: registration-instrument-pop 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }

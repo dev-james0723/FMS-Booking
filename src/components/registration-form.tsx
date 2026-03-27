@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 import { withBasePath } from "@/lib/base-path";
 import {
@@ -11,6 +12,14 @@ import {
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
+import { InstrumentOtherModal } from "@/components/instrument-other-modal";
+import {
+  emojiForOrchestraInstrument,
+  getOrchestraInstrument,
+  instrumentLabel,
+} from "@/lib/instruments/orchestra-instruments";
+import { registrationInstrumentImageMap } from "@/lib/instruments/instrument-reference-images";
+import type { RegistrationProfileKind } from "@/lib/registration/profile-kind";
 
 const IDENTITY_VALUES = [
   "student",
@@ -45,6 +54,8 @@ const USAGE_KEY_LIST = [
 const interestLinkClass =
   "font-medium text-amber-600 underline decoration-amber-600/70 underline-offset-2 hover:text-amber-500";
 const interestPlainClass = "font-medium text-stone-800 dark:text-stone-200";
+const consentLinkClass =
+  "font-medium text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-500 dark:text-blue-400 dark:decoration-blue-400/80 dark:hover:text-blue-300";
 
 function RedRequiredStarLead({ children }: { children: ReactNode }) {
   return (
@@ -162,6 +173,8 @@ function RegistrationPreferredDateMonth(props: {
 }
 
 export function RegistrationForm() {
+  const searchParams = useSearchParams();
+  const registerForOpenSpace = searchParams.get("for") === "open-space";
   const { t, tr, locale } = useTranslation();
   const dfestivalInfoUrl =
     locale === "en" ? "https://d-festival.org/en-us" : "https://d-festival.org/zh-hk";
@@ -187,11 +200,17 @@ export function RegistrationForm() {
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [webauthnSupported, setWebauthnSupported] = useState(false);
   const [age, setAge] = useState(18);
-  const [teacherRecommended, setTeacherRecommended] = useState(false);
+  const [registrationProfileKind, setRegistrationProfileKind] =
+    useState<RegistrationProfileKind>("personal_user");
   const [teacherName, setTeacherName] = useState("");
   const [teacherContact, setTeacherContact] = useState("");
-  const [userCategoryCode, setUserCategoryCode] = useState<"personal" | "teaching">("personal");
   const [instrumentField, setInstrumentField] = useState("");
+  const [instrumentMode, setInstrumentMode] = useState<"none" | "piano" | "other">("none");
+  const [otherInstrumentOpen, setOtherInstrumentOpen] = useState(false);
+  const [otherInstrumentId, setOtherInstrumentId] = useState<string | null>(null);
+  const [instrumentImages, setInstrumentImages] = useState<Record<string, string>>(() =>
+    registrationInstrumentImageMap()
+  );
   const [identityFlags, setIdentityFlags] = useState<string[]>([]);
   const [identityOtherText, setIdentityOtherText] = useState("");
   const [usage, setUsage] = useState<Record<string, boolean>>({});
@@ -262,6 +281,38 @@ export function RegistrationForm() {
   ];
   const allInterestSelected = interestCheckValues.every(Boolean);
   const someInterestSelected = interestCheckValues.some(Boolean);
+
+  const instrumentPreviewKey = useMemo((): string | null => {
+    if (instrumentMode === "piano") return "piano";
+    if (instrumentMode === "other" && otherInstrumentId) return otherInstrumentId;
+    return null;
+  }, [instrumentMode, otherInstrumentId]);
+
+  const instrumentPreviewAlt = useMemo(() => {
+    if (instrumentMode === "piano") return t("reg.instrumentPiano");
+    if (otherInstrumentId) {
+      const inst = getOrchestraInstrument(otherInstrumentId);
+      if (inst) return instrumentLabel(inst, locale);
+    }
+    return instrumentField.trim() || t("reg.instrument");
+  }, [instrumentMode, otherInstrumentId, instrumentField, locale, t]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(withBasePath("/api/v1/public/instrument-images"));
+        if (!res.ok) return;
+        const data = (await res.json()) as { images?: Record<string, string> };
+        if (!cancelled && data.images) setInstrumentImages(data.images);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const el = interestSelectAllRef.current;
@@ -472,6 +523,10 @@ export function RegistrationForm() {
       setError(t("reg.identityOtherDetail"));
       return;
     }
+    if (!instrumentField.trim()) {
+      setError(t("reg.instrumentRequired"));
+      return;
+    }
     if (!socialFollowClaimed || !socialRepostClaimed) {
       setError(t("reg.errSocialPromise"));
       return;
@@ -496,6 +551,12 @@ export function RegistrationForm() {
       setError(t("reg.errPasskeyBeforeSubmit"));
       return;
     }
+    if (registrationProfileKind === "teacher_referred_student") {
+      if (!teacherName.trim() || !teacherContact.trim()) {
+        setError(t("reg.validationFail"));
+        return;
+      }
+    }
     setLoading(true);
 
     const usagePurposes: Record<string, boolean | string> = { ...usage };
@@ -515,10 +576,9 @@ export function RegistrationForm() {
       phone: phone.trim(),
       phoneVerificationToken,
       age,
-      teacherRecommended,
+      registrationProfileKind,
       teacherName: teacherName.trim() || null,
       teacherContact: teacherContact.trim() || null,
-      userCategoryCode,
       instrumentField: instrumentField.trim(),
       identityFlags,
       identityOtherText: identityFlags.includes("other")
@@ -539,6 +599,7 @@ export function RegistrationForm() {
       agreedEmailNotifications,
       referralCode: null,
       passkeyPreregToken,
+      bookingVenueKind: registerForOpenSpace ? "open_space" : "studio_room",
     };
 
     try {
@@ -604,6 +665,173 @@ export function RegistrationForm() {
           {error}
         </div>
       )}
+      {registerForOpenSpace && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-5 sm:px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/35 dark:text-amber-100">
+          {t("reg.openSpaceRegistrationBanner")}
+        </div>
+      )}
+
+      <section className="space-y-4">
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionMusic")}</h2>
+        <div className="block text-sm">
+          <RedRequiredStarLead>
+            <span className="text-stone-700 dark:text-stone-300">{t("reg.instrument")}</span>
+          </RedRequiredStarLead>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              aria-pressed={instrumentMode === "piano"}
+              onClick={() => {
+                setInstrumentMode("piano");
+                setInstrumentField(t("reg.instrumentPiano"));
+                setOtherInstrumentId(null);
+                setOtherInstrumentOpen(false);
+              }}
+              className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${
+                instrumentMode === "piano"
+                  ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                  : "border-stone-300 bg-surface text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+              }`}
+            >
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <span aria-hidden>🎹</span>
+                {t("reg.instrumentPiano")}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={instrumentMode === "other"}
+              onClick={() => setOtherInstrumentOpen(true)}
+              className={`rounded-lg border px-3 py-3 text-sm font-medium transition ${
+                instrumentMode === "other"
+                  ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+                  : "border-stone-300 bg-surface text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+              }`}
+            >
+              <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 text-center leading-tight">
+                <span className="shrink-0" aria-hidden>
+                  {instrumentMode === "other" && otherInstrumentId
+                    ? emojiForOrchestraInstrument(otherInstrumentId)
+                    : "🎻"}
+                </span>
+                <span className="min-w-0 break-words">
+                  {instrumentMode === "other" && instrumentField.trim()
+                    ? instrumentField
+                    : t("reg.instrumentOther")}
+                </span>
+              </span>
+            </button>
+          </div>
+          {instrumentPreviewKey && instrumentImages[instrumentPreviewKey] ? (
+            <div className="mt-6 flex justify-center" key={instrumentPreviewKey}>
+              <div className="registration-instrument-pop relative size-[9.5rem] shrink-0 overflow-hidden rounded-full border-[3px] border-stone-300 bg-stone-100 shadow-md sm:size-44 dark:border-stone-600 dark:bg-stone-800">
+                <Image
+                  src={withBasePath(instrumentImages[instrumentPreviewKey])}
+                  alt={instrumentPreviewAlt}
+                  fill
+                  sizes="(max-width: 640px) 9.5rem, 11rem"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <InstrumentOtherModal
+          open={otherInstrumentOpen}
+          locale={locale}
+          initialInstrumentId={otherInstrumentId}
+          onClose={() => setOtherInstrumentOpen(false)}
+          onConfirm={(id, label) => {
+            setInstrumentField(label);
+            setInstrumentMode("other");
+            setOtherInstrumentId(id);
+            setOtherInstrumentOpen(false);
+          }}
+          t={t}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionUserType")}</h2>
+        <p className="text-sm text-stone-600 dark:text-stone-400">{t("reg.regProfileHint")}</p>
+        <div className="space-y-2" role="radiogroup" aria-label={t("reg.sectionUserType")}>
+          {(
+            [
+              ["personal_user", "reg.regProfilePersonal"],
+              ["teaching_user", "reg.regProfileTeaching"],
+              ["teacher_referred_student", "reg.regProfileTeacherReferred"],
+              ["dual_practice_and_teaching", "reg.regProfileDual"],
+            ] as const
+          ).map(([value, labelKey]) => (
+            <label
+              key={value}
+              className="flex cursor-pointer items-start gap-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-3 py-2.5 text-sm text-stone-800 dark:text-stone-200"
+            >
+              <input
+                type="radio"
+                name="registrationProfileKind"
+                className="mt-1"
+                checked={registrationProfileKind === value}
+                onChange={() => {
+                  setRegistrationProfileKind(value);
+                  if (value !== "teacher_referred_student") {
+                    setTeacherName("");
+                    setTeacherContact("");
+                  }
+                }}
+              />
+              <span>{t(labelKey)}</span>
+            </label>
+          ))}
+        </div>
+        {registrationProfileKind === "teacher_referred_student" && (
+          <>
+            <label className="block text-sm">
+              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherName")}</span>
+              <input
+                required
+                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
+                value={teacherName}
+                onChange={(e) => setTeacherName(e.target.value)}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherContact")}</span>
+              <input
+                required
+                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
+                value={teacherContact}
+                onChange={(e) => setTeacherContact(e.target.value)}
+              />
+            </label>
+          </>
+        )}
+        <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.identityHeading")}</p>
+        <div className="flex flex-wrap gap-3">
+          {identityOptions.map((o) => (
+            <label key={o.value} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={identityFlags.includes(o.value)}
+                onChange={() => toggleIdentity(o.value)}
+              />
+              {o.label}
+            </label>
+          ))}
+        </div>
+        {identityFlags.includes("other") && (
+          <label className="block text-sm">
+            <span className="text-stone-700 dark:text-stone-300">{t("reg.identityOtherExplain")}</span>
+            <input
+              required
+              className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
+              value={identityOtherText}
+              onChange={(e) => setIdentityOtherText(e.target.value)}
+              placeholder={t("reg.identityOtherPh")}
+            />
+          </label>
+        )}
+      </section>
 
       <section className="space-y-4">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionBasic")}</h2>
@@ -748,84 +976,6 @@ export function RegistrationForm() {
             onChange={(e) => setAge(Number(e.target.value))}
           />
         </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={teacherRecommended}
-            onChange={(e) => setTeacherRecommended(e.target.checked)}
-          />
-          {t("reg.teacherRecommended")}
-        </label>
-        {teacherRecommended && (
-          <>
-            <label className="block text-sm">
-              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherName")}</span>
-              <input
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
-                value={teacherName}
-                onChange={(e) => setTeacherName(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="text-stone-700 dark:text-stone-300">{t("reg.teacherContact")}</span>
-              <input
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
-                value={teacherContact}
-                onChange={(e) => setTeacherContact(e.target.value)}
-              />
-            </label>
-          </>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionUserType")}</h2>
-        <select
-          className="w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-sm text-foreground dark:border-stone-700"
-          value={userCategoryCode}
-          onChange={(e) => setUserCategoryCode(e.target.value as "personal" | "teaching")}
-        >
-          <option value="personal">{t("reg.userCatPersonal")}</option>
-          <option value="teaching">{t("reg.userCatTeaching")}</option>
-        </select>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionMusic")}</h2>
-        <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">{t("reg.instrument")}</span>
-          <input
-            required
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
-            value={instrumentField}
-            onChange={(e) => setInstrumentField(e.target.value)}
-          />
-        </label>
-        <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.identityHeading")}</p>
-        <div className="flex flex-wrap gap-3">
-          {identityOptions.map((o) => (
-            <label key={o.value} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={identityFlags.includes(o.value)}
-                onChange={() => toggleIdentity(o.value)}
-              />
-              {o.label}
-            </label>
-          ))}
-        </div>
-        {identityFlags.includes("other") && (
-          <label className="block text-sm">
-            <span className="text-stone-700 dark:text-stone-300">{t("reg.identityOtherExplain")}</span>
-            <input
-              required
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
-              value={identityOtherText}
-              onChange={(e) => setIdentityOtherText(e.target.value)}
-              placeholder={t("reg.identityOtherPh")}
-            />
-          </label>
-        )}
       </section>
 
       <section className="space-y-4">
@@ -1057,7 +1207,19 @@ export function RegistrationForm() {
             onChange={(e) => setAgreedTerms(e.target.checked)}
           />
           <span>
-            <RedRequiredStarLead>{t("reg.agreeTerms")}</RedRequiredStarLead>
+            <RedRequiredStarLead>
+              <>
+                {t("reg.agreeTermsPrefix")}
+                <a
+                  href={withBasePath("/terms")}
+                  className={consentLinkClass}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t("reg.agreeTermsLink")}
+                </a>
+                {t("reg.agreeTermsSuffix")}
+              </>
+            </RedRequiredStarLead>
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">
@@ -1069,7 +1231,19 @@ export function RegistrationForm() {
             onChange={(e) => setAgreedPrivacy(e.target.checked)}
           />
           <span>
-            <RedRequiredStarLead>{t("reg.agreePrivacy")}</RedRequiredStarLead>
+            <RedRequiredStarLead>
+              <>
+                {t("reg.agreePrivacyPrefix")}
+                <a
+                  href={withBasePath("/privacy")}
+                  className={consentLinkClass}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t("reg.agreePrivacyLink")}
+                </a>
+                {t("reg.agreePrivacySuffix")}
+              </>
+            </RedRequiredStarLead>
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug">

@@ -2,17 +2,19 @@ import { fromZonedTime } from "date-fns-tz";
 import { CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY } from "@/lib/booking/campaign-constants";
 import { HK_TZ } from "@/lib/time";
 
-/** Default timeline window start (most campaign days): 6:00 Hong Kong. */
+/** Timeline axis (display): 06:00–20:00 Hong Kong for all days. */
 export const TIMELINE_START_HOUR = 6;
 export const TIMELINE_END_HOUR = 20;
 
-/** First campaign day only: slots from 11:00. */
+/** First campaign day only: bookable slots from 11:00. */
 export const TIMELINE_FIRST_DAY_START_HOUR = 11;
 
-export function timelineStartHourForHkDateKey(dateKey: string): number {
-  return dateKey === CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY
-    ? TIMELINE_FIRST_DAY_START_HOUR
-    : TIMELINE_START_HOUR;
+/** First hour (HKT) for which bookable slots are generated for this calendar date. */
+export function bookableStartHourForCampaignDateKey(dateKey: string): number {
+  if (dateKey === CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY) {
+    return TIMELINE_FIRST_DAY_START_HOUR;
+  }
+  return TIMELINE_START_HOUR;
 }
 
 function pad2(n: number) {
@@ -34,13 +36,13 @@ export type TimelineClip = {
 };
 
 /**
- * Map a slot interval onto the day’s HK display window (first day 11:00–20:00, else 6:00–20:00).
+ * Map a slot interval onto the fixed HK timeline axis (06:00–20:00).
  */
 export function clipSlotToTimeline(
   dateKey: string,
   slotStart: Date,
   slotEnd: Date,
-  windowStartHour: number = timelineStartHourForHkDateKey(dateKey)
+  windowStartHour: number = TIMELINE_START_HOUR
 ): TimelineClip | null {
   const w0 = hkInstantOnDate(dateKey, windowStartHour, 0).getTime();
   const w1 = hkInstantOnDate(dateKey, TIMELINE_END_HOUR, 0).getTime();

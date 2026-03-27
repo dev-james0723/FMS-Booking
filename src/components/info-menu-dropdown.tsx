@@ -81,6 +81,14 @@ export function InfoMenuDropdown() {
           >
             {t("nav.faq")}
           </Link>
+          <Link
+            href="/open-space-booking"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.openSpaceBookingInfo")}
+          </Link>
           <div className={dividerClass} role="separator" />
           <button
             type="button"

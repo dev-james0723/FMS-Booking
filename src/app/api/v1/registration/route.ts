@@ -11,6 +11,7 @@ import { verifyPasskeyPreregToken } from "@/lib/passkey-prereg-token";
 import { verifyPhoneRegistrationProof } from "@/lib/phone-registration-proof";
 import { AccountStatus, Prisma, RegistrationSubmissionStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
+import { deriveRegistrationProfile } from "@/lib/registration/profile-kind";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -135,8 +136,9 @@ export async function POST(req: Request) {
     transports: pkRow.transports,
   };
 
+  const derived = deriveRegistrationProfile(data.registrationProfileKind);
   const category = await prisma.userCategory.findUnique({
-    where: { code: data.userCategoryCode },
+    where: { code: derived.categoryCode },
   });
   if (!category) {
     return jsonError("INVALID_CATEGORY", "User category not found", 500);
@@ -153,6 +155,10 @@ export async function POST(req: Request) {
       ...snapshotFields,
       phone: phoneNorm,
       isAge17OrAbove: true,
+      teacherRecommended: derived.teacherRecommended,
+      quotaTier: derived.quotaTier,
+      individualEligible: derived.individualEligible,
+      teachingEligible: derived.teachingEligible,
     })
   ) as Prisma.InputJsonValue;
 
@@ -164,6 +170,7 @@ export async function POST(req: Request) {
           accountStatus: AccountStatus.active,
           hasCompletedRegistration: true,
           category: { connect: { id: category.id } },
+          quotaTier: derived.quotaTier,
           referralAttributionCode: data.referralCode?.trim() || null,
           socialFollowSetupToken: data.socialFollowClaimed ? nanoid(32) : null,
         },
@@ -177,15 +184,18 @@ export async function POST(req: Request) {
           phone: phoneNorm,
           age: data.age,
           isAge17OrAbove: true,
-          teacherRecommended: data.teacherRecommended,
+          teacherRecommended: derived.teacherRecommended,
           teacherName: data.teacherName?.trim() || null,
           teacherContact: data.teacherContact?.trim() || null,
+          individualEligible: derived.individualEligible,
+          teachingEligible: derived.teachingEligible,
           identityFlags: data.identityFlags as Prisma.InputJsonValue,
           identityOtherText:
             data.identityFlags.includes("other") && data.identityOtherText?.trim()
               ? data.identityOtherText.trim()
               : null,
           instrumentField: data.instrumentField.trim(),
+          bookingVenueKind: data.bookingVenueKind,
           usagePurposes: data.usagePurposes as Prisma.InputJsonValue,
           preferredDates: (data.preferredDates ?? undefined) as Prisma.InputJsonValue | undefined,
           preferredTimeText: data.preferredTimeText?.trim() || null,

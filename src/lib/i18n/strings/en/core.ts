@@ -22,6 +22,7 @@ export const coreEn = {
     switchToZh: "Traditional Chinese",
     language: "Language",
     aboutDfestival2026: "About 2026 D Festival Young Pianist Program",
+    openSpaceBookingInfo: "Open Space booking info",
     homeAria: "Limited-time free piano studio booking (home)",
     openMenu: "Open menu",
     closeMenu: "Close menu",
@@ -42,13 +43,32 @@ export const coreEn = {
     tagline: "D Festival × Fantasia Music Space",
     title: "Limited-time free piano studio experience",
     lead:
-      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Hong Kong Fantasia International Music Management Ltd. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. On the first day (3 April), the venue is open 11:00–20:00; on all other campaign days, 06:00–20:00 (Hong Kong time).",
+      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Hong Kong Fantasia International Music Management Ltd. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. Bookable hours (Hong Kong time): 3 April 11:00–20:00; all other campaign days 06:00–20:00.",
     registerCta: "Register & create account",
     loginCta: "Booking login",
     loginDisabledHint:
       "Booking activates after the opening time; you can still register and create an account first.",
     sponsorLogoAlt: "Hong Kong Huayue International Music Management Company",
     sponsorCaption: "Proud sponsor",
+    eligibilityMemo: {
+      sectionAria: "How to qualify for the free studio experience",
+      title: "How to qualify for this free experience",
+      alert:
+        "Important: You must complete registration on this website first. After registering, you must also complete both requirements below in full to be eligible for this free experience.",
+      step1Heading: "1. Follow the official social accounts",
+      step1Intro: "Follow (Instagram and Facebook) for all of the following:",
+      step1a: "D Festival Young Pianist Program",
+      step1b: "Hong Kong Fantasia International Music Management Ltd.",
+      step1c: "Fantasia Music Space",
+      step2Heading: "2. Share or repost the designated posts",
+      step2Intro:
+        "Share or repost the two designated posts from “D Festival Young Pianist Program”, and:",
+      step2a: "Share to your Story or to a personal feed post; and",
+      step2b:
+        "Tag the Instagram or Facebook accounts of “D Festival Young Pianist Program” and “Fantasia Music Space”.",
+      closing:
+        "Registration alone is not enough. After you register, you must complete both items above in full to take part in this free experience. The organiser may verify your activity on social media.",
+    },
   },
   campaign: {
     dateRange: "3 April to 3 May 2026",
@@ -83,13 +103,49 @@ export const coreEn = {
     jointLine: "Joint presentation · 聯合企劃",
   },
   contact: {
-    title: "Contact us",
-    body: "Support email and phone will be updated soon; this page is a placeholder.",
+    title: "Contact information",
+    intro:
+      "Reach us using the details below, or send a message with the form. After you submit, we email you a confirmation and notify the organiser.",
+    phoneLabel: "Phone / WhatsApp",
+    emailLabel: "Email",
+    phoneDisplay: "+852 9163 6378",
+    emailDisplay: "fantasiamusicspace@gmail.com",
+    phoneAria: "Call +852 9163 6378",
+    emailAria: "Compose an email in Gmail to fantasiamusicspace@gmail.com",
+    formSectionTitle: "Enquiry form",
+    nameLabel: "Name",
+    emailFieldLabel: "Email address",
+    phoneFieldLabel: "Phone (optional)",
+    messageLabel: "Message",
+    messagePlaceholder: "How can we help?",
+    submit: "Send enquiry",
+    submitting: "Sending…",
+    success:
+      "Thank you. We have sent a confirmation to your email and will reply as soon as we can.",
+    sendAnother: "Send another message",
+    errorSend: "Something went wrong. Please try again later, or use the phone or email above.",
+    errorValidation: "Please complete the required fields.",
+    socialTitle: "Follow Fantasia Music Space",
+    whatsappButton: "WhatsApp",
+    instagramButton: "Instagram",
+    facebookButton: "Facebook",
+    whatsappAria: "Open WhatsApp chat (wa.link)",
+    instagramAria: "Open Fantasia Music Space on Instagram",
+    facebookAria: "Open Fantasia Music Space on Facebook",
   },
   registerPage: {
     title: "User registration",
     intro:
       "Please complete the form below. After you submit, we will create your account with your email and send a temporary password. Completing registration does not mean a booking is confirmed.",
+  },
+  largeInstrumentPage: {
+    title: "Large-instrument booking",
+    intro:
+      "If your instrument is larger than our studio can accommodate, please follow the guidance below instead of selecting it in the standard registration flow.",
+    celloNote: "Cello is the largest instrument this studio room can accommodate.",
+    roomNote:
+      "Fantasia Music Space currently offers one studio room for this experience. Space is limited; to keep sessions running smoothly, each time slot can host up to three people in total, including the pianist.",
+    backToRegister: "Back to registration",
   },
   login: {
     title: "Sign in",

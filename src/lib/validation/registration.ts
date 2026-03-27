@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { REGISTRATION_PROFILE_KINDS } from "@/lib/registration/profile-kind";
 
 /** Allow common HK / intl. formats; dots and extensions often appear in contact numbers. */
 const phoneSchema = z
@@ -21,10 +22,13 @@ export const registrationSchema = z
     age: z.coerce.number().int().min(1).max(120),
     /** No longer collected in UI; stored as true for legacy column. */
     isAge17OrAbove: z.boolean().default(true),
-    teacherRecommended: z.boolean(),
+    /**
+     * Registration / profile classification (not a third booking-identity enum).
+     * Booking quota uses the derived account `quota_tier` only.
+     */
+    registrationProfileKind: z.enum(REGISTRATION_PROFILE_KINDS),
     teacherName: z.string().max(200).optional().nullable(),
     teacherContact: z.string().max(200).optional().nullable(),
-    userCategoryCode: z.enum(["personal", "teaching"]),
     instrumentField: z.string().trim().min(1).max(200),
     identityFlags: z.array(z.string()).min(1),
     /** Required in UI when identity includes "other". */
@@ -49,16 +53,18 @@ export const registrationSchema = z
     wantsAmbassador: z.boolean(),
     agreedTerms: z
       .boolean()
-      .refine((v) => v === true, { message: "請勾選同意活動條款" }),
+      .refine((v) => v === true, { message: "請勾選同意條款與細則" }),
     agreedPrivacy: z
       .boolean()
-      .refine((v) => v === true, { message: "請勾選同意資料收集安排" }),
+      .refine((v) => v === true, { message: "請勾選同意私隱條例" }),
     agreedEmailNotifications: z
       .boolean()
       .refine((v) => v === true, { message: "請勾選同意透過 Email 收取系統通知" }),
     referralCode: z.string().max(64).optional().nullable(),
     /** JWT from POST /api/v1/registration/passkey/verify — required to complete registration. */
     passkeyPreregToken: z.string().trim().min(20).max(4096),
+    /** Set via `?for=open-space` for 大型樂器開放空間登記。 */
+    bookingVenueKind: z.enum(["studio_room", "open_space"]).default("studio_room"),
   })
   .superRefine((data, ctx) => {
     if (data.identityFlags.includes("other")) {
@@ -71,18 +77,18 @@ export const registrationSchema = z
         });
       }
     }
-    if (data.teacherRecommended) {
+    if (data.registrationProfileKind === "teacher_referred_student") {
       if (!data.teacherName?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Teacher name required when teacher recommended",
+          message: "請填寫推薦老師姓名",
           path: ["teacherName"],
         });
       }
       if (!data.teacherContact?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Teacher contact required when teacher recommended",
+          message: "請填寫推薦老師聯絡方式",
           path: ["teacherContact"],
         });
       }

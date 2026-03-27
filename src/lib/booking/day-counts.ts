@@ -28,3 +28,29 @@ export async function loadUserExistingDayCounts(
   }
   return map;
 }
+
+/** One query for admin lists — per-user HK day → slot count for quota-relevant bookings. */
+export async function loadExistingDayCountsBulk(
+  userIds: string[]
+): Promise<Map<string, Map<string, number>>> {
+  if (userIds.length === 0) return new Map();
+  const allocs = await prisma.bookingAllocation.findMany({
+    where: {
+      status: { in: ["pending", "approved"] },
+      request: {
+        userId: { in: userIds },
+        status: { in: COUNTED_REQUEST_STATUS },
+      },
+    },
+    include: { slot: true, request: { select: { userId: true } } },
+  });
+  const out = new Map<string, Map<string, number>>();
+  for (const a of allocs) {
+    const uid = a.request.userId;
+    const key = hkDateKey(a.slot.startsAt);
+    if (!out.has(uid)) out.set(uid, new Map());
+    const inner = out.get(uid)!;
+    inner.set(key, (inner.get(key) ?? 0) + 1);
+  }
+  return out;
+}

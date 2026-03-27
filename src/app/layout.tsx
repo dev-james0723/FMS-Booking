@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
-import Script from "next/script";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
@@ -9,17 +7,6 @@ import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 
 /** Avoid Prisma at build time when DB is unavailable (CI / local build without Postgres). */
 export const dynamic = "force-dynamic";
-
-const display = Cormorant_Garamond({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-});
-
-const sans = DM_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "D Festival × 幻樂空間｜限時免費琴室體驗預約",
@@ -42,14 +29,16 @@ export default async function RootLayout({
     <html
       lang={htmlLang}
       suppressHydrationWarning
-      className={`${display.variable} ${sans.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <Script
-          id="fms-theme-init"
-          strategy="beforeInteractive"
+      <head>
+        <script
+          // Blocking theme before paint; avoid next/script here — React 19 warns when a
+          // <script> from the RSC payload is reconciled on the client.
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
+      </head>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <SiteChrome initialLocale={initialLocale}>{children}</SiteChrome>
       </body>
     </html>

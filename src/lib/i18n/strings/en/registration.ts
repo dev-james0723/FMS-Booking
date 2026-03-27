@@ -20,7 +20,7 @@ export const regEn = {
   errSocialPromise:
     "Please tick both the follow and repost commitments before submitting registration.",
   consentThree:
-    "Please agree to all three items: event terms, privacy notice, and email notifications.",
+    "Please agree to all three items: terms & conditions, privacy policy, and email notifications.",
   phoneSmsPasskey:
     "Please complete SMS verification (send code and enter 6 digits).",
   passkeyRequired: "Please complete biometric setup (bind Face ID / fingerprint).",
@@ -35,7 +35,13 @@ export const regEn = {
     'Tap "Bind Face ID / fingerprint" and complete device verification first; biometrics are required to register.',
   submitFail: "Submission failed",
   sectionBasic: "Basic information",
-  sectionUserType: "User category",
+  sectionUserType: "User category & registration profile",
+  regProfileHint:
+    "This records your background and eligibility. Booking limits use one quota tier per account; dual eligibility does not double your quota. Individual / teacher-referred: up to 5 sessions per day and 7 in any rolling 3 calendar days. Teaching-only or dual practice+teaching (teaching tier): up to 8 per day and 16 in any rolling 3 days.",
+  regProfilePersonal: "Individual user",
+  regProfileTeaching: "Teaching / with students",
+  regProfileTeacherReferred: "Student referred by a teacher",
+  regProfileDual: "Individual & teaching (both practice and teaching needs)",
   sectionMusic: "Musical background",
   sectionUsage: "Intended use",
   sectionIntent: "Initial booking preferences",
@@ -80,6 +86,29 @@ export const regEn = {
   userCatPersonal: "Individual user",
   userCatTeaching: "Teaching / with students",
   instrument: "Instrument / musical field",
+  instrumentPiano: "Piano",
+  instrumentOther: "Other instruments",
+  instrumentModalTitle: "Select your instrument",
+  instrumentModalClose: "Close",
+  instrumentPercussionNote:
+    "Due to venue limitations, percussion players cannot take part in this programme.",
+  instrumentModalSpaceNote:
+    "Fantasia Music Space currently offers one studio room for this experience, and space is limited. To keep sessions running smoothly, each slot can host up to 3 people in total, including the pianist. If you play a larger instrument or one that needs more room (e.g. cello, double bass, harp, trombone, tuba), choose it from the list below and follow the prompt to register on the separate page.",
+  instrumentSelectLabel: "Instrument",
+  instrumentSelectPlaceholder: "Choose…",
+  instrumentLargeCta:
+    "Your instrument needs more space — please continue on the page below to complete registration",
+  openSpaceRegistrationBanner:
+    "You are registering through the Open Space (large-instrument) link. After completion, your account will only use the Open Space booking pool, separate from the studio room slots.",
+  instrumentCancel: "Cancel",
+  instrumentConfirm: "Confirm selection",
+  instrumentRequired:
+    "Please choose an instrument: tap Piano or Other instruments and complete your selection.",
+  instrumentCat: {
+    strings: "Strings",
+    woodwind: "Woodwinds",
+    brass: "Brass",
+  },
   identityHeading: "Identity (multiple choice)",
   identityOtherExplain: "Describe your identity (required)",
   identityOtherPh: "e.g. producer, ensemble member…",
@@ -105,8 +134,12 @@ export const regEn = {
   socialRepost:
     "I commit to reposting two designated D Festival Young Pianist Program posts (Stories or feed posts), and tagging the D Festival Young Pianist Program and Fantasia Music Space on Instagram or Facebook, to take part in the free trial studio experience.",
   ambassador: "I would like to join D Ambassador / share offers",
-  agreeTerms: "I have read and agree to the event terms",
-  agreePrivacy: "I have read and agree to the data collection notice",
+  agreeTermsPrefix: "I have read and agree to the ",
+  agreeTermsLink: "terms & conditions",
+  agreeTermsSuffix: " for this free studio experience",
+  agreePrivacyPrefix: "I have read and agree to the ",
+  agreePrivacyLink: "privacy policy",
+  agreePrivacySuffix: " for this free studio experience",
   agreeEmail: "I agree to receive system emails",
   identity: {
     student: "Student",
@@ -138,7 +171,8 @@ export const regEn = {
     teacherRecommended: "Teacher recommendation",
     teacherName: "Teacher name",
     teacherContact: "Teacher contact",
-    userCategoryCode: "User category",
+    registrationProfileKind: "Registration profile",
+    userCategoryCode: "User category (legacy)",
     instrumentField: "Instrument / field",
     identityFlags: "Identity",
     identityOtherText: "Other identity details",
@@ -152,8 +186,8 @@ export const regEn = {
     socialFollowClaimed: "Follow commitment",
     socialRepostClaimed: "Repost commitment",
     wantsAmbassador: "D Ambassador",
-    agreedTerms: "Event terms",
-    agreedPrivacy: "Privacy notice",
+    agreedTerms: "Terms & conditions",
+    agreedPrivacy: "Privacy policy",
     agreedEmailNotifications: "Email notifications",
     referralCode: "Referral code",
     passkeyPreregToken: "Biometric (passkey)",

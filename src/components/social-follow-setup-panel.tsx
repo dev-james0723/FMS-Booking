@@ -135,7 +135,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-stone-500 dark:text-stone-500">
+      <p className="mt-4 text-xs font-medium text-amber-900 dark:text-amber-200">
         請在電腦瀏覽器完成此步驟效果最佳。若你曾清除瀏覽器資料或更換裝置，請登入後聯絡主辦方協助。
       </p>
     </section>
@@ -164,7 +164,7 @@ function FollowButton({
     >
       {done ? (
         <>
-          <span className="text-emerald-600">✓</span> 已開啟 {label}
+          <span className="text-emerald-600">✓</span> 以追蹤 {label}
         </>
       ) : busy ? (
         <>處理中…</>

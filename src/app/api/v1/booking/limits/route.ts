@@ -1,8 +1,16 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { loadUserExistingDayCounts } from "@/lib/booking/day-counts";
+import {
+  BOOKING_COOLDOWN_MS,
+  ROLLING_WINDOW_CALENDAR_DAYS,
+} from "@/lib/booking/booking-constants";
+import {
+  cooldownRemainingMs,
+  getQuotaNumericLimits,
+  rollingWindowEndDateKey,
+} from "@/lib/booking/booking-rules";
 import { maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
-import { userHasExtendedBookingTier } from "@/lib/booking/limits-tier";
 import {
   parseBookingNumericSettings,
   parseCampaignDateKeys,
@@ -49,9 +57,8 @@ export async function GET(req: Request) {
   const now = await getEffectiveNow();
   const todayKey = hkDateKey(now);
 
-  const extended = userHasExtendedBookingTier(user);
-  const dailyMax = extended ? nums.teachingMaxPerDay : nums.personalMaxPerDay;
-  const rollingMax = extended ? nums.teachingMaxRolling3d : nums.personalMaxRolling3d;
+  const quotaTier = user.quotaTier;
+  const { dailyMax, rollingMax } = getQuotaNumericLimits(quotaTier, nums);
 
   const existing = await loadUserExistingDayCounts(auth.userId);
   const extraSlots =
@@ -76,13 +83,44 @@ export async function GET(req: Request) {
   const todayCommitted = existing.get(todayKey) ?? 0;
   const todayAfterExtra = withExtra.get(todayKey) ?? 0;
 
+  const profile = user.profile;
+  const dualEligible =
+    profile != null && profile.individualEligible && profile.teachingEligible;
+
+  const rollingEndKey = rollingWindowEndDateKey(todayKey);
+  const cooldownRemaining = cooldownRemainingMs(user.lastBookingAt, now);
+  const cooldownActive = cooldownRemaining > 0;
+  const nextBookingAt =
+    cooldownActive && user.lastBookingAt
+      ? new Date(user.lastBookingAt.getTime() + BOOKING_COOLDOWN_MS).toISOString()
+      : null;
+
   return jsonOk({
-    tier: extended ? "extended" : "standard",
+    quotaTier,
+    tier: quotaTier === "teaching" ? "teaching" : "individual",
     limits: { dailyMax, rollingMax },
     todayKey,
+    rollingWindow: {
+      calendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+      startKey: todayKey,
+      endKey: rollingEndKey,
+    },
+    eligibility: profile
+      ? {
+          individualEligible: profile.individualEligible,
+          teachingEligible: profile.teachingEligible,
+          dualEligible,
+        }
+      : null,
+    cooldown: {
+      active: cooldownActive,
+      remainingMs: cooldownRemaining,
+      nextBookingAt,
+    },
     countsByDay: Object.fromEntries(existing),
     todayCommitted,
     todayRemaining: Math.max(0, dailyMax - todayCommitted),
+    rollingSumCommitted: maxRollingThreeDaySum(existing),
     provisional: {
       slotIds: extraIds,
       todayAfterExtra,

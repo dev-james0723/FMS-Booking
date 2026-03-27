@@ -5,14 +5,14 @@ import { getSessionFromCookies } from "@/lib/auth/session";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
 import { loadUserExistingDayCounts } from "@/lib/booking/day-counts";
 import { maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
-import { userHasExtendedBookingTier } from "@/lib/booking/limits-tier";
+import { getQuotaNumericLimits } from "@/lib/booking/booking-rules";
 import { mergeConsecutiveSlots } from "@/lib/booking/merge-slots";
 import { parseBookingNumericSettings } from "@/lib/booking/settings";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 import { isUnreachableDbError } from "@/lib/settings-fallback";
 import { hkDateKey } from "@/lib/time";
-import { buildBookingCalendarDescription } from "@/lib/venue-calendar";
+import { isGoogleCalendarUserOAuthConfigured } from "@/lib/calendar/google-user-calendar";
 import type { Prisma } from "@prisma/client";
 
 export const metadata = {
@@ -103,9 +103,19 @@ function buildRollingLimitNarrative(
   };
 }
 
-export default async function AccountPage() {
+type AccountPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AccountPage({ searchParams }: AccountPageProps) {
   const session = await getSessionFromCookies();
   if (!session) redirect("/login?next=/account");
+
+  const sp = searchParams ? await searchParams : {};
+  const rawG = sp?.gcal;
+  const gcalRaw = Array.isArray(rawG) ? rawG[0] : rawG;
+  const googleCalendarFlash =
+    typeof gcalRaw === "string" && gcalRaw.trim() ? gcalRaw.trim() : null;
 
   try {
     const user = await prisma.user.findUnique({
@@ -124,9 +134,7 @@ export default async function AccountPage() {
       user.hasCompletedRegistration &&
       user.credentials?.mustChangePassword === false;
 
-    const extended = userHasExtendedBookingTier(user);
-    const dailyMax = extended ? nums.teachingMaxPerDay : nums.personalMaxPerDay;
-    const rollingMax = extended ? nums.teachingMaxRolling3d : nums.personalMaxRolling3d;
+    const { dailyMax, rollingMax } = getQuotaNumericLimits(user.quotaTier, nums);
     const todayKey = hkDateKey(now);
     const existingDayCounts = await loadUserExistingDayCounts(user.id);
     const todayCommitted = existingDayCounts.get(todayKey) ?? 0;
@@ -134,8 +142,11 @@ export default async function AccountPage() {
     const rollingUsed = maxRollingThreeDaySum(existingDayCounts);
     const rollingStory = buildRollingLimitNarrative(dailyMax, rollingMax);
 
+    const bookingBasePath =
+      user.profile.bookingVenueKind === "open_space" ? "/booking/open-space" : "/booking";
+
     const bookings = await prisma.bookingRequest.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, venueKind: user.profile.bookingVenueKind },
       orderBy: { requestedAt: "desc" },
       take: 40,
       include: {
@@ -145,8 +156,6 @@ export default async function AccountPage() {
         },
       },
     });
-
-    const calDescription = buildBookingCalendarDescription();
 
     const bookingsPayload = bookings.map((b) => {
       const slots = b.allocations.map((a) => ({
@@ -173,13 +182,14 @@ export default async function AccountPage() {
         nameZh={user.profile.nameZh}
         email={user.email}
         phone={user.profile.phone}
+        userCategoryCode={user.category?.code ?? null}
         identityKeys={identityKeys(user.profile.identityFlags)}
         preferredDateIsos={preferredDateIsos(user.profile.preferredDates)}
         preferredTimeText={user.profile.preferredTimeText}
         wantsConsecutiveSlots={user.profile.wantsConsecutiveSlots}
         favoriteAvatarAnimal={user.profile.favoriteAvatarAnimal}
         avatarImageDataUrl={user.profile.avatarImageDataUrl}
-        extended={extended}
+        quotaTier={user.quotaTier}
         dailyMax={dailyMax}
         rollingMax={rollingMax}
         todayKey={todayKey}
@@ -189,7 +199,10 @@ export default async function AccountPage() {
         rollingStory={rollingStory}
         bookings={bookingsPayload}
         canBook={canBook}
-        calDescription={calDescription}
+        bookingBasePath={bookingBasePath}
+        googleCalendarOAuthReady={isGoogleCalendarUserOAuthConfigured()}
+        googleCalendarLinked={Boolean(user.googleCalendarRefreshToken?.trim())}
+        googleCalendarFlash={googleCalendarFlash}
       />
     );
   } catch (e) {

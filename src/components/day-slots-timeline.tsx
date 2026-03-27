@@ -2,9 +2,9 @@
 
 import {
   TIMELINE_END_HOUR,
+  TIMELINE_START_HOUR,
   clipSlotToTimeline,
   formatHkRange,
-  timelineStartHourForHkDateKey,
 } from "@/lib/booking/day-timeline";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
@@ -39,9 +39,8 @@ export function DaySlotsTimeline({
   const { t, tr } = useTranslation();
   const daySlots = slots.filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey);
 
-  const windowStartHour = timelineStartHourForHkDateKey(dateKey);
   const hourTicks: number[] = [];
-  for (let h = windowStartHour; h <= TIMELINE_END_HOUR; h++) {
+  for (let h = TIMELINE_START_HOUR; h <= TIMELINE_END_HOUR; h++) {
     hourTicks.push(h);
   }
 
@@ -50,18 +49,23 @@ export function DaySlotsTimeline({
   const trackBorder = isAdmin ? "border-slate-600 bg-slate-900/40" : "border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80";
   const gridLine = isAdmin ? "border-slate-600/90" : "border-stone-200 dark:border-stone-700/90";
 
+  const trackMinPx = 720;
+
   return (
     <div className="flex gap-3">
       <div
-        className={`flex w-11 shrink-0 flex-col justify-between pt-1 text-right text-xs ${labelCls}`}
-        style={{ minHeight: 320 }}
+        className={`flex w-12 shrink-0 flex-col justify-between pt-1 text-right text-xs ${labelCls}`}
+        style={{ minHeight: trackMinPx }}
         aria-hidden
       >
         {hourTicks.map((h) => (
           <span key={h}>{hourTickLabel(h)}</span>
         ))}
       </div>
-      <div className={`relative min-h-[320px] flex-1 rounded-lg border ${trackBorder}`}>
+      <div
+        className={`relative flex-1 rounded-lg border ${trackBorder}`}
+        style={{ minHeight: trackMinPx }}
+      >
         {hourTicks.map((h, i) => (
           <div
             key={h}
@@ -76,7 +80,7 @@ export function DaySlotsTimeline({
             dateKey,
             new Date(s.startsAt),
             new Date(s.endsAt),
-            windowStartHour
+            TIMELINE_START_HOUR
           );
           if (!clip) return null;
           const fullRange = formatHkRange(new Date(s.startsAt), new Date(s.endsAt));
@@ -104,19 +108,21 @@ export function DaySlotsTimeline({
           return (
             <div
               key={s.id}
-              className={`absolute left-1 right-1 overflow-hidden rounded-md border px-1 py-0.5 text-[10px] leading-tight shadow-sm sm:text-xs ${bg} ${border} ${text}`}
+              className={`absolute left-1 right-1 flex flex-col justify-center overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-snug shadow-sm sm:text-sm ${bg} ${border} ${text}`}
               style={{
                 top: `${clip.topPct}%`,
-                height: `${Math.max(clip.heightPct, 2.2)}%`,
+                height: `${clip.heightPct}%`,
               }}
               title={`${fullRange} · ${statusLabel}`}
             >
-              <div className="font-semibold">{fullRange}</div>
-              {variant === "user" && s.remaining <= 0 && s.isOpen && (
-                <div className="opacity-95">{t("booking.timeline.bookedThis")}</div>
+              <div className="text-center font-semibold tabular-nums">{fullRange}</div>
+              {variant === "admin" && s.remaining <= 0 && s.isOpen && (
+                <div className="text-center text-[11px] opacity-95 sm:text-xs">
+                  {t("booking.timeline.bookedThis")}
+                </div>
               )}
-              {variant === "user" && s.remaining > 0 && s.isOpen && (
-                <div className="opacity-95">
+              {variant === "admin" && s.remaining > 0 && s.isOpen && (
+                <div className="text-center text-[11px] opacity-95 sm:text-xs">
                   {tr("booking.timeline.canBookRemaining", {
                     remaining: String(s.remaining),
                     capacity: String(s.capacityTotal),
@@ -124,7 +130,9 @@ export function DaySlotsTimeline({
                 </div>
               )}
               {s.venueLabel && (
-                <div className="truncate opacity-90">{s.venueLabel}</div>
+                <div className="truncate text-center text-[11px] opacity-90 sm:text-xs">
+                  {s.venueLabel}
+                </div>
               )}
             </div>
           );
@@ -136,8 +144,7 @@ export function DaySlotsTimeline({
 
 export function summarizeDaySlotsText(
   dateKey: string,
-  slots: TimelineSlotInput[],
-  lineTr?: (path: string, vars: Record<string, string>) => string
+  slots: TimelineSlotInput[]
 ): { bookedLines: string[]; availableLines: string[]; closedLines: string[] } {
   const daySlots = slots
     .filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey)
@@ -151,27 +158,11 @@ export function summarizeDaySlotsText(
   for (const s of daySlots) {
     const range = formatHkRange(new Date(s.startsAt), new Date(s.endsAt));
     if (!s.isOpen) {
-      closedLines.push(
-        lineTr
-          ? lineTr("booking.cal.summaryLineClosed", { range })
-          : `${range}（時段已關閉）`
-      );
+      closedLines.push(range);
     } else if (s.remaining <= 0) {
-      bookedLines.push(
-        lineTr
-          ? lineTr("booking.cal.summaryLineBooked", { range })
-          : `${range}（已滿／已被預約）`
-      );
+      bookedLines.push(range);
     } else {
-      availableLines.push(
-        lineTr
-          ? lineTr("booking.cal.summaryLineAvailable", {
-              range,
-              remaining: String(s.remaining),
-              capacity: String(s.capacityTotal),
-            })
-          : `${range}（可預約 · 剩餘 ${s.remaining}/${s.capacityTotal}）`
-      );
+      availableLines.push(range);
     }
   }
 

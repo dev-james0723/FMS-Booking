@@ -1,13 +1,25 @@
-import { jsonOk } from "@/lib/api-response";
+import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
+import { parseBookingVenueQuery } from "@/lib/booking/venue-kind";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await requireUserSession();
   if (!auth.ok) return auth.response;
 
+  const url = new URL(req.url);
+  const venueKind = parseBookingVenueQuery(url.searchParams.get("venue"));
+
+  const user = await prisma.user.findUnique({
+    where: { id: auth.userId },
+    include: { profile: true },
+  });
+  if (!user?.profile || user.profile.bookingVenueKind !== venueKind) {
+    return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
+  }
+
   const rows = await prisma.bookingRequest.findMany({
-    where: { userId: auth.userId },
+    where: { userId: auth.userId, venueKind },
     orderBy: { requestedAt: "desc" },
     include: {
       allocations: {
@@ -18,16 +30,19 @@ export async function GET() {
   });
 
   return jsonOk({
+    venueKind,
     bookings: rows.map((r) => ({
       id: r.id,
       status: r.status,
       requestedAt: r.requestedAt.toISOString(),
+      bookingIdentityType: r.bookingIdentityType,
       usesBonusSlot: r.usesBonusSlot,
       slots: r.allocations.map((a) => ({
         id: a.slot.id,
         startsAt: a.slot.startsAt.toISOString(),
         endsAt: a.slot.endsAt.toISOString(),
         venueLabel: a.slot.venueLabel,
+        venueKind: a.slot.venueKind,
       })),
     })),
   });

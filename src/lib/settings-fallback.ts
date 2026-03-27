@@ -18,11 +18,11 @@ export const FALLBACK_SYSTEM_SETTINGS_ROWS: { key: string; value: unknown }[] = 
     value: "2026-06-30T23:59:59+08:00",
   },
   { key: "slot_duration_minutes", value: 30 },
-  { key: "personal_max_slots_per_day", value: 3 },
-  { key: "personal_max_slots_any_3_consecutive_days", value: 8 },
+  { key: "personal_max_slots_per_day", value: 5 },
+  { key: "personal_max_slots_any_3_consecutive_days", value: 7 },
   { key: "teaching_max_slots_per_day", value: 8 },
   { key: "teaching_max_slots_any_3_consecutive_days", value: 16 },
-  { key: "max_advance_booking_days", value: 3 },
+  { key: "max_advance_booking_days", value: 2 },
   { key: "no_show_grace_minutes", value: 15 },
   { key: "ambassador_bonus_slot_cap_per_user", value: 2 },
 ];
@@ -44,8 +44,11 @@ export function isUnreachableDbError(e: unknown): boolean {
   if (!e || typeof e !== "object") return false;
   const err = e as { code?: string; name?: string; message?: string };
   if (err.name === "PrismaClientInitializationError") return true;
-  if (err.code === "P1001" || err.code === "P1000") return true;
+  // P1000 auth, P1001 unreachable, P1002 connect timeout, P1011 TLS, P1017 server closed connection
+  if (/^P100[012]$/.test(String(err.code ?? ""))) return true;
+  if (err.code === "P1011" || err.code === "P1017") return true;
   const msg = typeof err.message === "string" ? err.message : "";
   if (/Can't reach database server/i.test(msg)) return true;
+  if (/ECONNREFUSED|ETIMEDOUT|ECONNRESET|EPIPE|socket hang up/i.test(msg)) return true;
   return false;
 }

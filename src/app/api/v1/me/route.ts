@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
-import { getEffectiveNow, getPublicSettings, parseInstantSetting } from "@/lib/settings";
+import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -34,6 +34,8 @@ export async function GET() {
     user.credentials !== null &&
     user.credentials.mustChangePassword === false;
 
+  const p = user.profile;
+
   return jsonOk({
     user: {
       id: user.id,
@@ -41,8 +43,18 @@ export async function GET() {
       accountStatus: user.accountStatus,
       hasCompletedRegistration: user.hasCompletedRegistration,
       mustChangePassword: user.credentials?.mustChangePassword ?? true,
+      quotaTier: user.quotaTier,
+      bookingVenueKind: p?.bookingVenueKind ?? "studio_room",
       profile: user.profile,
       category: user.category,
+      bookingEligibility:
+        p != null
+          ? {
+              individualEligible: p.individualEligible,
+              teachingEligible: p.teachingEligible,
+              dualEligible: p.individualEligible && p.teachingEligible,
+            }
+          : null,
     },
     gates: {
       bookingPortalOpen: bookingOpen,

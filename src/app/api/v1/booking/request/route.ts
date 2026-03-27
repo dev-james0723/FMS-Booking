@@ -2,6 +2,7 @@ import { syncBookingRequestToGoogleCalendar } from "@/lib/calendar/google-bookin
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { BookingRuleError, validateAndCreateBookingRequest } from "@/lib/booking/service";
+import type { BookingIdentityType } from "@prisma/client";
 import { sendBookingSubmitted } from "@/lib/email/booking";
 import { sendBookingAdminNotification } from "@/lib/email/booking-admin-notify";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,7 @@ import { z } from "zod";
 const bodySchema = z.object({
   slotIds: z.array(z.string().uuid()).min(1),
   bonusRewardId: z.string().uuid().optional().nullable(),
+  bookingIdentityType: z.enum(["individual", "teaching_or_with_students"]).optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -44,6 +46,7 @@ export async function POST(req: Request) {
       userCategoryCode: categoryCode,
       slotIds: parsed.data.slotIds,
       bonusRewardId: parsed.data.bonusRewardId,
+      bookingIdentityType: parsed.data.bookingIdentityType as BookingIdentityType | null | undefined,
     });
 
     const full = await prisma.bookingRequest.findUnique({
@@ -96,6 +99,11 @@ export async function POST(req: Request) {
         "VALIDATION_ERROR",
         "NO_SLOTS",
         "CAMPAIGN_DATE_INVALID",
+        "BOOKING_OUTSIDE_ROLLING_WINDOW",
+        "BOOKING_IDENTITY_REQUIRED",
+        "BOOKING_IDENTITY_INELIGIBLE",
+        "BOOKING_VENUE_MISMATCH",
+        "BOOKING_VENUE_MIXED",
       ]);
       const status = forbidden.has(e.code)
         ? 403

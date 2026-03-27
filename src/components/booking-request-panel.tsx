@@ -8,8 +8,9 @@ import {
   formatSlotDateForLocale,
   formatSlotTimeRangeEn,
 } from "@/lib/booking-slot-display";
+import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import { shiftHkDateKey } from "@/lib/booking/hk-dates";
 import {
-  addDaysToDateKey,
   buildMonthGrid,
   daysInCalendarMonth,
   isHkDayBookable,
@@ -27,6 +28,13 @@ import {
   formatInstantForBookingOpensZhHk,
   HK_TZ,
 } from "@/lib/time";
+import {
+  BookingIconCampaignRange,
+  BookingIconMentorStudent,
+  BookingIconPerson,
+  BookingIconTeaching,
+} from "@/components/booking-quota-icons";
+import { BookingRulesVisual } from "@/components/booking-rules-visual";
 
 type SlotRow = {
   id: string;
@@ -37,12 +45,21 @@ type SlotRow = {
 };
 
 type LimitsPayload = {
+  quotaTier: string;
   tier: string;
   limits: { dailyMax: number; rollingMax: number };
   todayKey: string;
   countsByDay: Record<string, number>;
   todayCommitted: number;
   todayRemaining: number;
+  rollingSumCommitted?: number;
+  rollingWindow?: { calendarDays: number; startKey: string; endKey: string };
+  eligibility?: {
+    individualEligible: boolean;
+    teachingEligible: boolean;
+    dualEligible: boolean;
+  };
+  cooldown?: { active: boolean; remainingMs: number; nextBookingAt: string | null };
   provisional: {
     wouldExceedDaily: boolean;
     wouldExceedRolling: boolean;
@@ -50,6 +67,31 @@ type LimitsPayload = {
     rollingSum: number;
   };
 };
+
+function QuotaBlockStrip({
+  filled,
+  total,
+  filledClassName,
+  emptyClassName,
+}: {
+  filled: number;
+  total: number;
+  filledClassName: string;
+  emptyClassName: string;
+}) {
+  const n = Math.max(0, total);
+  const f = Math.min(n, Math.max(0, filled));
+  return (
+    <div className="mt-2 flex gap-1" aria-hidden>
+      {Array.from({ length: n }, (_, i) => (
+        <span
+          key={i}
+          className={`h-2.5 min-w-0 flex-1 rounded-sm ${i < f ? filledClassName : emptyClassName}`}
+        />
+      ))}
+    </div>
+  );
+}
 
 function hkTodayKeyFromMs(ms: number): string {
   return new Date(ms).toLocaleDateString("en-CA", { timeZone: HK_TZ });
@@ -101,7 +143,13 @@ function monthTouchesCampaign(y: number, m: number, cStart: string, cEnd: string
   return !(last < cStart || first > cEnd);
 }
 
-export function BookingRequestPanel() {
+export type BookingRequestVenue = "studio_room" | "open_space";
+
+export function BookingRequestPanel(props: {
+  venueKind: BookingRequestVenue;
+  bookingPathPrefix: string;
+}) {
+  const { venueKind, bookingPathPrefix } = props;
   const { t, tr, locale } = useTranslation();
   const campaignRange =
     locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
@@ -125,6 +173,10 @@ export function BookingRequestPanel() {
   const [limits, setLimits] = useState<LimitsPayload | null>(null);
   const [blockFlashSlotId, setBlockFlashSlotId] = useState<string | null>(null);
   const [dailyCapHint, setDailyCapHint] = useState<string | null>(null);
+  const [dualEligible, setDualEligible] = useState(false);
+  const [bookingIdentityChoice, setBookingIdentityChoice] = useState<
+    "individual" | "teaching_or_with_students"
+  >("individual");
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -138,11 +190,6 @@ export function BookingRequestPanel() {
     () => parseCampaignDateKeysFromSettings(settings),
     [settings]
   );
-
-  const maxAdvanceDays = useMemo(() => {
-    const v = settings?.max_advance_booking_days;
-    return typeof v === "number" && Number.isFinite(v) ? v : 3;
-  }, [settings]);
 
   const defaultMonthKey = useMemo(
     () => defaultHkMonthKey(todayKey, campaign.start, campaign.end),
@@ -171,7 +218,11 @@ export function BookingRequestPanel() {
   const loadMonthSlots = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const q = new URLSearchParams({ from: monthRange.from, to: monthRange.to });
+    const q = new URLSearchParams({
+      from: monthRange.from,
+      to: monthRange.to,
+      venue: venueKind,
+    });
     const res = await fetch(withBasePath(`/api/v1/booking/availability?${q}`));
     const data = await res.json();
     if (!res.ok) {
@@ -182,11 +233,27 @@ export function BookingRequestPanel() {
     }
     setMonthSlots(data.slots.filter((s: SlotRow) => s.remaining > 0));
     setLoading(false);
-  }, [monthRange.from, monthRange.to, t]);
+  }, [monthRange.from, monthRange.to, t, venueKind]);
 
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
+      if (cancelled || !res.ok) return;
+      const data = (await res.json().catch(() => null)) as {
+        user?: { bookingEligibility?: { dualEligible?: boolean } | null };
+      } | null;
+      const d = data?.user?.bookingEligibility?.dualEligible === true;
+      if (!cancelled) setDualEligible(d);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     void loadMonthSlots();
@@ -226,7 +293,7 @@ export function BookingRequestPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedKey encodes Set contents; avoids churn
   }, [selectedKey]);
 
-  const dailyMax = limits?.limits.dailyMax ?? 3;
+  const dailyMax = limits?.limits.dailyMax ?? 5;
   const countsByDay = limits?.countsByDay ?? {};
 
   const bookingOpensAt =
@@ -320,10 +387,17 @@ export function BookingRequestPanel() {
     setSubmitting(true);
     setError(null);
     setDone(null);
+    const payload: {
+      slotIds: string[];
+      bookingIdentityType?: "individual" | "teaching_or_with_students";
+    } = { slotIds: [...selected] };
+    if (dualEligible) {
+      payload.bookingIdentityType = bookingIdentityChoice;
+    }
     const res = await fetch(withBasePath("/api/v1/booking/request"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slotIds: [...selected] }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -340,8 +414,8 @@ export function BookingRequestPanel() {
   const lastBookableKey =
     campaign.start && campaign.end
       ? (() => {
-          const raw = addDaysToDateKey(todayKey, maxAdvanceDays);
-          return raw < campaign.end ? raw : campaign.end;
+          const raw = shiftHkDateKey(todayKey, ROLLING_WINDOW_CALENDAR_DAYS - 1);
+          return raw <= campaign.end ? raw : campaign.end;
         })()
       : null;
 
@@ -358,13 +432,21 @@ export function BookingRequestPanel() {
         </p>
       )}
 
-      <div className="space-y-3">
-        <p className="text-sm text-stone-600 dark:text-stone-400">
-          {tr("booking.request.campaignLine", {
-            range: campaignRange,
-            maxAdvance: String(maxAdvanceDays),
-          })}
-        </p>
+      <div className="space-y-4">
+        <div className="flex gap-3 rounded-xl border border-stone-200 bg-stone-50/90 px-4 py-3 dark:border-stone-700 dark:bg-stone-900/35">
+          <BookingIconCampaignRange className="mt-0.5 h-9 w-9 shrink-0 text-blue-800 dark:text-blue-400" />
+          <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+            {tr("booking.request.campaignLine", {
+              range: campaignRange,
+              windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+            })}
+          </p>
+        </div>
+        <BookingRulesVisual
+          t={t}
+          tr={tr}
+          windowDays={String(ROLLING_WINDOW_CALENDAR_DAYS)}
+        />
         <button
           type="button"
           onClick={() => void loadMonthSlots()}
@@ -382,7 +464,7 @@ export function BookingRequestPanel() {
       {done && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 sm:px-4 py-2 text-sm text-emerald-900">
           {tr("booking.request.submitted", { id: done })}
-          <Link href="/booking/history" className="ml-2 underline">
+          <Link href={`${bookingPathPrefix}/history`} className="ml-2 underline">
             {t("booking.request.viewHistory")}
           </Link>
         </div>
@@ -399,38 +481,246 @@ export function BookingRequestPanel() {
 
       <div className="space-y-3">
         <Link
-          href="/booking/calendar"
+          href={`${bookingPathPrefix}/calendar`}
           className="flex w-full min-h-12 items-center justify-center rounded-lg border border-emerald-950/30 bg-emerald-900 px-5 sm:px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950 active:bg-emerald-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
         >
           {t("booking.request.linkCalendarOverview")}
         </Link>
 
         {limits && (
-          <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm">
-            <p className="font-medium text-stone-900 dark:text-stone-50">{t("booking.request.limitsTitle")}</p>
-            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
-              {tr("booking.request.limitsToday", {
-                todayKey: limits.todayKey,
-                committed: String(limits.todayCommitted),
-                remaining: String(limits.todayRemaining),
-                dailyMax: String(limits.limits.dailyMax),
-                tier:
-                  limits.tier === "extended"
-                    ? t("booking.request.tierExtended")
-                    : t("booking.request.tierGeneral"),
-              })}
-            </p>
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
+          <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-4 text-sm text-stone-700 dark:text-stone-300 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-medium text-stone-900 dark:text-stone-50">
+                {t("booking.request.limitsTitle")}
+              </h3>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-stone-200 bg-stone-100 py-0.5 pl-1.5 pr-2.5 text-xs font-medium text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200">
+                {limits.quotaTier === "teaching" || limits.tier === "teaching" ? (
+                  <BookingIconTeaching className="h-4 w-4 text-indigo-700 dark:text-indigo-300" />
+                ) : (
+                  <span className="flex items-center gap-0.5">
+                    <BookingIconPerson className="h-3.5 w-3.5 text-sky-700 dark:text-sky-300" />
+                    <BookingIconMentorStudent className="h-3.5 w-3.5 text-teal-700 dark:text-teal-300" />
+                  </span>
+                )}
+                {limits.quotaTier === "teaching" || limits.tier === "teaching"
+                  ? t("booking.request.tierTeachingQuota")
+                  : t("booking.request.tierIndividualQuota")}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div
+                className="rounded-lg border border-stone-200/90 bg-white px-3 py-3 dark:border-stone-600 dark:bg-stone-900/50"
+                role="group"
+                aria-label={tr("booking.request.limitsMeterAriaToday", {
+                  date: limits.todayKey,
+                  used: String(limits.todayCommitted),
+                  max: String(limits.limits.dailyMax),
+                  remaining: String(limits.todayRemaining),
+                })}
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {t("booking.request.limitsCardToday")}
+                  </p>
+                  <p className="font-mono text-[11px] text-stone-400 dark:text-stone-500">
+                    {limits.todayKey}
+                  </p>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-stone-50 px-2.5 py-2 dark:bg-stone-800/80">
+                    <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
+                      {t("booking.request.limitsUsedLabel")}
+                    </p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+                      {limits.todayCommitted}
+                      <span className="ml-1 text-sm font-normal text-stone-500 dark:text-stone-400">
+                        {t("booking.request.limitsSessionsUnit")}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-emerald-50 px-2.5 py-2 dark:bg-emerald-950/35">
+                    <p className="text-[11px] font-medium text-emerald-800/90 dark:text-emerald-300/90">
+                      {t("booking.request.limitsLeftLabel")}
+                    </p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
+                      {limits.todayRemaining}
+                      <span className="ml-1 text-sm font-normal text-emerald-700/80 dark:text-emerald-300/70">
+                        {t("booking.request.limitsSessionsUnit")}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400">
+                  {t("booking.request.limitsDailyCapShort")} · {limits.limits.dailyMax}{" "}
+                  {t("booking.request.limitsSessionsUnit")}
+                </p>
+                <QuotaBlockStrip
+                  filled={limits.todayCommitted}
+                  total={limits.limits.dailyMax}
+                  filledClassName="bg-blue-600 dark:bg-blue-500"
+                  emptyClassName="bg-stone-200 dark:bg-stone-600"
+                />
+              </div>
+
+              {limits.rollingSumCommitted != null ? (
+                <div
+                  className="rounded-lg border border-stone-200/90 bg-white px-3 py-3 dark:border-stone-600 dark:bg-stone-900/50"
+                  role="group"
+                  aria-label={tr("booking.request.limitsMeterAriaRolling", {
+                    used: String(limits.rollingSumCommitted),
+                    max: String(limits.limits.rollingMax),
+                    remaining: String(
+                      Math.max(0, limits.limits.rollingMax - limits.rollingSumCommitted)
+                    ),
+                  })}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {t("booking.request.limitsCardRolling")}
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-md bg-stone-50 px-2.5 py-2 dark:bg-stone-800/80">
+                      <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
+                        {t("booking.request.limitsUsedLabel")}
+                      </p>
+                      <p className="mt-0.5 text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+                        {limits.rollingSumCommitted}
+                        <span className="ml-1 text-sm font-normal text-stone-500 dark:text-stone-400">
+                          {t("booking.request.limitsSessionsUnit")}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-violet-50 px-2.5 py-2 dark:bg-violet-950/35">
+                      <p className="text-[11px] font-medium text-violet-900/85 dark:text-violet-300/90">
+                        {t("booking.request.limitsLeftLabel")}
+                      </p>
+                      <p className="mt-0.5 text-2xl font-semibold tabular-nums text-violet-900 dark:text-violet-200">
+                        {Math.max(0, limits.limits.rollingMax - limits.rollingSumCommitted)}
+                        <span className="ml-1 text-sm font-normal text-violet-800/75 dark:text-violet-300/70">
+                          {t("booking.request.limitsSessionsUnit")}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400">
+                    {t("booking.request.limitsRollingCapShort")} · {limits.limits.rollingMax}{" "}
+                    {t("booking.request.limitsSessionsUnit")}
+                  </p>
+                  <QuotaBlockStrip
+                    filled={limits.rollingSumCommitted}
+                    total={limits.limits.rollingMax}
+                    filledClassName="bg-violet-600 dark:bg-violet-500"
+                    emptyClassName="bg-stone-200 dark:bg-stone-600"
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            {limits.rollingWindow ? (
+              <div className="mt-3 flex flex-col gap-1.5 rounded-lg border border-dashed border-stone-300 bg-stone-50/80 px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900/30 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
+                  {t("booking.request.limitsWindowLabel")}
+                </span>
+                <span className="font-mono text-sm font-medium text-stone-800 dark:text-stone-200">
+                  <span className="text-stone-500 dark:text-stone-500">{limits.rollingWindow.startKey}</span>
+                  <span className="mx-2 text-stone-400 dark:text-stone-600" aria-hidden>
+                    →
+                  </span>
+                  <span className="text-stone-500 dark:text-stone-500">{limits.rollingWindow.endKey}</span>
+                </span>
+              </div>
+            ) : null}
+
+            {limits.eligibility ? (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-medium text-stone-500 dark:text-stone-400">
+                  {t("booking.request.limitsEligibilityLabel")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
+                      limits.eligibility.individualEligible
+                        ? "border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
+                        : "border-stone-200 bg-stone-100 text-stone-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-400"
+                    }`}
+                  >
+                    <BookingIconPerson
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        limits.eligibility.individualEligible
+                          ? "text-emerald-800 dark:text-emerald-200"
+                          : "text-stone-400 dark:text-stone-500"
+                      }`}
+                    />
+                    <span
+                      className={`inline-block h-1.5 w-1.5 rounded-full ${
+                        limits.eligibility.individualEligible
+                          ? "bg-emerald-500"
+                          : "bg-stone-400 dark:bg-stone-500"
+                      }`}
+                      aria-hidden
+                    />
+                    {t("booking.request.limitsEligibilityIndividual")} ·{" "}
+                    {limits.eligibility.individualEligible ? t("booking.request.yes") : t("booking.request.no")}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
+                      limits.eligibility.teachingEligible
+                        ? "border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
+                        : "border-stone-200 bg-stone-100 text-stone-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-400"
+                    }`}
+                  >
+                    <BookingIconTeaching
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        limits.eligibility.teachingEligible
+                          ? "text-emerald-800 dark:text-emerald-200"
+                          : "text-stone-400 dark:text-stone-500"
+                      }`}
+                    />
+                    <span
+                      className={`inline-block h-1.5 w-1.5 rounded-full ${
+                        limits.eligibility.teachingEligible
+                          ? "bg-emerald-500"
+                          : "bg-stone-400 dark:bg-stone-500"
+                      }`}
+                      aria-hidden
+                    />
+                    {t("booking.request.limitsEligibilityTeaching")} ·{" "}
+                    {limits.eligibility.teachingEligible ? t("booking.request.yes") : t("booking.request.no")}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            {limits.cooldown?.active && limits.cooldown.nextBookingAt ? (
+              <p className="mt-3 rounded-md border border-amber-200/90 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+                {tr("booking.request.cooldownLine", {
+                  until: new Date(limits.cooldown.nextBookingAt).toLocaleString(
+                    locale === "en" ? "en-GB" : "zh-HK",
+                    {
+                      timeZone: HK_TZ,
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  ),
+                })}
+              </p>
+            ) : null}
+
+            <p className="mt-3 border-t border-stone-200 pt-3 text-xs text-stone-500 dark:text-stone-500 dark:border-stone-700">
               {tr("booking.request.limitsPickHint", {
                 dailyMax: String(limits.limits.dailyMax),
               })}
             </p>
+
             {selected.size > 0 &&
               (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling) && (
-                <p className="mt-2 text-sm font-medium text-red-800">
+                <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
                   {t("booking.request.wouldExceedTitle")}
                   {limits.provisional.wouldExceedDaily && (
-                    <span className="block">
+                    <span className="mt-1 block font-normal">
                       {tr("booking.request.exceedDaily", {
                         dailyMax: String(limits.limits.dailyMax),
                         datePart: limits.provisional.firstViolatingDate
@@ -442,7 +732,7 @@ export function BookingRequestPanel() {
                     </span>
                   )}
                   {limits.provisional.wouldExceedRolling && (
-                    <span className="block">
+                    <span className="mt-1 block font-normal">
                       {tr("booking.request.exceedRolling", {
                         rollingSum: String(limits.provisional.rollingSum),
                         rollingMax: String(limits.limits.rollingMax),
@@ -516,7 +806,7 @@ export function BookingRequestPanel() {
                     todayKey,
                     campaignStart: campaign.start!,
                     campaignEnd: campaign.end!,
-                    maxAdvanceDays,
+                    rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
                   })
                 : true
               : false;
@@ -561,7 +851,7 @@ export function BookingRequestPanel() {
           {bookingLive ? (
             <>
               {tr("booking.request.hintPickDayLive", {
-                maxAdvance: String(maxAdvanceDays),
+                windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
                 lastDay: lastBookableKey ?? t("booking.request.dash"),
               })}
             </>
@@ -569,7 +859,7 @@ export function BookingRequestPanel() {
             <>
               {tr("booking.request.hintPickDayPreview", {
                 range: campaignRange,
-                maxAdvance: String(maxAdvanceDays),
+                windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
                 lastDay: lastBookableKey ?? t("booking.request.dash"),
               })}
             </>
@@ -658,6 +948,38 @@ export function BookingRequestPanel() {
         )}
       </div>
 
+      {bookingLive && dualEligible && (
+        <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3 text-sm">
+          <p className="font-medium text-stone-900 dark:text-stone-50">
+            {t("booking.request.thisBookingIdentityTitle")}
+          </p>
+          <div className="mt-2 space-y-2">
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <input
+                type="radio"
+                name="bookingIdentity"
+                checked={bookingIdentityChoice === "individual"}
+                onChange={() => setBookingIdentityChoice("individual")}
+                className="shrink-0"
+              />
+              <BookingIconPerson className="h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" />
+              <span>{t("booking.request.identityIndividual")}</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <input
+                type="radio"
+                name="bookingIdentity"
+                checked={bookingIdentityChoice === "teaching_or_with_students"}
+                onChange={() => setBookingIdentityChoice("teaching_or_with_students")}
+                className="shrink-0"
+              />
+              <BookingIconTeaching className="h-4 w-4 shrink-0 text-indigo-800 dark:text-indigo-300" />
+              <span>{t("booking.request.identityTeaching")}</span>
+            </label>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 border-t border-stone-200 dark:border-stone-700 pt-6">
         <button
           type="button"
@@ -665,6 +987,7 @@ export function BookingRequestPanel() {
             selected.size === 0 ||
             submitting ||
             !bookingLive ||
+            (limits?.cooldown?.active === true) ||
             (limits != null &&
               selected.size > 0 &&
               (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling))
@@ -676,7 +999,7 @@ export function BookingRequestPanel() {
             ? t("booking.request.submitting")
             : tr("booking.request.submitWithCount", { n: String(selected.size) })}
         </button>
-        <Link href="/booking/history" className="text-sm text-stone-700 dark:text-stone-300 underline">
+        <Link href={`${bookingPathPrefix}/history`} className="text-sm text-stone-700 dark:text-stone-300 underline">
           {t("booking.request.linkHistory")}
         </Link>
       </div>

@@ -123,6 +123,22 @@ enum CompetitionConversionStatus {
   paid
 }
 
+enum QuotaTier {
+  individual
+  teaching
+}
+
+enum BookingIdentityType {
+  individual
+  teaching_or_with_students
+}
+
+/// Which physical booking system / slot pool this row belongs to (琴房 vs 開放空間).
+enum BookingVenueKind {
+  studio_room
+  open_space
+}
+
 enum AdminRole {
   admin
   super_admin
@@ -145,12 +161,24 @@ model UserCategory {
   @@map("user_categories")
 }
 
+/// Registration UI: circular preview image per instrument (`piano` or orchestra id). Paths are usually `/instruments/*.jpg`.
+model RegistrationInstrumentImage {
+  instrumentKey String @id @map("instrument_key")
+  imageUrl      String @map("image_url")
+
+  @@map("registration_instrument_images")
+}
+
 model User {
   id                       String        @id @default(uuid())
   email                    String        @unique
   accountStatus            AccountStatus @default(active) @map("account_status")
   hasCompletedRegistration Boolean       @default(false) @map("has_completed_registration")
   userCategoryId           String?       @map("user_category_id")
+  /// Single account quota bucket; dual-eligible users still use one tier only (default teaching).
+  quotaTier                QuotaTier     @default(individual) @map("quota_tier")
+  /// Latest successful booking submission time (pending / approved / waitlisted) for cooldown.
+  lastBookingAt            DateTime?     @map("last_booking_at")
   isFirstExperiencePriority Boolean      @default(true) @map("is_first_experience_priority")
   noShowCount              Int           @default(0) @map("no_show_count")
   suspendedUntil           DateTime?     @map("suspended_until")
@@ -158,6 +186,8 @@ model User {
   qualifiedForPrivilege    Boolean       @default(false) @map("qualified_for_privilege")
   /// Opaque token for the post-registration page to record official profile link opens (no login required).
   socialFollowSetupToken   String?       @unique @map("social_follow_setup_token")
+  /// OAuth refresh token for syncing the member's own bookings to their Google Calendar (server-side only).
+  googleCalendarRefreshToken String?     @map("google_calendar_refresh_token") @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -181,9 +211,27 @@ model User {
   webAuthnCredentials           WebAuthnCredential[]
   passkeyLoginChallenges        PasskeyLoginChallenge[]
   passkeyEnrollmentChallenges   PasskeyEnrollmentChallenge[]
+  googleCalendarSyncedBlocks    GoogleCalendarSyncedBlock[]
 
   @@index([email])
   @@map("users")
+}
+
+model GoogleCalendarSyncedBlock {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  bookingRequestId String   @map("booking_request_id")
+  mergedStartsAt   DateTime @map("merged_starts_at")
+  googleEventId    String   @map("google_event_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookingRequestId, mergedStartsAt], map: "gcal_sync_block_unique")
+  @@index([userId])
+  @@map("google_calendar_synced_blocks")
 }
 
 model UserProfile {
@@ -198,10 +246,16 @@ model UserProfile {
   teacherRecommended   Boolean @map("teacher_recommended")
   teacherName          String? @map("teacher_name")
   teacherContact       String? @map("teacher_contact")
+  /// Eligible to book as individual (practice) for this account.
+  individualEligible   Boolean @default(true) @map("individual_eligible")
+  /// Eligible to book as teaching / with students for this account.
+  teachingEligible     Boolean @default(false) @map("teaching_eligible")
   identityFlags        Json    @map("identity_flags")
   /// When 「其他」is selected among identities, user-specified description.
   identityOtherText    String? @map("identity_other_text")
   instrumentField      String  @map("instrument_field")
+  /// Registration-time routing: 琴房預約系統 vs 開放空間（大型樂器）預約系統。
+  bookingVenueKind     BookingVenueKind @default(studio_room) @map("booking_venue_kind")
   usagePurposes        Json    @map("usage_purposes")
   preferredDates       Json?   @map("preferred_dates")
   preferredTimeText    String? @map("preferred_time_text")
@@ -362,6 +416,7 @@ model BookingSlot {
   capacityTotal  Int      @default(1) @map("capacity_total")
   capacityHeld   Int      @default(0) @map("capacity_held")
   isOpen         Boolean  @default(true) @map("is_open")
+  venueKind      BookingVenueKind @default(studio_room) @map("venue_kind")
   venueLabel     String?  @map("venue_label")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -370,6 +425,7 @@ model BookingSlot {
   allocations BookingAllocation[]
 
   @@index([startsAt])
+  @@index([venueKind, startsAt])
   @@map("booking_slots")
 }
 
@@ -378,6 +434,9 @@ model BookingRequest {
   userId               String               @map("user_id")
   status               BookingRequestStatus @default(pending)
   requestedAt          DateTime             @default(now()) @map("requested_at")
+  venueKind            BookingVenueKind     @default(studio_room) @map("venue_kind")
+  /// Nature of this booking (for admin / stats). Quota always uses the user account `quota_tier`.
+  bookingIdentityType  BookingIdentityType  @map("booking_identity_type")
   userCategoryAtRequest String              @map("user_category_at_request")
   adminNote            String?              @map("admin_note")
   usesBonusSlot        Boolean              @default(false) @map("uses_bonus_slot")

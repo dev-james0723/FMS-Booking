@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookingCountdown } from "@/components/booking-countdown";
 import { BookingOpensCalendarReminder } from "@/components/booking-opens-calendar-reminder";
+import { HomeEligibilityMemo } from "@/components/home-eligibility-memo";
 import { HomePartnerLogos } from "@/components/home-partner-logos";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
@@ -39,10 +40,12 @@ export function HomePageMain({
         {tr("home.lead", { campaignRange })}
       </p>
 
+      <HomeEligibilityMemo />
+
       <div className="mx-auto mt-12 max-w-lg space-y-6">
         <Link
           href="/register"
-          className="block rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-6 py-5 text-center text-sm font-medium text-stone-900 dark:text-stone-50 shadow-sm transition hover:bg-stone-50 dark:hover:bg-stone-800"
+          className="block rounded-xl border border-emerald-950/25 bg-emerald-800 px-6 py-5 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-900 dark:border-emerald-950/40 dark:bg-emerald-800 dark:text-white dark:hover:bg-emerald-900"
         >
           {t("home.registerCta")}
         </Link>

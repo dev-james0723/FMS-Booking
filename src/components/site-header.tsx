@@ -90,7 +90,7 @@ function UserIcon({ className }: { className?: string }) {
   );
 }
 
-type MePayload = { user?: { email: string } } | null;
+type MePayload = { user?: { email: string; bookingVenueKind?: string } } | null;
 
 function MobileNavZipItem({
   index,
@@ -116,6 +116,9 @@ export function SiteHeader() {
   const homeAriaLabel = t("nav.homeAria");
   const [menuOpen, setMenuOpen] = useState(false);
   const [me, setMe] = useState<MePayload | undefined>(undefined);
+  const bookingHref =
+    me?.user?.bookingVenueKind === "open_space" ? "/booking/open-space" : "/booking";
+
   const registrationBannerDismissed = useSyncExternalStore(
     subscribeRegistrationBannerDismissed,
     readRegistrationBannerDismissedFromStorage,
@@ -183,7 +186,7 @@ export function SiteHeader() {
                   <UserIcon className="h-5 w-5" />
                 </Link>
                 <Link
-                  href="/booking"
+                  href={bookingHref}
                   className="text-center text-[11px] font-medium leading-tight text-violet-800 underline decoration-violet-400 underline-offset-2 hover:text-violet-950 dark:text-violet-300 dark:decoration-violet-500 dark:hover:text-violet-100"
                 >
                   {t("nav.bookingSlots")}
@@ -299,6 +302,15 @@ export function SiteHeader() {
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
+                    <Link
+                      href="/open-space-booking"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.openSpaceBookingInfo")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
                     <button
                       type="button"
                       className={`${linkPlain} w-full justify-center gap-2 py-2`}
@@ -311,7 +323,7 @@ export function SiteHeader() {
                       {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
                     </button>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={5}>
+                  <MobileNavZipItem index={6}>
                     <Link
                       href="/privacy"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -320,7 +332,7 @@ export function SiteHeader() {
                       {t("nav.privacyPolicy")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={6}>
+                  <MobileNavZipItem index={7}>
                     <Link
                       href="/terms"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -329,7 +341,7 @@ export function SiteHeader() {
                       {t("nav.termsAndConditions")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={7}>
+                  <MobileNavZipItem index={8}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -344,7 +356,7 @@ export function SiteHeader() {
                 <>
                   <MobileNavZipItem index={0}>
                     <Link
-                      href="/booking"
+                      href={bookingHref}
                       className={`${btnSolid} w-full text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
@@ -379,6 +391,15 @@ export function SiteHeader() {
                     </Link>
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
+                    <Link
+                      href="/open-space-booking"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.openSpaceBookingInfo")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
                     <button
                       type="button"
                       className={`${linkPlain} w-full justify-center gap-2 py-2`}
@@ -391,7 +412,7 @@ export function SiteHeader() {
                       {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
                     </button>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={5}>
+                  <MobileNavZipItem index={6}>
                     <Link
                       href="/privacy"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -400,7 +421,7 @@ export function SiteHeader() {
                       {t("nav.privacyPolicy")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={6}>
+                  <MobileNavZipItem index={7}>
                     <Link
                       href="/terms"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -409,7 +430,7 @@ export function SiteHeader() {
                       {t("nav.termsAndConditions")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={7}>
+                  <MobileNavZipItem index={8}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}

@@ -1,81 +1,31 @@
-import { BookingRequestStatus, type BookingSlot, type User } from "@prisma/client";
+import {
+  BookingRequestStatus,
+  type BookingSlot,
+  type BookingIdentityType,
+  type BookingVenueKind,
+  type User,
+  Prisma,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { BookingRuleError } from "@/lib/booking/booking-errors";
+export { BookingRuleError };
+export type { BookingGateErrorCode } from "@/lib/booking/booking-errors";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
-import { getEffectiveNow, getAllSettings, parseInstantSetting } from "@/lib/settings";
+import {
+  assertCooldownAllowsBooking,
+  getQuotaNumericLimits,
+  isSlotDateWithinRollingWindow,
+  loadSlotUsageCountsDb,
+  resolveBookingIdentityTypeOrThrow,
+} from "@/lib/booking/booking-rules";
+import { getEffectiveNow, getAllSettings } from "@/lib/settings";
 import { hkDateKey } from "@/lib/time";
 import { hkCalendarDaysBetween, maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
 import {
   parseBookingNumericSettings,
   parseCampaignDateKeys,
 } from "@/lib/booking/settings";
-import { COUNTED_REQUEST_STATUS, loadUserExistingDayCounts } from "@/lib/booking/day-counts";
-import { userHasExtendedBookingTier } from "@/lib/booking/limits-tier";
-
-export type BookingGateErrorCode =
-  | "BOOKING_NOT_OPEN"
-  | "MUST_CHANGE_PASSWORD"
-  | "REGISTRATION_INCOMPLETE"
-  | "ACCOUNT_NOT_ACTIVE"
-  | "VALIDATION_ERROR"
-  | "SLOT_NOT_FOUND"
-  | "SLOT_CLOSED"
-  | "SLOT_FULL"
-  | "CAMPAIGN_DATE_INVALID"
-  | "BOOKING_TOO_FAR_ADVANCE"
-  | "BOOKING_LIMIT_DAILY"
-  | "BOOKING_LIMIT_ROLLING_3D"
-  | "SLOT_OVERLAP"
-  | "BONUS_INVALID"
-  | "NO_SLOTS";
-
-export class BookingRuleError extends Error {
-  constructor(
-    public code: BookingGateErrorCode,
-    message: string,
-    public details?: unknown
-  ) {
-    super(message);
-    this.name = "BookingRuleError";
-  }
-}
-
-export async function assertBookingPortalAllowed(user: User & { credentials: { mustChangePassword: boolean } | null }) {
-  const settings = await getAllSettings();
-  const now = await getEffectiveNow();
-  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
-  if (!bookingOpens || now.getTime() < bookingOpens.getTime()) {
-    throw new BookingRuleError("BOOKING_NOT_OPEN", "預約系統尚未開放");
-  }
-  if (!user.hasCompletedRegistration) {
-    throw new BookingRuleError("REGISTRATION_INCOMPLETE", "請先完成登記");
-  }
-  if (user.accountStatus !== "active") {
-    throw new BookingRuleError("ACCOUNT_NOT_ACTIVE", "帳戶狀態未能預約");
-  }
-  if (!user.credentials || user.credentials.mustChangePassword) {
-    throw new BookingRuleError("MUST_CHANGE_PASSWORD", "請先更改臨時密碼");
-  }
-  return { settings, now };
-}
-
-async function loadSlotUsageCounts(
-  slotIds: string[]
-): Promise<Map<string, number>> {
-  if (slotIds.length === 0) return new Map();
-  const allocs = await prisma.bookingAllocation.findMany({
-    where: {
-      bookingSlotId: { in: slotIds },
-      status: { in: ["pending", "approved"] },
-      request: { status: { in: COUNTED_REQUEST_STATUS } },
-    },
-    select: { bookingSlotId: true },
-  });
-  const map = new Map<string, number>();
-  for (const a of allocs) {
-    map.set(a.bookingSlotId, (map.get(a.bookingSlotId) ?? 0) + 1);
-  }
-  return map;
-}
+import { COUNTED_REQUEST_STATUS } from "@/lib/booking/day-counts";
 
 function mergeDayCounts(
   base: Map<string, number>,
@@ -110,11 +60,33 @@ function userHasSlotOverlap(newSlots: BookingSlot[], existing: { slot: BookingSl
   return false;
 }
 
+export async function assertBookingPortalAllowed(
+  user: User & { credentials: { mustChangePassword: boolean } | null }
+) {
+  const settings = await getAllSettings();
+  const now = await getEffectiveNow();
+  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
+  if (!bookingOpens || now.getTime() < bookingOpens.getTime()) {
+    throw new BookingRuleError("BOOKING_NOT_OPEN", "預約系統尚未開放");
+  }
+  if (!user.hasCompletedRegistration) {
+    throw new BookingRuleError("REGISTRATION_INCOMPLETE", "請先完成登記");
+  }
+  if (user.accountStatus !== "active") {
+    throw new BookingRuleError("ACCOUNT_NOT_ACTIVE", "帳戶狀態未能預約");
+  }
+  if (!user.credentials || user.credentials.mustChangePassword) {
+    throw new BookingRuleError("MUST_CHANGE_PASSWORD", "請先更改臨時密碼");
+  }
+  return { settings, now };
+}
+
 export async function validateAndCreateBookingRequest(params: {
   userId: string;
   userCategoryCode: string;
   slotIds: string[];
   bonusRewardId?: string | null;
+  bookingIdentityType?: BookingIdentityType | null;
 }): Promise<{ requestId: string }> {
   const { userId, userCategoryCode, slotIds } = params;
   const uniqueSlotIds = [...new Set(slotIds)];
@@ -137,176 +109,240 @@ export async function validateAndCreateBookingRequest(params: {
   }
 
   const todayKey = hkDateKey(now);
-  const extended = userHasExtendedBookingTier(user);
-  const dailyMax = extended ? nums.teachingMaxPerDay : nums.personalMaxPerDay;
-  const rollingMax = extended
-    ? nums.teachingMaxRolling3d
-    : nums.personalMaxRolling3d;
+  const quotaTier = user.quotaTier;
+  const { dailyMax, rollingMax } = getQuotaNumericLimits(quotaTier, nums);
 
-  const slots = await prisma.bookingSlot.findMany({
-    where: { id: { in: uniqueSlotIds } },
-    orderBy: { startsAt: "asc" },
-  });
-
-  if (slots.length !== uniqueSlotIds.length) {
-    throw new BookingRuleError("SLOT_NOT_FOUND", "部分時段不存在");
+  if (!user.profile) {
+    throw new BookingRuleError("REGISTRATION_INCOMPLETE", "請先完成登記");
   }
 
-  for (const s of slots) {
-    if (!s.isOpen) {
-      throw new BookingRuleError("SLOT_CLOSED", "時段已關閉", { slotId: s.id });
-    }
-    const sk = hkDateKey(s.startsAt);
-    if (sk < startKey || sk > endKey) {
-      throw new BookingRuleError(
-        "CAMPAIGN_DATE_INVALID",
-        "時段不在活動有效期內",
-        { slotId: s.id }
-      );
-    }
-    const advance = hkCalendarDaysBetween(todayKey, sk);
-    if (advance < 0) {
-      throw new BookingRuleError(
-        "CAMPAIGN_DATE_INVALID",
-        "不可選擇已過去的時段",
-        { slotId: s.id }
-      );
-    }
-    if (advance > nums.maxAdvanceDays) {
-      throw new BookingRuleError(
-        "BOOKING_TOO_FAR_ADVANCE",
-        `最多只可提前 ${nums.maxAdvanceDays} 個曆日預約`,
-        { slotId: s.id }
-      );
-    }
-  }
+  assertCooldownAllowsBooking(user.lastBookingAt, now);
 
-  const usage = await loadSlotUsageCounts(uniqueSlotIds);
-  for (const s of slots) {
-    const used = usage.get(s.id) ?? 0;
-    if (used >= s.capacityTotal) {
-      throw new BookingRuleError("SLOT_FULL", "此時段預約名額已滿", {
-        slotId: s.id,
+  const categoryCode = user.category?.code ?? userCategoryCode;
+
+  const requestId = await prisma.$transaction(
+    async (tx) => {
+      const u = await tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { profile: true, category: true },
       });
-    }
-  }
+      if (!u.profile) {
+        throw new BookingRuleError("REGISTRATION_INCOMPLETE", "請先完成登記");
+      }
 
-  const existingAllocs = await prisma.bookingAllocation.findMany({
+      assertCooldownAllowsBooking(u.lastBookingAt, now);
+
+      const slots = await tx.bookingSlot.findMany({
+        where: { id: { in: uniqueSlotIds } },
+        orderBy: { startsAt: "asc" },
+      });
+
+      if (slots.length !== uniqueSlotIds.length) {
+        throw new BookingRuleError("SLOT_NOT_FOUND", "部分時段不存在");
+      }
+
+      const venueFromSlots = slots[0]!.venueKind;
+      for (const s of slots) {
+        if (s.venueKind !== venueFromSlots) {
+          throw new BookingRuleError("BOOKING_VENUE_MIXED", "所選時段必須屬於同一預約系統（琴房或開放空間）");
+        }
+      }
+      if (u.profile.bookingVenueKind !== venueFromSlots) {
+        throw new BookingRuleError(
+          "BOOKING_VENUE_MISMATCH",
+          "此帳戶的登記類型與所選時段不符。大型樂器（開放空間）使用者請使用開放空間預約頁面；琴房使用者請使用琴室預約頁面。"
+        );
+      }
+
+      for (const s of slots) {
+        if (!s.isOpen) {
+          throw new BookingRuleError("SLOT_CLOSED", "時段已關閉", { slotId: s.id });
+        }
+        const sk = hkDateKey(s.startsAt);
+        if (sk < startKey || sk > endKey) {
+          throw new BookingRuleError("CAMPAIGN_DATE_INVALID", "時段不在活動有效期內", {
+            slotId: s.id,
+          });
+        }
+        const advance = hkCalendarDaysBetween(todayKey, sk);
+        if (advance < 0) {
+          throw new BookingRuleError("CAMPAIGN_DATE_INVALID", "不可選擇已過去的時段", {
+            slotId: s.id,
+          });
+        }
+        if (!isSlotDateWithinRollingWindow(todayKey, sk)) {
+          throw new BookingRuleError(
+            "BOOKING_OUTSIDE_ROLLING_WINDOW",
+            "你目前只可預約未來 3 日內之時段。",
+            { slotId: s.id, slotDate: sk }
+          );
+        }
+      }
+
+      const usage = await loadSlotUsageCountsDb(tx, uniqueSlotIds);
+      for (const s of slots) {
+        const used = usage.get(s.id) ?? 0;
+        if (used >= s.capacityTotal) {
+          throw new BookingRuleError("SLOT_FULL", "該時段已被預約，請選擇其他時間。", {
+            slotId: s.id,
+          });
+        }
+      }
+
+      const existingAllocs = await tx.bookingAllocation.findMany({
+        where: {
+          request: {
+            userId,
+            status: { in: COUNTED_REQUEST_STATUS },
+          },
+          status: { in: ["pending", "approved"] },
+        },
+        include: { slot: true },
+      });
+
+      if (userHasSlotOverlap(slots, existingAllocs)) {
+        throw new BookingRuleError("SLOT_OVERLAP", "所選時段與現有預約重疊或彼此重疊");
+      }
+
+      const existingDayCounts = await loadUserExistingDayCountsTx(tx, userId);
+      const newDayKeys = slots.map((s) => hkDateKey(s.startsAt));
+      const merged = mergeDayCounts(existingDayCounts, newDayKeys);
+
+      for (const [day, n] of merged) {
+        if (day < startKey || day > endKey) continue;
+        if (n > dailyMax) {
+          throw new BookingRuleError(
+            "BOOKING_LIMIT_DAILY",
+            "你今日的可預約時段已達上限。",
+            { date: day, count: n }
+          );
+        }
+      }
+
+      if (maxRollingThreeDaySum(merged) > rollingMax) {
+        throw new BookingRuleError(
+          "BOOKING_LIMIT_ROLLING_3D",
+          "你於連續 3 日內的可預約時段已達上限。",
+          { rollingMax }
+        );
+      }
+
+      let usesBonus = false;
+      let bonusId: string | null = null;
+      if (params.bonusRewardId) {
+        const br = await tx.bonusReward.findFirst({
+          where: {
+            id: params.bonusRewardId,
+            userId,
+            slotsRemaining: { gt: 0 },
+          },
+        });
+        if (!br) {
+          throw new BookingRuleError("BONUS_INVALID", "Bonus 時段無效或已用盡");
+        }
+        usesBonus = true;
+        bonusId = br.id;
+      }
+
+      const resolvedIdentity = resolveBookingIdentityTypeOrThrow(
+        u.profile.individualEligible,
+        u.profile.teachingEligible,
+        params.bookingIdentityType ?? undefined
+      );
+
+      const req = await tx.bookingRequest.create({
+        data: {
+          userId,
+          status: BookingRequestStatus.pending,
+          venueKind: venueFromSlots,
+          bookingIdentityType: resolvedIdentity,
+          userCategoryAtRequest: u.category?.code ?? categoryCode,
+          usesBonusSlot: usesBonus,
+          bonusRewardId: bonusId,
+        },
+      });
+
+      for (const s of slots) {
+        await tx.bookingAllocation.create({
+          data: {
+            bookingRequestId: req.id,
+            bookingSlotId: s.id,
+            status: "pending",
+          },
+        });
+      }
+
+      if (bonusId) {
+        await tx.bonusReward.update({
+          where: { id: bonusId },
+          data: { slotsRemaining: { decrement: 1 } },
+        });
+      }
+
+      await tx.bookingStatusLog.create({
+        data: {
+          bookingRequestId: req.id,
+          fromStatus: null,
+          toStatus: BookingRequestStatus.pending,
+          actorType: "system",
+          actorId: null,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { lastBookingAt: new Date() },
+      });
+
+      return req.id;
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 10_000,
+      timeout: 20_000,
+    }
+  );
+
+  return { requestId };
+}
+
+async function loadUserExistingDayCountsTx(
+  tx: Prisma.TransactionClient,
+  userId: string
+): Promise<Map<string, number>> {
+  const allocs = await tx.bookingAllocation.findMany({
     where: {
+      status: { in: ["pending", "approved"] },
       request: {
         userId,
         status: { in: COUNTED_REQUEST_STATUS },
       },
-      status: { in: ["pending", "approved"] },
     },
     include: { slot: true },
   });
-
-  if (userHasSlotOverlap(slots, existingAllocs)) {
-    throw new BookingRuleError("SLOT_OVERLAP", "所選時段與現有預約重疊或彼此重疊");
+  const map = new Map<string, number>();
+  for (const a of allocs) {
+    const key = hkDateKey(a.slot.startsAt);
+    map.set(key, (map.get(key) ?? 0) + 1);
   }
-
-  const existingDayCounts = await loadUserExistingDayCounts(userId);
-  const newDayKeys = slots.map((s) => hkDateKey(s.startsAt));
-  const merged = mergeDayCounts(existingDayCounts, newDayKeys);
-
-  for (const [day, n] of merged) {
-    if (day < startKey || day > endKey) continue;
-    if (n > dailyMax) {
-      throw new BookingRuleError(
-        "BOOKING_LIMIT_DAILY",
-        `同一日最多只可預約 ${dailyMax} 節（30 分鐘為 1 節）`,
-        { date: day, count: n }
-      );
-    }
-  }
-
-  if (maxRollingThreeDaySum(merged) > rollingMax) {
-    throw new BookingRuleError(
-      "BOOKING_LIMIT_ROLLING_3D",
-      `任何連續 3 個曆日內最多只可預約 ${rollingMax} 節`,
-      { rollingMax }
-    );
-  }
-
-  let usesBonus = false;
-  let bonusId: string | null = null;
-  if (params.bonusRewardId) {
-    const br = await prisma.bonusReward.findFirst({
-      where: {
-        id: params.bonusRewardId,
-        userId,
-        slotsRemaining: { gt: 0 },
-      },
-    });
-    if (!br) {
-      throw new BookingRuleError("BONUS_INVALID", "Bonus 時段無效或已用盡");
-    }
-    usesBonus = true;
-    bonusId = br.id;
-  }
-
-  const categoryCode = user.category?.code ?? userCategoryCode;
-
-  const requestId = await prisma.$transaction(async (tx) => {
-    const req = await tx.bookingRequest.create({
-      data: {
-        userId,
-        status: BookingRequestStatus.pending,
-        userCategoryAtRequest: categoryCode,
-        usesBonusSlot: usesBonus,
-        bonusRewardId: bonusId,
-      },
-    });
-
-    for (const s of slots) {
-      await tx.bookingAllocation.create({
-        data: {
-          bookingRequestId: req.id,
-          bookingSlotId: s.id,
-          status: "pending",
-        },
-      });
-    }
-
-    if (bonusId) {
-      await tx.bonusReward.update({
-        where: { id: bonusId },
-        data: { slotsRemaining: { decrement: 1 } },
-      });
-    }
-
-    await tx.bookingStatusLog.create({
-      data: {
-        bookingRequestId: req.id,
-        fromStatus: null,
-        toStatus: BookingRequestStatus.pending,
-        actorType: "system",
-        actorId: null,
-      },
-    });
-
-    return req.id;
-  });
-
-  return { requestId };
+  return map;
 }
 
 export async function listAvailability(params: {
   from: Date;
   to: Date;
-}): Promise<
-  (BookingSlot & { bookedCount: number; remaining: number })[]
-> {
+  venueKind: BookingVenueKind;
+}): Promise<(BookingSlot & { bookedCount: number; remaining: number })[]> {
   const slots = await prisma.bookingSlot.findMany({
     where: {
       isOpen: true,
+      venueKind: params.venueKind,
       startsAt: { gte: params.from, lte: params.to },
     },
     orderBy: { startsAt: "asc" },
   });
   const ids = slots.map((s) => s.id);
-  const usage = await loadSlotUsageCounts(ids);
+  const usage = await loadSlotUsageCountsDb(prisma, ids);
   return slots.map((s) => {
     const booked = usage.get(s.id) ?? 0;
     return {
@@ -317,21 +353,20 @@ export async function listAvailability(params: {
   });
 }
 
-/** All slots in range (including closed), for calendar / timeline views. */
 export async function listSlotsForCalendarView(params: {
   from: Date;
   to: Date;
-}): Promise<
-  (BookingSlot & { bookedCount: number; remaining: number })[]
-> {
+  venueKind: BookingVenueKind;
+}): Promise<(BookingSlot & { bookedCount: number; remaining: number })[]> {
   const slots = await prisma.bookingSlot.findMany({
     where: {
+      venueKind: params.venueKind,
       startsAt: { gte: params.from, lte: params.to },
     },
     orderBy: { startsAt: "asc" },
   });
   const ids = slots.map((s) => s.id);
-  const usage = await loadSlotUsageCounts(ids);
+  const usage = await loadSlotUsageCountsDb(prisma, ids);
   return slots.map((s) => {
     const booked = usage.get(s.id) ?? 0;
     return {

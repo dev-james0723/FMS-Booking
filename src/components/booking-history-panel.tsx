@@ -7,23 +7,27 @@ import {
   formatSlotListLineForLocale,
 } from "@/lib/booking-slot-display";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { bookingIdentityTypeLabelEn, bookingIdentityTypeLabelZh } from "@/lib/identity-labels";
 
 type BookingRow = {
   id: string;
   status: string;
   requestedAt: string;
+  bookingIdentityType: string;
   usesBonusSlot: boolean;
   slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
 
-export function BookingHistoryPanel() {
+export function BookingHistoryPanel(props: { venueKind: "studio_room" | "open_space" }) {
+  const { venueKind } = props;
   const { t, locale } = useTranslation();
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const res = await fetch(withBasePath("/api/v1/booking/history"));
+      const q = new URLSearchParams({ venue: venueKind });
+      const res = await fetch(withBasePath(`/api/v1/booking/history?${q}`));
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error?.message ?? t("booking.historyPanel.loadError"));
@@ -31,7 +35,7 @@ export function BookingHistoryPanel() {
       }
       setRows(data.bookings ?? []);
     })();
-  }, [t]);
+  }, [t, venueKind]);
 
   if (error) {
     return <p className="text-sm text-red-700">{error}</p>;
@@ -66,6 +70,10 @@ export function BookingHistoryPanel() {
               timeZone: "Asia/Hong_Kong",
             })}
             {r.usesBonusSlot ? ` · ${t("booking.historyPanel.bonusSlot")}` : ""}
+            {" · "}
+            {locale === "en"
+              ? bookingIdentityTypeLabelEn(r.bookingIdentityType)
+              : bookingIdentityTypeLabelZh(r.bookingIdentityType)}
           </p>
           <ul className="mt-3 space-y-1 text-stone-800 dark:text-stone-200">
             {r.slots.map((s, i) => (

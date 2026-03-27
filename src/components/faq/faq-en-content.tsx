@@ -52,8 +52,9 @@ export function FaqEnContent() {
               performance opportunities.
             </li>
             <li>
-              Dates and hours follow organiser announcements (for example open hours within{" "}
-              <strong>3 April–3 May 2026</strong>; first day from 11:00, other days from 06:00).
+              Dates and hours follow organiser announcements (for example within{" "}
+              <strong>3 April–3 May 2026</strong>: 3 Apr 11:00–20:00, all other campaign days 06:00–20:00, Hong Kong
+              time).
             </li>
             <li>
               The platform uses <strong>two steps</strong>: first complete <strong>registration &amp; account

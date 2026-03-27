@@ -13,8 +13,8 @@ export const coreZhHK = {
     loginBooking: "預約系統登入",
     myAccount: "我的帳戶",
     bookingSlots: "預約時段",
-    contact: "聯絡",
-    infoMenu: "聯絡",
+    contact: "聯絡資訊",
+    infoMenu: "聯絡資訊",
     faq: "常見問題（FAQ）",
     privacyPolicy: "私隱條例",
     termsAndConditions: "條款與細則",
@@ -22,6 +22,7 @@ export const coreZhHK = {
     switchToZh: "繁體中文",
     language: "語言",
     aboutDfestival2026: "關於 2026 D Festival 青年鋼琴家藝術節",
+    openSpaceBookingInfo: "開放空間預約說明",
     homeAria: "限時免費琴室體驗預約（主頁）",
     openMenu: "開啟選單",
     closeMenu: "關閉選單",
@@ -42,13 +43,32 @@ export const coreZhHK = {
     tagline: "D Festival × Fantasia Music Space",
     title: "限時免費琴室體驗預約",
     lead:
-      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際有限公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。首日（4 月 3 日）場地開放時間為 11:00–20:00，其餘活動日為 06:00–20:00（香港時間）。",
+      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際有限公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。可預約時段（香港時間）：4 月 3 日 11:00–20:00；其餘活動日 06:00–20:00。",
     registerCta: "登記資料及建立帳戶",
     loginCta: "預約系統登入",
     loginDisabledHint:
       "預約將於開放時間後啟用；您仍可先完成登記及建立帳戶。",
     sponsorLogoAlt: "香港華樂國際音樂管理公司",
     sponsorCaption: "全力贊助",
+    eligibilityMemo: {
+      sectionAria: "免費體驗活動參加資格說明",
+      title: "如何獲得今次免費體驗活動資格",
+      alert:
+        "重要：你必須先於本網站完成登記。完成登記後，你仍須完成下列兩項全部要求，方可符合參加今次免費體驗活動的資格。",
+      step1Heading: "一、追蹤官方社交帳戶",
+      step1Intro: "請追蹤（Follow）以下帳號的 Instagram 及 Facebook：",
+      step1a: "D Festival 青年鋼琴家藝術節",
+      step1b: "香港幻樂國際有限公司",
+      step1c: "幻樂空間",
+      step2Heading: "二、分享或轉發指定貼文",
+      step2Intro:
+        "請分享或轉發「D Festival 青年鋼琴家藝術節」的指定兩則貼文，並符合以下要求：",
+      step2a: "分享至限時動態（Story）或個人貼文；",
+      step2b:
+        "標註（Tag）「D Festival 青年鋼琴家藝術節」及「幻樂空間」的 Instagram 或 Facebook 帳號。",
+      closing:
+        "請注意：僅完成網上登記並不足夠。你必須在完成登記後切實做到以上兩項全部要求，才可參加今次免費體驗活動。主辦方有權核對相關社交媒體上的紀錄。",
+    },
   },
   campaign: {
     dateRange: "2026 年 4 月 3 日至 5 月 3 日",
@@ -82,13 +102,49 @@ export const coreZhHK = {
     jointLine: "聯合企劃 · Joint presentation",
   },
   contact: {
-    title: "聯絡我們",
-    body: "請稍後更新客服電郵及電話；此頁為佔位。",
+    title: "聯絡資訊",
+    intro:
+      "歡迎透過以下方式聯絡我們，或填寫查詢表格。提交後系統會向你的電郵發送確認信，並通知主辦方。",
+    phoneLabel: "電話 / WhatsApp",
+    emailLabel: "電郵",
+    phoneDisplay: "+852 9163 6378",
+    emailDisplay: "fantasiamusicspace@gmail.com",
+    phoneAria: "撥打電話 +852 9163 6378",
+    emailAria: "以 Gmail 撰寫電郵至 fantasiamusicspace@gmail.com",
+    formSectionTitle: "查詢表格",
+    nameLabel: "姓名",
+    emailFieldLabel: "電郵地址",
+    phoneFieldLabel: "電話（選填）",
+    messageLabel: "查詢內容",
+    messagePlaceholder: "請輸入你的問題或需要協助的事項…",
+    submit: "提交查詢",
+    submitting: "提交中…",
+    success:
+      "提交成功。我們已向你填寫的電郵發送確認信，並會盡快回覆你。",
+    sendAnother: "提交另一則查詢",
+    errorSend: "無法送出，請稍後再試，或直接使用上方的電話或電郵聯絡我們。",
+    errorValidation: "請檢查並填妥必填項目。",
+    socialTitle: "追蹤幻樂空間",
+    whatsappButton: "WhatsApp",
+    instagramButton: "Instagram",
+    facebookButton: "Facebook",
+    whatsappAria: "在 WhatsApp 開啟對話（wa.link）",
+    instagramAria: "開啟幻樂空間 Instagram 專頁",
+    facebookAria: "開啟幻樂空間 Facebook 專頁",
   },
   registerPage: {
     title: "用戶資料登記",
     intro:
       "請填寫以下資料。提交後系統會以你的 Email 建立帳戶，並發送臨時密碼至你的電郵信箱。完成登記並不代表預約已確認。",
+  },
+  largeInstrumentPage: {
+    title: "大型樂器預約說明",
+    intro:
+      "若你使用的樂器體積大於本琴房可容納之上限，請依以下說明安排，勿於一般登記流程選取該樂器。",
+    celloNote: "大提琴為本琴房可容納之最大體積樂器。",
+    roomNote:
+      "由於幻樂空間目前僅開放一間琴室提供本次體驗活動使用，且房間空間有限，為確保活動安排順暢及良好的使用體驗，每節時段最多可容納三人（當中包括鋼琴彈奏者）。",
+    backToRegister: "返回登記",
   },
   login: {
     title: "登入",

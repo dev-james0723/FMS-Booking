@@ -2,7 +2,11 @@ import { EmailLogStatus } from "@prisma/client";
 import { Resend } from "resend";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
-import { identityFlagsToZh, userCategoryLabelZh } from "@/lib/identity-labels";
+import {
+  identityFlagsToZh,
+  registrationProfileKindLabelZh,
+  userCategoryLabelZh,
+} from "@/lib/identity-labels";
 import { regZhHK } from "@/lib/i18n/strings/zh-HK/registration";
 
 const fieldLabels = regZhHK.fieldLabels as Record<string, string>;
@@ -66,7 +70,11 @@ const SNAPSHOT_FIELD_ORDER: string[] = [
   "teacherRecommended",
   "teacherName",
   "teacherContact",
+  "registrationProfileKind",
   "userCategoryCode",
+  "quotaTier",
+  "individualEligible",
+  "teachingEligible",
   "instrumentField",
   "identityFlags",
   "identityOtherText",
@@ -89,8 +97,15 @@ const SNAPSHOT_FIELD_ORDER: string[] = [
 function formatSnapshotValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return "—";
   switch (key) {
+    case "registrationProfileKind":
+      return registrationProfileKindLabelZh(typeof value === "string" ? value : "");
     case "userCategoryCode":
       return userCategoryLabelZh(typeof value === "string" ? value : "");
+    case "quotaTier":
+      return typeof value === "string" ? value : "—";
+    case "individualEligible":
+    case "teachingEligible":
+      return formatBool(value);
     case "identityFlags":
       return identityFlagsToZh(value).join("、") || "—";
     case "usagePurposes":

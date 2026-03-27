@@ -1,6 +1,10 @@
 import { EmailLogStatus } from "@prisma/client";
 import { Resend } from "resend";
-import { identityFlagsToZh, userCategoryLabelZh } from "@/lib/identity-labels";
+import {
+  bookingIdentityTypeLabelZh,
+  identityFlagsToZh,
+  userCategoryLabelZh,
+} from "@/lib/identity-labels";
 import { formatHkRange } from "@/lib/booking/day-timeline";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
@@ -46,12 +50,19 @@ export async function sendBookingAdminNotification(
 
   const subject = `【新預約】${p?.nameZh ?? booking.user.email}｜${slots.length} 節｜${booking.id.slice(0, 8)}`;
 
+  const venueLine =
+    booking.venueKind === "open_space"
+      ? "場地系統：開放空間（大型樂器）"
+      : "場地系統：琴室（房間內）";
+
   const lines = [
     `有新的預約提交。`,
     ``,
     `預約編號：${booking.id}`,
     `預約狀態：${booking.status}`,
+    venueLine,
     `使用者類別（提交當刻）：${categoryZh}`,
+    `今次預約身份：${bookingIdentityTypeLabelZh(booking.bookingIdentityType)}`,
     ``,
     `—— 聯絡資料 ——`,
     `中文姓名：${p?.nameZh ?? "—"}`,

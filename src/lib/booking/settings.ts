@@ -17,11 +17,11 @@ export function parseBookingNumericSettings(
     return typeof v === "number" && Number.isFinite(v) ? v : fallback;
   };
   return {
-    personalMaxPerDay: num("personal_max_slots_per_day", 3),
-    personalMaxRolling3d: num("personal_max_slots_any_3_consecutive_days", 8),
+    personalMaxPerDay: num("personal_max_slots_per_day", 5),
+    personalMaxRolling3d: num("personal_max_slots_any_3_consecutive_days", 7),
     teachingMaxPerDay: num("teaching_max_slots_per_day", 8),
     teachingMaxRolling3d: num("teaching_max_slots_any_3_consecutive_days", 16),
-    maxAdvanceDays: num("max_advance_booking_days", 3),
+    maxAdvanceDays: num("max_advance_booking_days", 2),
   };
 }
 

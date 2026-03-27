@@ -2,6 +2,7 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { listAvailability } from "@/lib/booking/service";
+import { parseBookingVenueQuery } from "@/lib/booking/venue-kind";
 import { prisma } from "@/lib/prisma";
 
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -21,11 +22,17 @@ export async function GET(req: Request) {
     );
   }
 
+  const venueKind = parseBookingVenueQuery(url.searchParams.get("venue"));
+
   const user = await prisma.user.findUnique({
     where: { id: auth.userId },
+    include: { profile: true },
   });
   if (!user?.hasCompletedRegistration || user.accountStatus !== "active") {
     return jsonError("FORBIDDEN", "無法查閱時段", 403);
+  }
+  if (!user.profile || user.profile.bookingVenueKind !== venueKind) {
+    return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
   }
 
   const start = hkDayStartUtc(from);
@@ -34,9 +41,10 @@ export async function GET(req: Request) {
     return jsonError("VALIDATION_ERROR", "to must be on or after from", 400);
   }
 
-  const rows = await listAvailability({ from: start, to: end });
+  const rows = await listAvailability({ from: start, to: end, venueKind });
 
   return jsonOk({
+    venueKind,
     slots: rows.map((s) => ({
       id: s.id,
       startsAt: s.startsAt.toISOString(),
@@ -45,6 +53,7 @@ export async function GET(req: Request) {
       bookedCount: s.bookedCount,
       remaining: s.remaining,
       venueLabel: s.venueLabel,
+      venueKind: s.venueKind,
       isOpen: s.isOpen,
     })),
   });
