@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import type { AccountStatus } from "@prisma/client";
+import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
 
 const COOKIE = "fms_user_session";
 
@@ -15,26 +16,18 @@ export type SessionPayload = {
   exp?: number;
 };
 
-function getSecret(): Uint8Array {
-  const s = process.env.JWT_SECRET;
-  if (!s || s.length < 16) {
-    throw new Error("JWT_SECRET must be set (min 16 chars)");
-  }
-  return new TextEncoder().encode(s);
-}
-
 export async function signUserSession(payload: Omit<SessionPayload, "iat" | "exp">): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(getSecret());
+    .sign(jwtSecretKeyBytes());
 }
 
 export async function verifyUserSession(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecret());
+    const { payload } = await jwtVerify(token, jwtSecretKeyBytes());
     const sub = String(payload.sub ?? "");
     const email = String(payload.email ?? "");
     const accountStatus = payload.accountStatus as AccountStatus;

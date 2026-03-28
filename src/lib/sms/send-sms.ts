@@ -1,3 +1,5 @@
+import { sanitizeTwilioSecretValue } from "@/lib/sms/twilio-env";
+
 export type SendSmsResult =
   | { ok: true; dev?: boolean }
   | { ok: false; error: string };
@@ -24,10 +26,12 @@ export async function sendSms(params: {
   toE164: string;
   body: string;
 }): Promise<SendSmsResult> {
-  const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
-  const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const from = process.env.TWILIO_FROM_NUMBER?.trim();
-  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID?.trim();
+  const sid = sanitizeTwilioSecretValue(process.env.TWILIO_ACCOUNT_SID);
+  const token = sanitizeTwilioSecretValue(process.env.TWILIO_AUTH_TOKEN);
+  const from = sanitizeTwilioSecretValue(process.env.TWILIO_FROM_NUMBER);
+  const messagingServiceSid = sanitizeTwilioSecretValue(
+    process.env.TWILIO_MESSAGING_SERVICE_SID
+  );
 
   const senderOk = Boolean(from) || Boolean(messagingServiceSid);
   if (!sid || !token || !senderOk) {

@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
+import { isJwtSecretConfigured } from "@/lib/jwt-secret";
 import { normalizePhoneForSms } from "@/lib/phone-normalize";
 import { hashPhoneOtp } from "@/lib/phone-otp";
 import { sendSms } from "@/lib/sms/send-sms";
@@ -31,6 +33,17 @@ export async function POST(req: Request) {
     const phoneNorm = normalizePhoneForSms(parsed.data.phone);
     if (!phoneNorm) {
       return jsonError("INVALID_PHONE", "電話號碼格式不正確，請輸入有效手機號碼（例如 91234567 或 +852…）。", 400);
+    }
+
+    if (!isJwtSecretConfigured()) {
+      console.error(
+        "[registration/phone/send-code] JWT_SECRET missing or shorter than 16 characters (required for OTP hashing)"
+      );
+      return jsonError(
+        "SERVER_MISCONFIGURED",
+        "伺服器設定未完成，暫時無法發送驗證碼。請聯絡主辦方。",
+        500
+      );
     }
 
     const phoneTaken = await prisma.userProfile.findUnique({
@@ -95,6 +108,23 @@ export async function POST(req: Request) {
     return jsonOk({ ok: true, smsDevMode: Boolean(sms.dev) });
   } catch (e) {
     console.error("[registration/phone/send-code]", e);
+    if (e instanceof Error && e.message.includes("JWT_SECRET")) {
+      return jsonError(
+        "SERVER_MISCONFIGURED",
+        "伺服器設定未完成，暫時無法發送驗證碼。請聯絡主辦方。",
+        500
+      );
+    }
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError ||
+      e instanceof Prisma.PrismaClientInitializationError
+    ) {
+      return jsonError(
+        "DATABASE_ERROR",
+        "無法連接資料庫或寫入驗證資料。請稍後再試；如問題持續，請聯絡主辦方。",
+        500
+      );
+    }
     return jsonError(
       "INTERNAL",
       "驗證碼發送時發生錯誤，請稍後再試。",

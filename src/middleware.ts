@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyAdminSessionToken } from "@/lib/auth/admin-session-edge";
 import { verifyUserSessionToken } from "@/lib/auth/session-edge";
+import { isJwtSecretConfigured, requireJwtSecret } from "@/lib/jwt-secret";
 
 const USER_COOKIE = "fms_user_session";
 const ADMIN_COOKIE = "fms_admin_session";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 16) {
+  if (!isJwtSecretConfigured()) {
     return NextResponse.next();
   }
+  const secret = requireJwtSecret();
 
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login") {

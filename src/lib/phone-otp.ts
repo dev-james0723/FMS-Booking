@@ -1,11 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { requireJwtSecret } from "@/lib/jwt-secret";
 
 function pepper(): string {
-  const s = process.env.JWT_SECRET;
-  if (!s || s.length < 16) {
-    throw new Error("JWT_SECRET must be set (min 16 chars) for phone OTP");
-  }
-  return s;
+  return requireJwtSecret();
 }
 
 export function hashPhoneOtp(phoneNorm: string, code: string): string {

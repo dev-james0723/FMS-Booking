@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import type { AdminRole } from "@prisma/client";
+import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
 
 const COOKIE = "fms_admin_session";
 
@@ -11,24 +12,18 @@ export type AdminSessionPayload = {
   role: AdminRole;
 };
 
-function getSecret(): Uint8Array {
-  const s = process.env.JWT_SECRET;
-  if (!s || s.length < 16) throw new Error("JWT_SECRET must be set (min 16 chars)");
-  return new TextEncoder().encode(s);
-}
-
 export async function signAdminSession(payload: AdminSessionPayload): Promise<string> {
   return new SignJWT({ email: payload.email, role: payload.role })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
     .setExpirationTime("12h")
-    .sign(getSecret());
+    .sign(jwtSecretKeyBytes());
 }
 
 export async function verifyAdminSessionToken(token: string): Promise<AdminSessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecret());
+    const { payload } = await jwtVerify(token, jwtSecretKeyBytes());
     const sub = String(payload.sub ?? "");
     const email = String(payload.email ?? "");
     const role = payload.role as AdminRole;

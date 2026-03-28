@@ -10,17 +10,10 @@ import { prisma } from "@/lib/prisma";
 import { sessionCountWithHoursPack, sessionHoursParenZh } from "@/lib/i18n/session-hours";
 import { HK_TZ } from "@/lib/time";
 import { buildBookingCalendarDescription, getVenueCalendarEnv } from "@/lib/venue-calendar";
+import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
 
 const OAUTH_STATE_TYP = "gcal_oauth";
 const CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar.events"];
-
-function jwtSecret(): Uint8Array {
-  const s = process.env.JWT_SECRET;
-  if (!s || s.length < 16) {
-    throw new Error("JWT_SECRET must be set (min 16 chars)");
-  }
-  return new TextEncoder().encode(s);
-}
 
 export function isGoogleCalendarUserOAuthConfigured(): boolean {
   return Boolean(
@@ -44,14 +37,14 @@ export async function signGoogleCalendarOAuthState(userId: string): Promise<stri
     .setSubject(userId)
     .setIssuedAt()
     .setExpirationTime("10m")
-    .sign(jwtSecret());
+    .sign(jwtSecretKeyBytes());
 }
 
 export async function verifyGoogleCalendarOAuthState(
   state: string
 ): Promise<{ userId: string } | null> {
   try {
-    const { payload } = await jwtVerify(state, jwtSecret());
+    const { payload } = await jwtVerify(state, jwtSecretKeyBytes());
     if (payload.typ !== OAUTH_STATE_TYP) return null;
     const sub = String(payload.sub ?? "");
     if (!sub) return null;
