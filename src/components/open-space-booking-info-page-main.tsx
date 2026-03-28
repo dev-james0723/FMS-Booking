@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { OpenSpaceVenueInfoCards } from "@/components/open-space-venue-info-cards";
+import { useSiteMe } from "@/lib/auth/use-site-me";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { withBasePath } from "@/lib/base-path";
 
 export function OpenSpaceBookingInfoPageMain() {
   const { t } = useTranslation();
+  const { user: meUser, bookingHref } = useSiteMe();
 
   return (
     <main className="mx-auto max-w-3xl px-5 sm:px-4 py-12">
@@ -47,12 +49,21 @@ export function OpenSpaceBookingInfoPageMain() {
         >
           {t("booking.openSpace.ctaRegister")}
         </Link>
-        <Link
-          href="/login?next=/booking/open-space"
-          className="inline-flex min-h-12 items-center justify-center rounded-full border border-stone-300 px-6 py-3 text-center text-sm font-medium text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
-        >
-          {t("booking.openSpace.ctaBooking")}
-        </Link>
+        {meUser ? (
+          <Link
+            href={bookingHref}
+            className="inline-flex min-h-12 items-center justify-center rounded-full border border-stone-300 px-6 py-3 text-center text-sm font-medium text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+          >
+            {t("nav.bookingSlots")}
+          </Link>
+        ) : (
+          <Link
+            href="/login?next=/booking/open-space"
+            className="inline-flex min-h-12 items-center justify-center rounded-full border border-stone-300 px-6 py-3 text-center text-sm font-medium text-stone-800 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+          >
+            {t("booking.openSpace.ctaBooking")}
+          </Link>
+        )}
       </div>
     </main>
   );

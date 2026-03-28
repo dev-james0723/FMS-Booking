@@ -12,7 +12,7 @@ export const coreEn = {
     registerCta: "Register & create account",
     loginBooking: "Booking login",
     loginBookingPianoStudio: "Piano studio booking login",
-    loginBookingOpenSpace: "Open Space booking login",
+    loginBookingOpenSpace: "Large instrument / Open Space booking login",
     myAccount: "My account",
     bookingSlots: "Book a slot",
     contact: "Contact",
@@ -152,7 +152,7 @@ export const coreEn = {
   login: {
     title: "Sign in",
     titlePianoStudio: "Piano studio booking login",
-    titleOpenSpace: "Open Space booking login",
+    titleOpenSpace: "Large instrument / Open Space booking login",
     hint: "Use the email you registered with and the temporary password from the email.",
     password: "Password",
     signingIn: "Signing in…",

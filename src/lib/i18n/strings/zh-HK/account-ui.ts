@@ -1,5 +1,6 @@
 export const accountZhHK = {
-  pageTitle: "使用者介面",
+  pageTitleStudio: "琴室預約使用者介面",
+  pageTitleOpenSpace: "大型樂器/開放空間使用者介面",
   limitsTitle: "預約節數上限（30 分鐘 = 1 節）",
   limitsIntro:
     "帳戶「配額級別」為「{tier}」（與登記時歸類一致；雙重預約資格仍只佔同一套配額，不會加倍）。同一香港曆日最多 {dailyMax} 節；任何連續 3 個香港曆日內合共最多 {rollingMax} 節。",
@@ -43,6 +44,7 @@ export const accountZhHK = {
   sectionContact: "個人及聯絡",
   dtEmail: "電郵",
   dtPhone: "電話",
+  dtInstrument: "登記樂器",
   dtUserCategory: "使用者類別",
   dtIdentity: "身份標籤",
   userCategory: {
@@ -99,7 +101,7 @@ export const accountZhHK = {
   ambassadorSectionIntro:
     "請分享下方專屬連結或 QR code。親友開啟連結時系統會記錄次數；若對方經你的推薦通道完成登記，合資格 Ambassador 可獲額外 30 分鐘獎勵節數（受活動條款及名額所限）。",
   ambassadorRewardRules:
-    "推薦獎賞：每成功推薦 1 位新登記者可獲 1 節 30 分鐘 bonus slot，本活動期間每位 Ambassador 最多 25 節（25 名推薦人）；須視乎名額及時段供應，不可轉讓、不可兌換現金。",
+    "推薦獎賞：每成功推薦 1 位新登記者可獲 1 節 30 分鐘 bonus slot，本活動期間每位 Ambassador 最多 25 節（25 名推薦人）；須視乎名額及時段供應，不可轉讓、不可兌換現金，所有 bonus slot 額外時段只可於今次免費體驗活動後使用，亦即 5 月 3 日後。屆時幻樂空間會分批提醒合資格推薦人何時可進行房間預約。",
   ambassadorShareLink: "專屬分享連結",
   ambassadorCopyLink: "複製連結",
   ambassadorLinkCopied: "已複製",

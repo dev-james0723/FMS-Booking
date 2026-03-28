@@ -10,6 +10,10 @@ import { mergeConsecutiveSlots } from "@/lib/booking/merge-slots";
 import { parseBookingNumericSettings } from "@/lib/booking/settings";
 import { prisma } from "@/lib/prisma";
 import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
+import {
+  getAmbassadorReferralPayloadForUser,
+  type AmbassadorReferralPayload,
+} from "@/lib/referral/ambassador-referral-payload";
 import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 import { isUnreachableDbError } from "@/lib/settings-fallback";
 import { hkDateKey } from "@/lib/time";
@@ -163,6 +167,16 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       user.referralAttributionCode
     );
 
+    let ambassadorReferralInitial: AmbassadorReferralPayload | null = null;
+    if (user.profile.wantsAmbassador === true) {
+      try {
+        ambassadorReferralInitial = await getAmbassadorReferralPayloadForUser(prisma, user.id);
+      } catch (e) {
+        console.error("[account/page] ambassador referral preload", e);
+        ambassadorReferralInitial = null;
+      }
+    }
+
     const bookingsPayload = bookings.map((b) => {
       const slots = b.allocations.map((a) => ({
         startsAt: a.slot.startsAt,
@@ -188,6 +202,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         nameZh={user.profile.nameZh}
         email={user.email}
         phone={user.profile.phone}
+        bookingVenueKind={user.profile.bookingVenueKind}
+        instrumentField={user.profile.instrumentField}
         userCategoryCode={user.category?.code ?? null}
         identityKeys={identityKeys(user.profile.identityFlags)}
         preferredDateIsos={preferredDateIsos(user.profile.preferredDates)}
@@ -211,6 +227,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         googleCalendarFlash={googleCalendarFlash}
         referrerNameZh={referrerNameZh}
         wantsAmbassador={user.profile.wantsAmbassador === true}
+        ambassadorReferralInitial={
+          user.profile.wantsAmbassador === true ? ambassadorReferralInitial : undefined
+        }
       />
     );
   } catch (e) {

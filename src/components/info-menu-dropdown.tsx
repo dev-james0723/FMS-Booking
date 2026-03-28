@@ -39,7 +39,7 @@ export function InfoMenuDropdown() {
   }, [open]);
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className="relative shrink-0" ref={rootRef}>
       <button
         type="button"
         className={triggerClass}

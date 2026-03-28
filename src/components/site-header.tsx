@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { InfoMenuDropdown } from "@/components/info-menu-dropdown";
 import { LanguageSwitchIcon } from "@/components/language-switch-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,16 +20,15 @@ import {
   navIconButtonMdHome,
   navIconButtonSmHome,
 } from "@/lib/nav-icon-button-classes";
-import { withBasePath } from "@/lib/base-path";
-
+import { useSiteMe } from "@/lib/auth/use-site-me";
+import {
+  bookingNavLoginOpenSpaceClass,
+  bookingNavLoginPianoClass,
+} from "@/lib/booking-nav-login-button-classes";
 const btnOutline =
   "inline-flex min-h-[44px] items-center justify-center rounded-full border border-stone-300 dark:border-stone-600 px-5 sm:px-4 py-2 text-sm text-stone-800 dark:text-stone-200 transition hover:border-stone-900 hover:bg-stone-50 dark:hover:border-stone-400 dark:hover:bg-stone-800";
 const btnSolid =
   "inline-flex min-h-[44px] items-center justify-center rounded-full bg-stone-900 px-5 sm:px-4 py-2 text-sm text-white transition hover:bg-stone-800";
-const btnLoginPiano =
-  "inline-flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-full bg-blue-900 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white shadow-sm transition hover:bg-blue-950 sm:px-3 sm:text-xs md:flex-none md:px-4 md:text-sm dark:bg-blue-950 dark:hover:bg-blue-900";
-const btnLoginOpenSpace =
-  "inline-flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-full bg-sky-400 px-2 py-2 text-center text-[11px] font-medium leading-snug text-blue-950 shadow-sm transition hover:bg-sky-300 sm:px-3 sm:text-xs md:flex-none md:px-4 md:text-sm dark:bg-sky-500 dark:text-sky-950 dark:hover:bg-sky-400";
 const linkPlain =
   "inline-flex min-h-[44px] items-center text-sm text-stone-600 transition hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-50";
 
@@ -36,15 +43,10 @@ function readRegistrationBannerDismissedFromStorage(): boolean {
   }
 }
 
-function subscribeRegistrationBannerDismissed(onStoreChange: () => void) {
-  const handler = () => onStoreChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener(REGISTRATION_BANNER_STORE_EVENT, handler);
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(REGISTRATION_BANNER_STORE_EVENT, handler);
-  };
-}
+const CHROME_SCROLL_SHOW_TOP_PX = 40;
+const CHROME_SCROLL_DIRECTION_EPS = 8;
+/** Until ResizeObserver runs (SSR / first paint), reserve space so content is not covered. */
+const CHROME_SHELL_HEIGHT_FALLBACK_PX = 104;
 
 function CloseIconSm({ className }: { className?: string }) {
   return (
@@ -99,8 +101,6 @@ function UserIcon({ className }: { className?: string }) {
   );
 }
 
-type MePayload = { user?: { email: string; bookingVenueKind?: string } } | null;
-
 function MobileNavZipItem({
   index,
   className = "",
@@ -121,33 +121,84 @@ function MobileNavZipItem({
 }
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const { t, locale, toggleLocale } = useTranslation();
   const homeAriaLabel = t("nav.homeAria");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [me, setMe] = useState<MePayload | undefined>(undefined);
-  const bookingHref =
-    me?.user?.bookingVenueKind === "open_space" ? "/booking/open-space" : "/booking";
+  const { user: meUser, bookingHref } = useSiteMe();
 
-  const registrationBannerDismissed = useSyncExternalStore(
-    subscribeRegistrationBannerDismissed,
-    readRegistrationBannerDismissedFromStorage,
-    () => false,
-  );
+  const [registrationBannerDismissed, setRegistrationBannerDismissed] = useState(false);
+
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [shellHeight, setShellHeight] = useState(0);
+  const [shellReady, setShellReady] = useState(false);
+  const [chromeHiddenByScroll, setChromeHiddenByScroll] = useState(false);
+  const lastScrollY = useRef(0);
+  const [reduceScrollChromeMotion, setReduceScrollChromeMotion] = useState(false);
+
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduceScrollChromeMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
-      if (cancelled) return;
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setMe(data?.user ? { user: data.user } : null);
-      } else {
-        setMe(null);
+    lastScrollY.current = Math.max(0, window.scrollY);
+    setChromeHiddenByScroll(false);
+  }, [pathname]);
+
+  useLayoutEffect(() => {
+    const el = shellRef.current;
+    if (!el) return;
+    const apply = () => {
+      setShellHeight(Math.round(el.getBoundingClientRect().height));
+      setShellReady(true);
+    };
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    apply();
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (menuOpen) {
+      setChromeHiddenByScroll(false);
+      lastScrollY.current = Math.max(0, window.scrollY);
+    }
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (reduceScrollChromeMotion) return;
+    const onScroll = () => {
+      if (menuOpen) return;
+      const y = Math.max(0, window.scrollY);
+      if (y < CHROME_SCROLL_SHOW_TOP_PX) {
+        setChromeHiddenByScroll(false);
+        lastScrollY.current = y;
+        return;
       }
-    })();
+      const delta = y - lastScrollY.current;
+      lastScrollY.current = y;
+      if (Math.abs(delta) < CHROME_SCROLL_DIRECTION_EPS) return;
+      if (delta > 0) setChromeHiddenByScroll(true);
+      else setChromeHiddenByScroll(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [menuOpen, reduceScrollChromeMotion]);
+
+  const chromeCollapsed = chromeHiddenByScroll && !menuOpen;
+
+  useEffect(() => {
+    setRegistrationBannerDismissed(readRegistrationBannerDismissedFromStorage());
+    const sync = () => setRegistrationBannerDismissed(readRegistrationBannerDismissedFromStorage());
+    window.addEventListener("storage", sync);
+    window.addEventListener(REGISTRATION_BANNER_STORE_EVENT, sync);
     return () => {
-      cancelled = true;
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(REGISTRATION_BANNER_STORE_EVENT, sync);
     };
   }, []);
 
@@ -162,40 +213,62 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="relative z-20 border-b border-stone-200 bg-[color:var(--chrome-bg)] backdrop-blur-md dark:border-stone-800">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 sm:px-4 py-3 md:gap-4 md:py-4">
+      <div
+        aria-hidden
+        className={`shrink-0 overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none ${
+          chromeCollapsed ? "pointer-events-none" : ""
+        }`}
+        style={{
+          height: chromeCollapsed
+            ? 0
+            : shellReady
+              ? shellHeight
+              : CHROME_SHELL_HEIGHT_FALLBACK_PX,
+        }}
+      />
+      <div
+        ref={shellRef}
+        className={`fixed inset-x-0 top-0 z-50 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${
+          chromeCollapsed ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
+      <header className="relative border-b border-stone-200/90 bg-[color:var(--chrome-bg)] backdrop-blur-md backdrop-saturate-150 dark:border-stone-800/90">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 sm:px-4 py-3 md:gap-x-5 md:gap-y-3 md:py-4 lg:max-w-7xl">
           <Link
             href="/"
-            className="min-w-0 shrink font-serif text-base leading-tight tracking-tight text-stone-900 dark:text-stone-50 sm:text-lg"
+            className="min-w-0 shrink font-serif text-base leading-tight tracking-tight text-stone-900 dark:text-stone-50 sm:text-lg md:shrink-0"
           >
             <span className="block truncate sm:whitespace-normal">{t("brand.festivalLine")}</span>
           </Link>
 
           <nav
-            className="hidden md:flex md:items-center md:gap-3"
+            className="hidden min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2 md:flex md:gap-x-3.5 md:gap-y-2.5 lg:gap-x-4"
             aria-label={t("nav.mainNavDesktop")}
           >
-            {!me?.user && (
+            {!meUser && (
               <>
-                <Link href="/register" className={btnOutline}>
+                <Link href="/register" className={`${btnOutline} shrink-0`}>
                   {t("nav.registerCta")}
                 </Link>
-                <div className="flex min-w-0 shrink gap-2">
-                  <Link href="/login?next=/booking" className={btnLoginPiano}>
+                <div className="flex shrink-0 flex-wrap gap-2 sm:gap-2.5">
+                  <Link href="/login?next=/booking" className={bookingNavLoginPianoClass}>
                     {t("nav.loginBookingPianoStudio")}
                   </Link>
-                  <Link href="/login?next=/booking/open-space" className={btnLoginOpenSpace}>
+                  <Link
+                    href="/login?next=/booking/open-space"
+                    className={bookingNavLoginOpenSpaceClass}
+                  >
                     {t("nav.loginBookingOpenSpace")}
                   </Link>
                 </div>
-                <Link href="/about-d-festival" className={navDfestivalCtaHeaderInlineClass}>
+                <Link href="/about-d-festival" className={`${navDfestivalCtaHeaderInlineClass} shrink-0`}>
                   {t("nav.aboutDfestival2026")}
                 </Link>
               </>
             )}
-            {me?.user && (
+            {meUser && (
               <>
-                <Link href="/about-d-festival" className={navDfestivalCtaHeaderInlineClass}>
+                <Link href="/about-d-festival" className={`${navDfestivalCtaHeaderInlineClass} shrink-0`}>
                   {t("nav.aboutDfestival2026")}
                 </Link>
                 <div className="flex flex-col items-center gap-1">
@@ -223,7 +296,7 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-            {me?.user && (
+            {meUser && (
               <Link
                 href="/account"
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-300 bg-violet-50 text-violet-900 transition hover:border-violet-500 hover:bg-violet-100 dark:border-violet-500/60 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:border-violet-400 dark:hover:bg-violet-900/60"
@@ -285,7 +358,7 @@ export function SiteHeader() {
               className="mx-auto flex max-w-5xl flex-col gap-2 px-5 sm:px-4 py-3"
               aria-label={t("nav.mainNavMobile")}
             >
-              {!me?.user && (
+              {!meUser && (
                 <>
                   <MobileNavZipItem index={0}>
                     <Link
@@ -300,14 +373,14 @@ export function SiteHeader() {
                     <div className="flex w-full gap-2">
                       <Link
                         href="/login?next=/booking"
-                        className={`${btnLoginPiano} sm:flex-1`}
+                        className={`${bookingNavLoginPianoClass} sm:flex-1`}
                         onClick={() => setMenuOpen(false)}
                       >
                         {t("nav.loginBookingPianoStudio")}
                       </Link>
                       <Link
                         href="/login?next=/booking/open-space"
-                        className={`${btnLoginOpenSpace} sm:flex-1`}
+                        className={`${bookingNavLoginOpenSpaceClass} sm:flex-1`}
                         onClick={() => setMenuOpen(false)}
                       >
                         {t("nav.loginBookingOpenSpace")}
@@ -383,7 +456,7 @@ export function SiteHeader() {
                   </MobileNavZipItem>
                 </>
               )}
-              {me?.user && (
+              {meUser && (
                 <>
                   <MobileNavZipItem index={0}>
                     <Link
@@ -479,12 +552,12 @@ export function SiteHeader() {
 
       {registrationBannerDismissed ? (
         <div
-          className="h-px w-full shrink-0 bg-black dark:bg-white"
+          className="h-px w-full shrink-0 bg-black/40 dark:bg-white/35"
           aria-hidden
         />
       ) : (
         <div
-          className="relative z-10 border-b border-[#2a1845] bg-gradient-to-r from-[#3d2463] via-[#4a2d75] to-[#3d2463] px-5 sm:px-4 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:pr-11 sm:text-xs sm:leading-snug"
+          className="relative border-b border-[#2a1845]/85 bg-gradient-to-r from-[#3d2463]/88 via-[#4a2d75]/88 to-[#3d2463]/88 px-5 py-2 pr-10 text-center text-[11px] font-medium leading-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md backdrop-saturate-150 sm:px-4 sm:pr-11 sm:text-xs sm:leading-snug"
           role="note"
         >
           <p className="mx-auto max-w-3xl">
@@ -500,6 +573,7 @@ export function SiteHeader() {
           </button>
         </div>
       )}
+      </div>
     </>
   );
 }

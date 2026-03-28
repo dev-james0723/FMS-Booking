@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { FaqAuthInlineLinks } from "@/components/faq/faq-auth-inline-links";
 import { FaqUserCategoriesSection } from "@/components/faq/faq-user-categories-section";
 import {
   FaqCallout,
@@ -106,29 +105,7 @@ export function FaqZhContent() {
               },
             ]}
           />
-          <p className="mt-5 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-            <Link
-              href="/register"
-              className="text-stone-900 underline decoration-stone-400 underline-offset-2 dark:text-stone-50"
-            >
-              前往登記
-            </Link>
-            <span className="text-stone-400" aria-hidden>
-              ·
-            </span>
-            <Link
-              href="/login"
-              className="text-stone-900 underline decoration-stone-400 underline-offset-2 dark:text-stone-50"
-            >
-              登入
-            </Link>
-            <span className="text-stone-400" aria-hidden>
-              ·
-            </span>
-            <Link href="/" className="text-stone-900 underline decoration-stone-400 underline-offset-2 dark:text-stone-50">
-              首頁
-            </Link>
-          </p>
+          <FaqAuthInlineLinks />
         </section>
 
         <section id="fair-use" className="scroll-mt-24">

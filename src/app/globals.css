@@ -19,7 +19,7 @@ html {
   --surface: #ffffff;
   --surface-muted: #fafaf9;
   --surface-input: #ffffff;
-  --chrome-bg: rgb(255 255 255 / 0.92);
+  --chrome-bg: rgb(255 255 255 / 0.82);
   color-scheme: light;
 }
 
@@ -30,7 +30,7 @@ html {
   --surface: #141414;
   --surface-muted: #0f0f0f;
   --surface-input: #0a0a0a;
-  --chrome-bg: rgb(10 10 10 / 0.94);
+  --chrome-bg: rgb(10 10 10 / 0.82);
   color-scheme: dark;
 }
 
@@ -44,6 +44,7 @@ html {
   --font-serif: var(--font-display), ui-serif, Georgia, serif;
   --animate-memo-drift: memo-drift 5.5s ease-in-out infinite;
   --animate-cta-attention: cta-attention-pulse 2.4s ease-in-out infinite;
+  --animate-ambassador-copy-wobble: ambassador-copy-link-wobble 4s ease-in-out infinite;
 }
 
 /* Memo only: pivot at top-centre so the pin (sibling, not animated) stays put */
@@ -54,6 +55,24 @@ html {
   }
   50% {
     transform: rotate(2deg);
+  }
+}
+
+/* Account ambassador: copy-link — periodic subtle bounce + wobble (use with motion-safe:) */
+@keyframes ambassador-copy-link-wobble {
+  0%,
+  10%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  2% {
+    transform: translateY(-3px) rotate(-1deg);
+  }
+  5% {
+    transform: translateY(0) rotate(0.75deg);
+  }
+  8% {
+    transform: translateY(-1px) rotate(-0.45deg);
   }
 }
 

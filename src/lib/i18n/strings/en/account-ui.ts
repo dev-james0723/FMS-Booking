@@ -1,5 +1,6 @@
 export const accountEn = {
-  pageTitle: "My account",
+  pageTitleStudio: "Studio room booking account",
+  pageTitleOpenSpace: "Large instrument / Open Space account",
   limitsTitle: "Booking limits (30 minutes = 1 session)",
   limitsIntro:
     "Your account quota tier is “{tier}” (same bucket as on registration; dual eligibility still uses one tier, not doubled). Up to {dailyMax} sessions on a single Hong Kong calendar day; up to {rollingMax} summed across any 3 consecutive Hong Kong calendar days.",
@@ -44,6 +45,7 @@ export const accountEn = {
   sectionContact: "Profile & contact",
   dtEmail: "Email",
   dtPhone: "Phone",
+  dtInstrument: "Registered instrument",
   dtUserCategory: "User category",
   dtIdentity: "Identity tags",
   userCategory: {
@@ -100,7 +102,7 @@ export const accountEn = {
   ambassadorSectionIntro:
     "Share your personal link or QR code. Visits are counted when someone opens the link; when they complete registration through your channel, eligible ambassadors earn bonus 30-minute slots (subject to programme rules and slot availability).",
   ambassadorRewardRules:
-    "Each successful new registration you refer can earn 1 bonus 30-minute slot, up to 25 slots during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash.",
+    "Each successful new registration you refer can earn 1 bonus 30-minute slot, up to 25 slots during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash. All bonus slots may only be used after this free experience programme ends, i.e. after 3 May. Fantasia Music Space will then remind eligible referrers in batches when they may book rooms.",
   ambassadorShareLink: "Your share link",
   ambassadorCopyLink: "Copy link",
   ambassadorLinkCopied: "Copied",

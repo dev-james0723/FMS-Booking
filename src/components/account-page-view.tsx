@@ -2,14 +2,16 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import type { BookingRequestStatus } from "@prisma/client";
+import type { BookingRequestStatus, BookingVenueKind } from "@prisma/client";
 import { LogoutButton } from "@/components/logout-button";
 import { UserHubAvatarSection } from "@/components/user-hub-avatar-section";
 import { displayVenueLabel } from "@/lib/booking-slot-display";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
+import { accountPageHeading } from "@/lib/i18n/account-page-heading";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
 import { AccountAmbassadorReferralSection } from "@/components/account-ambassador-referral-section";
+import type { AmbassadorReferralPayload } from "@/lib/referral/ambassador-referral-payload";
 import { AccountGoogleCalendarPanel } from "@/components/account-google-calendar-panel";
 import {
   BookingIconCalendarRolling,
@@ -67,6 +69,10 @@ export type AccountPageViewProps = {
   nameZh: string;
   email: string;
   phone: string;
+  /** Registration routing: studio room vs open space (large instruments). */
+  bookingVenueKind: BookingVenueKind;
+  /** Free-text instrument / field from registration (e.g. 鋼琴 or list label). */
+  instrumentField: string;
   /** `UserCategory.code` (e.g. personal | teaching); null if unset. */
   userCategoryCode: string | null;
   identityKeys: string[];
@@ -93,6 +99,11 @@ export type AccountPageViewProps = {
   referrerNameZh: string | null;
   /** Registration / account opt-in to D Ambassador (loads referral tools when true). */
   wantsAmbassador: boolean;
+  /**
+   * Server-rendered ambassador payload when opted in (`undefined` if not opted in).
+   * `null` means the server could not build it; the client will retry via API.
+   */
+  ambassadorReferralInitial?: AmbassadorReferralPayload | null;
 };
 
 const EXAMPLE_DATE_ISOS = ["2026-04-05", "2026-04-06", "2026-04-07"] as const;
@@ -395,10 +406,13 @@ export function AccountPageView(props: AccountPageViewProps) {
     return label === path ? code : label;
   })();
 
+  const accountPageTitle = accountPageHeading(locale, props.bookingVenueKind);
+  const instrumentDisplay = props.instrumentField.trim() ? props.instrumentField.trim() : dash;
+
   return (
     <main className="mx-auto max-w-3xl space-y-10 px-5 sm:px-4 py-12">
       <header>
-        <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-50">{t("account.pageTitle")}</h1>
+        <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-50">{accountPageTitle}</h1>
         <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
           {props.nameZh} · {props.email}
         </p>
@@ -420,7 +434,10 @@ export function AccountPageView(props: AccountPageViewProps) {
         </section>
       ) : null}
 
-      <AccountAmbassadorReferralSection wantsAmbassador={props.wantsAmbassador} />
+      <AccountAmbassadorReferralSection
+        wantsAmbassador={props.wantsAmbassador}
+        initialReferral={props.ambassadorReferralInitial}
+      />
 
       <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.limitsTitle")}</h2>
@@ -572,6 +589,10 @@ export function AccountPageView(props: AccountPageViewProps) {
           <div className="flex flex-wrap justify-between gap-2 border-b border-stone-100 dark:border-stone-800 py-2">
             <dt className="text-stone-500 dark:text-stone-500">{t("account.dtPhone")}</dt>
             <dd className="text-right font-medium text-stone-900 dark:text-stone-50">{props.phone}</dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 border-b border-stone-100 dark:border-stone-800 py-2">
+            <dt className="text-stone-500 dark:text-stone-500">{t("account.dtInstrument")}</dt>
+            <dd className="max-w-md text-right font-medium text-stone-900 dark:text-stone-50">{instrumentDisplay}</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2 border-b border-stone-100 dark:border-stone-800 py-2">
             <dt className="text-stone-500 dark:text-stone-500">{t("account.dtUserCategory")}</dt>

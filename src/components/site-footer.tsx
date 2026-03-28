@@ -1,36 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { LanguageSwitchIcon } from "@/components/language-switch-icon";
+import { useSiteMe } from "@/lib/auth/use-site-me";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
-
-type MePayload = { user?: { email: string } } | null;
 
 const footerLinkClass =
   "text-sm text-stone-600 transition hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100";
 
 export function SiteFooter() {
   const { t, tr, locale, toggleLocale } = useTranslation();
-  const [me, setMe] = useState<MePayload | undefined>(undefined);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
-      if (cancelled) return;
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setMe(data?.user ? { user: data.user } : null);
-      } else {
-        setMe(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { user: meUser, bookingHref } = useSiteMe();
 
   const year = String(new Date().getFullYear());
 
@@ -48,10 +29,10 @@ export function SiteFooter() {
                   {t("footer.home")}
                 </Link>
               </li>
-              {me?.user ? (
+              {meUser ? (
                 <>
                   <li>
-                    <Link href={withBasePath("/booking")} className={footerLinkClass}>
+                    <Link href={withBasePath(bookingHref)} className={footerLinkClass}>
                       {t("nav.bookingSlots")}
                     </Link>
                   </li>
@@ -69,8 +50,19 @@ export function SiteFooter() {
                     </Link>
                   </li>
                   <li>
-                    <Link href={withBasePath("/login?next=/account")} className={footerLinkClass}>
-                      {t("nav.loginBooking")}
+                    <Link
+                      href={withBasePath("/login?next=/booking")}
+                      className={`${footerLinkClass} font-medium text-blue-900 dark:text-blue-300`}
+                    >
+                      {t("nav.loginBookingPianoStudio")}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href={withBasePath("/login?next=/booking/open-space")}
+                      className={`${footerLinkClass} font-medium text-sky-700 dark:text-sky-400`}
+                    >
+                      {t("nav.loginBookingOpenSpace")}
                     </Link>
                   </li>
                 </>

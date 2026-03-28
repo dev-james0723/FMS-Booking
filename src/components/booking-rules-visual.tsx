@@ -254,7 +254,7 @@ export function BookingRulesVisual({ t, tr, windowDays }: { t: T; tr: Tr; window
       <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
         {t("booking.request.rulesAtAGlance")}
       </h2>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3">
         <RuleCard
           media={
             <IconWrap className="bg-violet-100 text-violet-800 dark:bg-violet-950/55 dark:text-violet-200">

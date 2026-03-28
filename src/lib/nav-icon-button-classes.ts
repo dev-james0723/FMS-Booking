@@ -25,5 +25,5 @@ const navDfestivalCtaVisual =
 /** Gold CTA for “About 2026 D Festival” — match register/login: min-h, px, rounded-full, full width in stacks. */
 export const navDfestivalCtaClass = `${navDfestivalCtaVisual} w-full px-5 sm:px-4 text-sm`;
 
-/** Same CTA for desktop header bar (narrow inline pill next to account / booking). */
-export const navDfestivalCtaHeaderInlineClass = `${navDfestivalCtaVisual} w-auto max-w-[min(15rem,38vw)] shrink-0 px-3 text-xs sm:text-sm`;
+/** Same CTA for desktop header bar (inline pill; cap width so long copy wraps inside the pill, not into neighbors). */
+export const navDfestivalCtaHeaderInlineClass = `${navDfestivalCtaVisual} w-auto max-w-[min(19rem,46vw)] shrink-0 px-3 text-xs sm:text-sm md:max-w-[min(22rem,40vw)]`;

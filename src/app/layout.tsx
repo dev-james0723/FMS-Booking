@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
@@ -32,12 +31,13 @@ export default async function RootLayout({
       suppressHydrationWarning
       className="h-full antialiased"
     >
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <Script
-          id="fms-theme-init"
-          strategy="beforeInteractive"
+      <head>
+        <script
+          // Theme before paint; native tag avoids next/script (client) + React 19 <script> warnings.
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
+      </head>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <SiteChrome initialLocale={initialLocale}>{children}</SiteChrome>
       </body>
     </html>

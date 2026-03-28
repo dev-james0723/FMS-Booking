@@ -1,67 +1,10 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
-import { appBasePath } from "@/lib/base-path";
 import { prisma } from "@/lib/prisma";
-import { ensureAmbassadorReferralCode } from "@/lib/referral/ambassador";
-import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
-import { Prisma } from "@prisma/client";
-
-type ReferralStats = {
-  linkOpens: number;
-  registrations: number;
-  rewardTimes: number;
-  rewardBonusSlotsTotal: number;
-};
-
-async function ambassadorReferralPayload(userId: string): Promise<{
-  code: string;
-  shareUrl: string;
-  stats: ReferralStats;
-}> {
-  await ensureAmbassadorReferralCode(prisma, userId);
-  const row = await prisma.referralCode.findFirst({
-    where: { ambassadorUserId: userId },
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      code: true,
-      openCount: true,
-    },
-  });
-  if (!row) {
-    throw new Error("REFERRAL_CODE_ROW_MISSING");
-  }
-
-  const registrationCount = await prisma.referral.count({
-    where: {
-      referralCodeId: row.id,
-      refereeUserId: { not: null },
-      status: "registered",
-    },
-  });
-
-  const rewards = await prisma.ambassadorReward.findMany({
-    where: { ambassadorUserId: userId },
-    include: { bonusReward: { select: { slotsGranted: true } } },
-  });
-  const rewardTimes = rewards.length;
-  const rewardSlotsTotal = rewards.reduce((s, r) => s + r.bonusReward.slotsGranted, 0);
-
-  const { origin } = await getWebAuthnSettingsForRequest();
-  const base = appBasePath();
-  const shareUrl = `${origin}${base}/?ref=${encodeURIComponent(row.code)}`;
-
-  return {
-    code: row.code,
-    shareUrl,
-    stats: {
-      linkOpens: row.openCount,
-      registrations: registrationCount,
-      rewardTimes,
-      rewardBonusSlotsTotal: rewardSlotsTotal,
-    },
-  };
-}
+import {
+  getAmbassadorReferralPayloadForUser,
+  isAmbassadorDbSchemaMismatch,
+} from "@/lib/referral/ambassador-referral-payload";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -82,11 +25,13 @@ export async function GET() {
   }
 
   try {
-    const body = await ambassadorReferralPayload(session.sub);
-    return jsonOk({ optedIn: true as const, ...body });
+    const body = await getAmbassadorReferralPayloadForUser(prisma, session.sub);
+    const res = jsonOk({ optedIn: true as const, ...body });
+    res.headers.set("Cache-Control", "private, no-store");
+    return res;
   } catch (e) {
-    console.error("[account/referral] GET ambassadorReferralPayload", e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2022") {
+    console.error("[account/referral] GET getAmbassadorReferralPayloadForUser", e);
+    if (isAmbassadorDbSchemaMismatch(e)) {
       return jsonError(
         "DB_SCHEMA_MISMATCH",
         "Database is missing referral columns (e.g. open_count). Run: npx prisma migrate deploy",
@@ -112,11 +57,13 @@ export async function POST() {
   }
 
   try {
-    const body = await ambassadorReferralPayload(session.sub);
-    return jsonOk({ optedIn: true as const, ...body });
+    const body = await getAmbassadorReferralPayloadForUser(prisma, session.sub);
+    const res = jsonOk({ optedIn: true as const, ...body });
+    res.headers.set("Cache-Control", "private, no-store");
+    return res;
   } catch (e) {
-    console.error("[account/referral] POST ambassadorReferralPayload", e);
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2022") {
+    console.error("[account/referral] POST getAmbassadorReferralPayloadForUser", e);
+    if (isAmbassadorDbSchemaMismatch(e)) {
       return jsonError(
         "DB_SCHEMA_MISMATCH",
         "Database is missing referral columns (e.g. open_count). Run: npx prisma migrate deploy",
