@@ -56,125 +56,125 @@ export async function POST(req: Request) {
     );
   }
 
-  const challenge = await prisma.phoneOtpChallenge.findFirst({
-    where: {
-      id: phoneProof.challengeId,
-      phoneNorm,
-      verifiedAt: { not: null },
-      registrationConsumedAt: null,
-    },
-  });
-  if (!challenge) {
-    return jsonError(
-      "PHONE_VERIFICATION_EXPIRED",
-      "電話驗證已失效，請重新發送驗證碼並完成驗證。",
-      400
-    );
-  }
-
-  const phoneTaken = await prisma.userProfile.findUnique({
-    where: { phone: phoneNorm },
-    select: { userId: true },
-  });
-  if (phoneTaken) {
-    return jsonError(
-      "PHONE_EXISTS",
-      "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
-      409
-    );
-  }
-
-  const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
-
-  if (idempotencyKey) {
-    const existing = await prisma.registrationSubmission.findUnique({
-      where: { idempotencyKey },
-      include: { user: { include: { credentials: true } } },
-    });
-    if (existing?.status === RegistrationSubmissionStatus.processed && existing.userId) {
-      return jsonOk({
-        ok: true,
-        idempotent: true,
-        userId: existing.userId,
-        message: "Already registered",
-      });
-    }
-  }
-
-  const dup = await prisma.user.findUnique({ where: { email } });
-  if (dup) {
-    return jsonError("EMAIL_EXISTS", "This email is already registered", 409);
-  }
-
-  const passkeyTok = data.passkeyPreregToken.trim();
-  const dec = await verifyPasskeyPreregToken(passkeyTok);
-  if (!dec) {
-    return jsonError(
-      "PASSKEY_TOKEN_INVALID",
-      "生物認證憑證無效或已過期，請重新按「綁定 Face ID／指紋」完成驗證。",
-      400
-    );
-  }
-  const pkRow = await prisma.passkeyPreregChallenge.findFirst({
-    where: {
-      id: dec.preregChallengeId,
-      emailNorm: email,
-      phoneNorm,
-      completedAt: { not: null },
-      credentialId: { not: null },
-      publicKey: { not: null },
-      counter: { not: null },
-    },
-  });
-  if (!pkRow?.credentialId || !pkRow.publicKey || pkRow.counter === null) {
-    return jsonError(
-      "PASSKEY_TOKEN_INVALID",
-      "生物認證未完成或已失效，請重新綁定 Face ID／指紋。",
-      400
-    );
-  }
-  const passkeyPrereg = {
-    id: pkRow.id,
-    credentialId: pkRow.credentialId,
-    publicKey: pkRow.publicKey,
-    counter: pkRow.counter,
-    transports: pkRow.transports,
-  };
-
-  const derived = deriveRegistrationProfile(data.registrationProfileKind);
-  const category = await prisma.userCategory.findUnique({
-    where: { code: derived.categoryCode },
-  });
-  if (!category) {
-    return jsonError("INVALID_CATEGORY", "User category not found", 500);
-  }
-
-  const referralRaw = data.referralCode?.trim() || null;
-  const resolvedReferral = referralRaw
-    ? await findReferralCodeByRaw(prisma, referralRaw)
-    : null;
-  const allSettings = await getAllSettings();
-  const referralAttributionCode = resolvedReferral ? resolvedReferral.code : null;
-
-  const tempPassword = nanoid(14);
-  const passwordHash = await hashPassword(tempPassword);
-
-  const snapshotFields: Record<string, unknown> = { ...data };
-  delete snapshotFields.phoneVerificationToken;
-  delete snapshotFields.passkeyPreregToken;
-  const payloadSnapshot = JSON.parse(
-    JSON.stringify({
-      ...snapshotFields,
-      phone: phoneNorm,
-      isAge17OrAbove: true,
-      teacherRecommended: derived.teacherRecommended,
-      quotaTier: derived.quotaTier,
-      individualEligible: derived.individualEligible,
-      teachingEligible: derived.teachingEligible,
-    })
-  ) as Prisma.InputJsonValue;
-
   try {
+    const challenge = await prisma.phoneOtpChallenge.findFirst({
+      where: {
+        id: phoneProof.challengeId,
+        phoneNorm,
+        verifiedAt: { not: null },
+        registrationConsumedAt: null,
+      },
+    });
+    if (!challenge) {
+      return jsonError(
+        "PHONE_VERIFICATION_EXPIRED",
+        "電話驗證已失效，請重新發送驗證碼並完成驗證。",
+        400
+      );
+    }
+
+    const phoneTaken = await prisma.userProfile.findUnique({
+      where: { phone: phoneNorm },
+      select: { userId: true },
+    });
+    if (phoneTaken) {
+      return jsonError(
+        "PHONE_EXISTS",
+        "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+        409
+      );
+    }
+
+    const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
+
+    if (idempotencyKey) {
+      const existing = await prisma.registrationSubmission.findUnique({
+        where: { idempotencyKey },
+        include: { user: { include: { credentials: true } } },
+      });
+      if (existing?.status === RegistrationSubmissionStatus.processed && existing.userId) {
+        return jsonOk({
+          ok: true,
+          idempotent: true,
+          userId: existing.userId,
+          message: "Already registered",
+        });
+      }
+    }
+
+    const dup = await prisma.user.findUnique({ where: { email } });
+    if (dup) {
+      return jsonError("EMAIL_EXISTS", "此電郵已被登記，請直接登入或使用其他電郵。", 409);
+    }
+
+    const passkeyTok = data.passkeyPreregToken.trim();
+    const dec = await verifyPasskeyPreregToken(passkeyTok);
+    if (!dec) {
+      return jsonError(
+        "PASSKEY_TOKEN_INVALID",
+        "生物認證憑證無效或已過期，請重新按「綁定 Face ID／指紋」完成驗證。",
+        400
+      );
+    }
+    const pkRow = await prisma.passkeyPreregChallenge.findFirst({
+      where: {
+        id: dec.preregChallengeId,
+        emailNorm: email,
+        phoneNorm,
+        completedAt: { not: null },
+        credentialId: { not: null },
+        publicKey: { not: null },
+        counter: { not: null },
+      },
+    });
+    if (!pkRow?.credentialId || !pkRow.publicKey || pkRow.counter === null) {
+      return jsonError(
+        "PASSKEY_TOKEN_INVALID",
+        "生物認證未完成或已失效，請重新綁定 Face ID／指紋。",
+        400
+      );
+    }
+    const passkeyPrereg = {
+      id: pkRow.id,
+      credentialId: pkRow.credentialId,
+      publicKey: pkRow.publicKey,
+      counter: pkRow.counter,
+      transports: pkRow.transports,
+    };
+
+    const derived = deriveRegistrationProfile(data.registrationProfileKind);
+    const category = await prisma.userCategory.findUnique({
+      where: { code: derived.categoryCode },
+    });
+    if (!category) {
+      return jsonError("INVALID_CATEGORY", "User category not found", 500);
+    }
+
+    const referralRaw = data.referralCode?.trim() || null;
+    const resolvedReferral = referralRaw
+      ? await findReferralCodeByRaw(prisma, referralRaw)
+      : null;
+    const allSettings = await getAllSettings();
+    const referralAttributionCode = resolvedReferral ? resolvedReferral.code : null;
+
+    const tempPassword = nanoid(14);
+    const passwordHash = await hashPassword(tempPassword);
+
+    const snapshotFields: Record<string, unknown> = { ...data };
+    delete snapshotFields.phoneVerificationToken;
+    delete snapshotFields.passkeyPreregToken;
+    const payloadSnapshot = JSON.parse(
+      JSON.stringify({
+        ...snapshotFields,
+        phone: phoneNorm,
+        isAge17OrAbove: true,
+        teacherRecommended: derived.teacherRecommended,
+        quotaTier: derived.quotaTier,
+        individualEligible: derived.individualEligible,
+        teachingEligible: derived.teachingEligible,
+      })
+    ) as Prisma.InputJsonValue;
+
     const result = await prisma.$transaction(
       async (tx) => {
         const user = await tx.user.create({
@@ -348,7 +348,7 @@ export async function POST(req: Request) {
 
     return jsonOk(base);
   } catch (e: unknown) {
-    console.error(e);
+    console.error("[registration]", e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002") {
         const target = (e.meta as { target?: string[] })?.target ?? [];
@@ -375,8 +375,26 @@ export async function POST(req: Request) {
           503
         );
       }
+      if (e.code === "P1001" || e.code === "P1002" || e.code === "P1017") {
+        return jsonError(
+          "DB_UNAVAILABLE",
+          "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+          503
+        );
+      }
     }
     const errMsg = e instanceof Error ? e.message : String(e);
+    if (
+      /Can't reach database server|Server has closed the connection|Timed out fetching|ECONNREFUSED|P1001|P1002|P1017/i.test(
+        errMsg
+      )
+    ) {
+      return jsonError(
+        "DB_UNAVAILABLE",
+        "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+        503
+      );
+    }
     if (errMsg === "PHONE_VERIFICATION_ALREADY_USED") {
       return jsonError(
         "PHONE_VERIFICATION_ALREADY_USED",

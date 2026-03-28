@@ -23,6 +23,7 @@ import {
 } from "@/lib/booking/campaign-constants";
 import { buildPreviewSlotsForHkDay } from "@/lib/booking/preview-slots";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { sessionHoursParen } from "@/lib/i18n/session-hours";
 import {
   formatInstantForBookingOpensEn,
   formatInstantForBookingOpensZhHk,
@@ -374,6 +375,7 @@ export function BookingRequestPanel(props: {
         tr("booking.request.dailyCapHint", {
           dayKey,
           dailyMax: String(dailyMax),
+          dailyMaxH: sessionHoursParen(locale, dailyMax),
         })
       );
       window.setTimeout(() => setDailyCapHint(null), 4500);
@@ -517,6 +519,9 @@ export function BookingRequestPanel(props: {
                   used: String(limits.todayCommitted),
                   max: String(limits.limits.dailyMax),
                   remaining: String(limits.todayRemaining),
+                  usedH: sessionHoursParen(locale, limits.todayCommitted),
+                  maxH: sessionHoursParen(locale, limits.limits.dailyMax),
+                  remainingH: sessionHoursParen(locale, limits.todayRemaining),
                 })}
               >
                 <div className="flex items-baseline justify-between gap-2">
@@ -537,6 +542,9 @@ export function BookingRequestPanel(props: {
                       <span className="ml-1 text-sm font-normal text-stone-500 dark:text-stone-400">
                         {t("booking.request.limitsSessionsUnit")}
                       </span>
+                      <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-500">
+                        {sessionHoursParen(locale, limits.todayCommitted)}
+                      </span>
                     </p>
                   </div>
                   <div className="rounded-md bg-emerald-50 px-2.5 py-2 dark:bg-emerald-950/35">
@@ -548,12 +556,16 @@ export function BookingRequestPanel(props: {
                       <span className="ml-1 text-sm font-normal text-emerald-700/80 dark:text-emerald-300/70">
                         {t("booking.request.limitsSessionsUnit")}
                       </span>
+                      <span className="ml-1 text-xs font-normal text-emerald-800/80 dark:text-emerald-300/80">
+                        {sessionHoursParen(locale, limits.todayRemaining)}
+                      </span>
                     </p>
                   </div>
                 </div>
                 <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400">
                   {t("booking.request.limitsDailyCapShort")} · {limits.limits.dailyMax}{" "}
                   {t("booking.request.limitsSessionsUnit")}
+                  {sessionHoursParen(locale, limits.limits.dailyMax)}
                 </p>
                 <QuotaBlockStrip
                   filled={limits.todayCommitted}
@@ -573,6 +585,12 @@ export function BookingRequestPanel(props: {
                     remaining: String(
                       Math.max(0, limits.limits.rollingMax - limits.rollingSumCommitted)
                     ),
+                    usedH: sessionHoursParen(locale, limits.rollingSumCommitted),
+                    maxH: sessionHoursParen(locale, limits.limits.rollingMax),
+                    remainingH: sessionHoursParen(
+                      locale,
+                      Math.max(0, limits.limits.rollingMax - limits.rollingSumCommitted)
+                    ),
                   })}
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
@@ -588,6 +606,9 @@ export function BookingRequestPanel(props: {
                         <span className="ml-1 text-sm font-normal text-stone-500 dark:text-stone-400">
                           {t("booking.request.limitsSessionsUnit")}
                         </span>
+                        <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-500">
+                          {sessionHoursParen(locale, limits.rollingSumCommitted)}
+                        </span>
                       </p>
                     </div>
                     <div className="rounded-md bg-violet-50 px-2.5 py-2 dark:bg-violet-950/35">
@@ -599,12 +620,19 @@ export function BookingRequestPanel(props: {
                         <span className="ml-1 text-sm font-normal text-violet-800/75 dark:text-violet-300/70">
                           {t("booking.request.limitsSessionsUnit")}
                         </span>
+                        <span className="ml-1 text-xs font-normal text-violet-800/75 dark:text-violet-300/75">
+                          {sessionHoursParen(
+                            locale,
+                            Math.max(0, limits.limits.rollingMax - limits.rollingSumCommitted)
+                          )}
+                        </span>
                       </p>
                     </div>
                   </div>
                   <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400">
                     {t("booking.request.limitsRollingCapShort")} · {limits.limits.rollingMax}{" "}
                     {t("booking.request.limitsSessionsUnit")}
+                    {sessionHoursParen(locale, limits.limits.rollingMax)}
                   </p>
                   <QuotaBlockStrip
                     filled={limits.rollingSumCommitted}
@@ -712,6 +740,7 @@ export function BookingRequestPanel(props: {
             <p className="mt-3 border-t border-stone-200 pt-3 text-xs text-stone-500 dark:text-stone-500 dark:border-stone-700">
               {tr("booking.request.limitsPickHint", {
                 dailyMax: String(limits.limits.dailyMax),
+                dailyMaxH: sessionHoursParen(locale, limits.limits.dailyMax),
               })}
             </p>
 
@@ -723,6 +752,7 @@ export function BookingRequestPanel(props: {
                     <span className="mt-1 block font-normal">
                       {tr("booking.request.exceedDaily", {
                         dailyMax: String(limits.limits.dailyMax),
+                        dailyMaxH: sessionHoursParen(locale, limits.limits.dailyMax),
                         datePart: limits.provisional.firstViolatingDate
                           ? tr("booking.request.exceedDailyDate", {
                               date: limits.provisional.firstViolatingDate,
@@ -736,6 +766,8 @@ export function BookingRequestPanel(props: {
                       {tr("booking.request.exceedRolling", {
                         rollingSum: String(limits.provisional.rollingSum),
                         rollingMax: String(limits.limits.rollingMax),
+                        rollingSumH: sessionHoursParen(locale, limits.provisional.rollingSum),
+                        rollingMaxH: sessionHoursParen(locale, limits.limits.rollingMax),
                       })}
                     </span>
                   )}
@@ -834,7 +866,10 @@ export function BookingRequestPanel(props: {
                     className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
                       isSelected ? "bg-emerald-300" : "bg-emerald-500"
                     }`}
-                    title={tr("booking.request.dotTitle", { n: String(avail) })}
+                    title={tr("booking.request.dotTitle", {
+                      n: String(avail),
+                      nH: sessionHoursParen(locale, avail),
+                    })}
                   />
                 )}
                 {bookingLive && bookable && avail === 0 && (
@@ -928,7 +963,10 @@ export function BookingRequestPanel(props: {
                       </span>
                       <span className={`mt-1 block text-xs ${on ? "text-stone-200" : "text-stone-500 dark:text-stone-500"}`}>
                         {displayVenueLabel(s.venueLabel, locale)} ·{" "}
-                        {tr("booking.request.remainingSlots", { n: String(s.remaining) })}
+                        {tr("booking.request.remainingSlots", {
+                          n: String(s.remaining),
+                          nH: sessionHoursParen(locale, s.remaining),
+                        })}
                       </span>
                     </button>
                   </li>
@@ -997,7 +1035,10 @@ export function BookingRequestPanel(props: {
         >
           {submitting
             ? t("booking.request.submitting")
-            : tr("booking.request.submitWithCount", { n: String(selected.size) })}
+            : tr("booking.request.submitWithCount", {
+                n: String(selected.size),
+                nH: sessionHoursParen(locale, selected.size),
+              })}
         </button>
         <Link href={`${bookingPathPrefix}/history`} className="text-sm text-stone-700 dark:text-stone-300 underline">
           {t("booking.request.linkHistory")}

@@ -44,7 +44,9 @@ function readRegistrationBannerDismissedFromStorage(): boolean {
 }
 
 const CHROME_SCROLL_SHOW_TOP_PX = 40;
-const CHROME_SCROLL_DIRECTION_EPS = 8;
+const CHROME_SCROLL_DIRECTION_EPS = 10;
+/** Ignore opposite show/hide toggles right after a toggle to break scroll-anchoring feedback loops. */
+const CHROME_SCROLL_TOGGLE_COOLDOWN_MS = 320;
 /** Until ResizeObserver runs (SSR / first paint), reserve space so content is not covered. */
 const CHROME_SHELL_HEIGHT_FALLBACK_PX = 104;
 
@@ -134,6 +136,8 @@ export function SiteHeader() {
   const [shellReady, setShellReady] = useState(false);
   const [chromeHiddenByScroll, setChromeHiddenByScroll] = useState(false);
   const lastScrollY = useRef(0);
+  const lastChromeScrollToggleAt = useRef(0);
+  const scrollRafId = useRef<number | null>(null);
   const [reduceScrollChromeMotion, setReduceScrollChromeMotion] = useState(false);
 
   useLayoutEffect(() => {
@@ -171,22 +175,49 @@ export function SiteHeader() {
 
   useEffect(() => {
     if (reduceScrollChromeMotion) return;
-    const onScroll = () => {
+    const applyScrollChrome = () => {
+      scrollRafId.current = null;
       if (menuOpen) return;
       const y = Math.max(0, window.scrollY);
       if (y < CHROME_SCROLL_SHOW_TOP_PX) {
         setChromeHiddenByScroll(false);
         lastScrollY.current = y;
+        lastChromeScrollToggleAt.current = 0;
         return;
       }
       const delta = y - lastScrollY.current;
       lastScrollY.current = y;
       if (Math.abs(delta) < CHROME_SCROLL_DIRECTION_EPS) return;
-      if (delta > 0) setChromeHiddenByScroll(true);
-      else setChromeHiddenByScroll(false);
+
+      const nextHidden = delta > 0;
+      setChromeHiddenByScroll((prevHidden) => {
+        if (nextHidden === prevHidden) return prevHidden;
+        const now = performance.now();
+        if (
+          now - lastChromeScrollToggleAt.current < CHROME_SCROLL_TOGGLE_COOLDOWN_MS &&
+          y >= CHROME_SCROLL_SHOW_TOP_PX
+        ) {
+          return prevHidden;
+        }
+        lastChromeScrollToggleAt.current = now;
+        return nextHidden;
+      });
     };
+
+    const onScroll = () => {
+      if (menuOpen) return;
+      if (scrollRafId.current != null) return;
+      scrollRafId.current = window.requestAnimationFrame(applyScrollChrome);
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (scrollRafId.current != null) {
+        cancelAnimationFrame(scrollRafId.current);
+        scrollRafId.current = null;
+      }
+    };
   }, [menuOpen, reduceScrollChromeMotion]);
 
   const chromeCollapsed = chromeHiddenByScroll && !menuOpen;
@@ -219,6 +250,7 @@ export function SiteHeader() {
           chromeCollapsed ? "pointer-events-none" : ""
         }`}
         style={{
+          overflowAnchor: "none",
           height: chromeCollapsed
             ? 0
             : shellReady
@@ -407,6 +439,15 @@ export function SiteHeader() {
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
                     <Link
+                      href="/directions"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.directions")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
+                    <Link
                       href="/open-space-booking"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
@@ -414,7 +455,7 @@ export function SiteHeader() {
                       {t("nav.openSpaceBookingInfo")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={5}>
+                  <MobileNavZipItem index={6}>
                     <button
                       type="button"
                       className={`${linkPlain} w-full justify-center gap-2 py-2`}
@@ -427,7 +468,7 @@ export function SiteHeader() {
                       {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
                     </button>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={6}>
+                  <MobileNavZipItem index={7}>
                     <Link
                       href="/privacy"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -436,7 +477,7 @@ export function SiteHeader() {
                       {t("nav.privacyPolicy")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={7}>
+                  <MobileNavZipItem index={8}>
                     <Link
                       href="/terms"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -445,7 +486,7 @@ export function SiteHeader() {
                       {t("nav.termsAndConditions")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={8}>
+                  <MobileNavZipItem index={9}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -496,6 +537,15 @@ export function SiteHeader() {
                   </MobileNavZipItem>
                   <MobileNavZipItem index={4}>
                     <Link
+                      href="/directions"
+                      className={`${linkPlain} w-full justify-center py-2`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t("nav.directions")}
+                    </Link>
+                  </MobileNavZipItem>
+                  <MobileNavZipItem index={5}>
+                    <Link
                       href="/open-space-booking"
                       className={`${linkPlain} w-full justify-center py-2`}
                       onClick={() => setMenuOpen(false)}
@@ -503,7 +553,7 @@ export function SiteHeader() {
                       {t("nav.openSpaceBookingInfo")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={5}>
+                  <MobileNavZipItem index={6}>
                     <button
                       type="button"
                       className={`${linkPlain} w-full justify-center gap-2 py-2`}
@@ -516,7 +566,7 @@ export function SiteHeader() {
                       {locale === "zh-HK" ? t("nav.switchToEnglish") : t("nav.switchToZh")}
                     </button>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={6}>
+                  <MobileNavZipItem index={7}>
                     <Link
                       href="/privacy"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -525,7 +575,7 @@ export function SiteHeader() {
                       {t("nav.privacyPolicy")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={7}>
+                  <MobileNavZipItem index={8}>
                     <Link
                       href="/terms"
                       className={`${linkPlain} w-full justify-center py-2`}
@@ -534,7 +584,7 @@ export function SiteHeader() {
                       {t("nav.termsAndConditions")}
                     </Link>
                   </MobileNavZipItem>
-                  <MobileNavZipItem index={8}>
+                  <MobileNavZipItem index={9}>
                     <Link
                       href="/contact"
                       className={`${linkPlain} w-full justify-center py-2`}

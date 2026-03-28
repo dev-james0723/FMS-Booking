@@ -3,13 +3,14 @@ export const accountEn = {
   pageTitleOpenSpace: "Large instrument / Open Space account",
   limitsTitle: "Booking limits (30 minutes = 1 session)",
   limitsIntro:
-    "Your account quota tier is “{tier}” (same bucket as on registration; dual eligibility still uses one tier, not doubled). Up to {dailyMax} sessions on a single Hong Kong calendar day; up to {rollingMax} summed across any 3 consecutive Hong Kong calendar days.",
+    "Your account quota tier is “{tier}” (same bucket as on registration; dual eligibility still uses one tier, not doubled). Up to {dailyMax} sessions{dailyMaxH} on a single Hong Kong calendar day; up to {rollingMax} sessions{rollingMaxH} summed across any 3 consecutive Hong Kong calendar days.",
   quotaTierIndividual: "Individual quota tier",
   quotaTierTeaching: "Teaching quota tier",
   meterTodayTitle: "Today (HK calendar day)",
-  meterTodaySub: "{used} / {max} used · {remaining} left today",
+  meterTodaySub:
+    "{used} sessions{usedH} used · daily cap {max} sessions{maxH} · {remaining} sessions{remainingH} left today",
   meterRollingTitle: "Rolling 3-day window",
-  meterRollingSub: "Worst-case total across windows: {used} / {max}*",
+  meterRollingSub: "Worst-case total across windows: {used} / {max} sessions{maxH}*",
   slidingDiagramCaption: "Any 3 consecutive HK calendar days",
   slidingDay1: "Day 1",
   slidingDay2: "Day 2",
@@ -17,29 +18,29 @@ export const accountEn = {
   slidingDiagramHint:
     "The system sums sessions in every such triple and compares the highest total to your cap. The tiles illustrate one triple; in practice all sliding triples are checked.",
   rollingDetailsSummary: "Details & examples",
-  todayUsed: "Today ({todayKey}) used: {n} sessions",
-  todayRemaining: "Still bookable today (within daily cap): {n} sessions",
+  todayUsed: "Today ({todayKey}) used: {n} sessions{nH}",
+  todayRemaining: "Still bookable today (within daily cap): {n} sessions{nH}",
   rollingUsedLine:
-    "Rolling 3-day total used so far: {used} / {rollingMax} sessions (new picks are checked together when you submit)",
+    "Rolling 3-day total used so far: {used} / {rollingMax} sessions{rollingMaxH} (new picks are checked together when you submit)",
   rollingFootnote:
     "*Rolling 3 days: Hong Kong calendar days. For every window of three consecutive days, booked sessions are summed; the number shown is the maximum across all such windows. As the calendar moves, the window moves too (not a fixed Mon–Wed). Submitting re-checks with your newly selected slots.",
   exampleTitle: "Example (Alex Chan)",
   exampleName: "Alex Chan",
   exampleIntro:
-    "Example below uses the same quota tier as you (“{tier}”): up to {dailyMax} sessions per day, up to {rollingMax} in any three consecutive calendar days.",
+    "Example below uses the same quota tier as you (“{tier}”): up to {dailyMax} sessions{dailyMaxH} per day, up to {rollingMax} sessions{rollingMaxH} in any three consecutive calendar days.",
   labelCannot: "Cannot book:",
   labelCan: "Can book:",
   labelSlide: "What “rolling” means:",
   storyFail:
-    "{name} has {t0}, {t1}, and {t2} sessions on {d0}, {d1}, and {d2} (in order), totalling exactly {rollingMax}. Adding another session on {extraDay} makes the {windowSpan} window {nextExpr} = {sumAfter} sessions, over the cap of {rollingMax}, so the request is blocked. Even if that day is still under the daily cap, a full rolling window blocks the booking—daily and rolling limits are checked together on submit.",
+    "{name} has {t0Pack}, {t1Pack}, and {t2Pack} on {d0}, {d1}, and {d2} (in order), totalling exactly {rollingMaxPack}. Adding another session on {extraDay} makes the {windowSpan} window {nextExpr} = {sumAfterPack}, over the cap of {rollingMaxPack}, so the request is blocked. Even if that day is still under the daily cap, a full rolling window blocks the booking—daily and rolling limits are checked together on submit.",
   storyPass:
-    "If instead {d0} has {a0}, {d1} has {a1}, and {d2} has {a2} ({preSum} total across the three days), then add one more on {d2}, the window becomes {tri1Expr} = {sumAfter}, which is within {rollingMax}, the third day is only {thirdDay} sessions, and it stays within the daily cap of {dailyMax}, so it passes.",
+    "If instead {d0} has {a0Pack}, {d1} has {a1Pack}, and {d2} has {a2Pack} ({preSumPack} total across the three days), then add one more session{aOneH} on {d2}, the window becomes {tri1Expr} = {sumAfterPack}, which is within {rollingMaxPack}, the third day is only {thirdDayPack}, and it stays within the daily cap of {dailyMaxPack}, so it passes.",
   storySlide:
-    "When earlier dates pass or bookings move later, the system recalculates using newer 3-day windows (e.g. 6–8 Apr, 7–9 Apr). You are not stuck forever on one fixed window—as long as every 3-day window sums to at most {rollingMax}.",
+    "When earlier dates pass or bookings move later, the system recalculates using newer 3-day windows (e.g. 6–8 Apr, 7–9 Apr). You are not stuck forever on one fixed window—as long as every 3-day window sums to at most {rollingMaxPack}.",
   genericCannot:
-    "If approved or pending sessions in some three consecutive days already total {rollingMax}, adding a session on any of those days would push at least one window over the limit, so the system rejects it.",
+    "If approved or pending sessions in some three consecutive days already total {rollingMaxPack}, adding a session on any of those days would push at least one window over the limit, so the system rejects it.",
   genericCan:
-    "You can submit if every 3-day window totals at most {rollingMax} sessions and each single day is at most {dailyMax} sessions.",
+    "You can submit if every 3-day window totals at most {rollingMaxPack} and each single day is at most {dailyMaxPack}.",
   genericSlide:
     "As dates advance, the system uses newer consecutive triples (e.g. 6–8 Apr) instead of a fixed Mon–Wed—the limit “slides” with the calendar.",
   sectionContact: "Profile & contact",
@@ -82,7 +83,7 @@ export const accountEn = {
   emptyBookings: "No bookings yet.",
   statusLine: "Status: {status}",
   requestedAtLine: "Requested: {time}",
-  sessionsVenue: "({sessions} sessions · {venue})",
+  sessionsVenue: "({sessions} sessions{sessionsH} · {venue})",
   shortcuts: "Shortcuts",
   goBooking: "Go to booking",
   bookingLocked: "Booking not open yet or password change required",
@@ -100,9 +101,9 @@ export const accountEn = {
   },
   ambassadorPlanTitle: "D Ambassador referral programme",
   ambassadorSectionIntro:
-    "Share your personal link or QR code. Visits are counted when someone opens the link; when they complete registration through your channel, eligible ambassadors earn bonus 30-minute slots (subject to programme rules and slot availability).",
+    "Share your personal link or QR code. Visits are counted when someone opens the link; when they complete registration through your channel, eligible ambassadors earn bonus session rewards (30 minutes = 0.5 hour each) (subject to programme rules and slot availability).",
   ambassadorRewardRules:
-    "Each successful new registration you refer can earn 1 bonus 30-minute slot, up to 25 slots during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash. All bonus slots may only be used after this free experience programme ends, i.e. after 3 May. Fantasia Music Space will then remind eligible referrers in batches when they may book rooms.",
+    "Each successful new registration you refer can earn 1 bonus slot (0.5 hour), up to 25 slots (12.5 hours) during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash. All bonus slots may only be used after this free experience programme ends, i.e. after 3 May. Fantasia Music Space will then remind eligible referrers in batches when they may book rooms.",
   ambassadorShareLink: "Your share link",
   ambassadorCopyLink: "Copy link",
   ambassadorLinkCopied: "Copied",
@@ -111,7 +112,7 @@ export const accountEn = {
   ambassadorStatOpens: "Link opens recorded",
   ambassadorStatRegisters: "Registrations completed",
   ambassadorStatRewards: "Rewards",
-  ambassadorStatRewardsValue: "{times} time(s) · {slots} bonus slot(s) granted",
+  ambassadorStatRewardsValue: "{times} time(s) · {slots} bonus slot(s) granted{slotsH}",
   ambassadorLoading: "Loading your referral tools…",
   ambassadorOptInIntro:
     "If you did not opt in during registration, you can still join here. Once you confirm, we generate your personal share link and QR code and start tracking opens and referred registrations.",

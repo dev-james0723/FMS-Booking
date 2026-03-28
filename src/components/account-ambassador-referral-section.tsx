@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { sessionHoursParen } from "@/lib/i18n/session-hours";
 import type { AmbassadorReferralPayload } from "@/lib/referral/ambassador-referral-payload";
 
 function statFromJson(v: unknown): number {
@@ -67,7 +68,7 @@ export function AccountAmbassadorReferralSection(props: {
   /** When opted in: server payload, or `null` if the server could not load (client retries). */
   initialReferral?: AmbassadorReferralPayload | null;
 }) {
-  const { t, tr } = useTranslation();
+  const { t, tr, locale } = useTranslation();
   const optedInAtRegistration = props.wantsAmbassador === true;
 
   const [mounted, setMounted] = useState(false);
@@ -321,6 +322,7 @@ export function AccountAmbassadorReferralSection(props: {
             {tr("account.ambassadorStatRewardsValue", {
               times: String(data.stats.rewardTimes),
               slots: String(data.stats.rewardBonusSlotsTotal),
+              slotsH: sessionHoursParen(locale, data.stats.rewardBonusSlotsTotal),
             })}
           </dd>
         </div>

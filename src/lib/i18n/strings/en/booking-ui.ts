@@ -11,7 +11,7 @@ export const bookingEn = {
   portal: {
     title: "Booking",
     intro:
-      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); limits use a single quota tier per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
+      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single quota tier per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
@@ -75,7 +75,7 @@ export const bookingEn = {
   request: {
     loadSlotsError: "Could not load slots",
     dailyCapHint:
-      "On {dayKey} you have reached your daily cap for your tier: up to {dailyMax} slots (30 minutes each); you cannot add another.",
+      "On {dayKey} you have reached your daily cap for your tier: up to {dailyMax} slots{dailyMaxH} (30 minutes each); you cannot add another.",
     submitError: "Submit failed",
     notOpenBanner:
       "Booking is not open yet. Tap a day within the campaign to preview 30-minute slots; slots stay locked until opening and cannot be selected or submitted.",
@@ -107,10 +107,10 @@ export const bookingEn = {
     ruleCardSlotSummary: "Each slot is 30 minutes (one pick = one session).",
     ruleCardIndividualTitle: "Individual quota tier",
     ruleCardIndividualSummary:
-      "Personal practice / general individual users, or teacher-referred students — up to 5 sessions per day; up to 7 in any 3 consecutive calendar days.",
+      "Personal practice / general individual users, or teacher-referred students — up to 5 sessions per day (2.5 hours); up to 7 in any 3 consecutive calendar days (3.5 hours).",
     ruleCardTeachingTitle: "Teaching quota tier",
     ruleCardTeachingSummary:
-      "Teaching, with students, or both teaching and practice on the account — up to 8 per day; up to 16 in any 3 consecutive calendar days.",
+      "Teaching, with students, or both teaching and practice on the account — up to 8 per day (4 hours); up to 16 in any 3 consecutive calendar days (8 hours).",
     ruleCardCooldownTitle: "Submission cooldown",
     ruleCardCooldownSummary: "After each successful submission, wait 3 hours before submitting again.",
     ruleCardIdentityTitle: "Dual eligibility",
@@ -121,11 +121,11 @@ export const bookingEn = {
       "Even with dual eligibility, all sessions count toward a single quota tier — limits are not doubled.",
     ruleSlotLen: "Each slot is 30 minutes.",
     ruleQuotaIndividual:
-      "Individual users and teacher-referred students (individual quota tier): up to 5 sessions per day (2.5 hours); up to 7 sessions in any 3 consecutive calendar days.",
+      "Individual users and teacher-referred students (individual quota tier): up to 5 sessions per day (2.5 hours); up to 7 sessions in any 3 consecutive calendar days (3.5 hours).",
     ruleQuotaTeaching:
-      "Teaching / with-students users (teaching quota tier): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days.",
+      "Teaching / with-students users (teaching quota tier): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days (8 hours).",
     ruleQuotaDual:
-      "Users with both teaching and practice needs (teaching quota tier on the account): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days.",
+      "Users with both teaching and practice needs (teaching quota tier on the account): up to 8 sessions per day (4 hours); up to 16 sessions in any 3 consecutive calendar days (8 hours).",
     ruleCooldown: "After each successful booking submission, wait 3 hours before submitting another.",
     ruleDualPick:
       "If you have both individual and teaching eligibility, pick which applies to this booking (for the organiser and reporting).",
@@ -136,9 +136,9 @@ export const bookingEn = {
       "Request submitted (reference: {id}). You will be notified by email after review.",
     viewHistory: "View history",
     linkCalendarOverview: "Calendar overview (timeline)",
-    limitsTitle: "Session usage (Hong Kong dates)",
+    limitsTitle: "Session usage (Hong Kong dates; 30 min = 0.5 hr each)",
     limitsToday:
-      "Today ({todayKey}): {committed} sessions used, {remaining} left (daily cap {dailyMax}). Quota tier: {tier}.",
+      "Today ({todayKey}): {committed} sessions{committedH} used, {remaining} sessions{remainingH} left (daily cap {dailyMax} sessions{dailyMaxH}). Quota tier: {tier}.",
     limitsCardToday: "Today",
     limitsCardRolling: "Rolling 3 calendar days",
     limitsUsedLabel: "Used",
@@ -151,28 +151,29 @@ export const bookingEn = {
     limitsEligibilityIndividual: "Individual",
     limitsEligibilityTeaching: "Teaching",
     limitsMeterAriaToday:
-      "Hong Kong date {date}: {used} of {max} sessions used, {remaining} remaining.",
+      "Hong Kong date {date}: {used} sessions{usedH} used, daily cap {max} sessions{maxH}, {remaining} sessions{remainingH} remaining.",
     limitsMeterAriaRolling:
-      "Rolling three calendar days: {used} of {max} sessions counted, {remaining} remaining.",
+      "Rolling three calendar days: {used} sessions{usedH} counted, cap {max} sessions{maxH}, {remaining} sessions{remainingH} remaining.",
     tierTeachingQuota: "Teaching quota tier",
     tierIndividualQuota: "Individual quota tier",
-    limitsRollingCommitted: "Rolling 3-day window: {sum} / {max} sessions counted.",
+    limitsRollingCommitted:
+      "Rolling 3-day window: {sum} sessions{sumH} of {max} sessions{maxH2} counted.",
     limitsRollingWindow: "Current rolling bookable range (HK dates): {start} – {end}.",
     limitsEligibility: "Eligibility — individual: {ind} · teaching: {tea}",
     yes: "Yes",
     no: "No",
     cooldownLine: "Booking cooldown active — you can submit again after {until} (Hong Kong time).",
     limitsPickHint:
-      "30 minutes per slot. After {dailyMax} picks on one day, further picks show a red hint and cannot be added.",
+      "30 minutes per slot. After {dailyMax} picks{dailyMaxH} on one day, further picks show a red hint and cannot be added.",
     wouldExceedTitle: "Current selection would exceed limits:",
-    exceedDaily: "More than {dailyMax} sessions on one day{datePart}.",
+    exceedDaily: "More than {dailyMax} sessions{dailyMaxH} on one day{datePart}.",
     exceedDailyDate: " ({date})",
     exceedRolling:
-      "{rollingSum} sessions in any rolling 3 calendar days, over the cap of {rollingMax}.",
+      "{rollingSum} sessions{rollingSumH} in any rolling 3 calendar days, over the cap of {rollingMax} sessions{rollingMaxH}.",
     monthTitle: "{year} / {month} (Hong Kong)",
     prevMonth: "Previous month",
     nextMonth: "Next month",
-    dotTitle: "{n} slots available",
+    dotTitle: "{n} slots{nH} available",
     fullLabel: "Full",
     hintPickDayLive:
       "Pick a day first; a green dot means slots are still available. Live booking: only the next {windowDays} calendar days from today (inclusive), not after {lastDay}.",
@@ -187,11 +188,11 @@ export const bookingEn = {
       "After you pick a campaign day, a preview of 30-minute bookable slots appears here (3 Apr 11:00–20:00; all other campaign days 06:00–20:00), for practice only.",
     noSlotsDay: "No bookable slots for this day (or all full).",
     previewSlotSuffix: "Preview (not open)",
-    remainingSlots: "{n} left",
+    remainingSlots: "{n} left{nH}",
     notOpenYet: "Booking has not started yet; watch for the opening time{suffix}.",
     notOpenFallback: " (as announced by the organiser)",
     submitting: "Submitting…",
-    submitWithCount: "Submit request ({n} sessions)",
+    submitWithCount: "Submit request ({n} sessions{nH})",
     linkHistory: "Booking history",
     footnote:
       "Quotas follow the guide above; approval still depends on availability and the organiser.",

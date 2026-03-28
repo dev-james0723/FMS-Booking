@@ -6,6 +6,7 @@ import {
   userCategoryLabelZh,
 } from "@/lib/identity-labels";
 import { formatHkRange } from "@/lib/booking/day-timeline";
+import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
 import type { BookingAllocation, BookingRequest, BookingSlot, User, UserProfile } from "@prisma/client";
@@ -48,7 +49,7 @@ export async function sendBookingAdminNotification(
       formatHkRange(a.slot.startsAt, a.slot.endsAt)
     );
 
-  const subject = `【新預約】${p?.nameZh ?? booking.user.email}｜${slots.length} 節｜${booking.id.slice(0, 8)}`;
+  const subject = `【新預約】${p?.nameZh ?? booking.user.email}｜${sessionCountWithHoursPack("zh-HK", slots.length)}｜${booking.id.slice(0, 8)}`;
 
   const venueLine =
     booking.venueKind === "open_space"

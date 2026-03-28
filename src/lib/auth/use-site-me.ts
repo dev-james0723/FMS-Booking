@@ -13,29 +13,38 @@ export function bookingHrefForUser(user: SiteMeUser | null): string {
 }
 
 /**
- * Current session for public chrome (header, footer, home CTA). `undefined` while loading.
+ * Current session for public chrome (header, footer, home CTA).
+ * Before the client `/api/v1/me` request finishes, `user` is always `null` so SSR and
+ * the first client render match (avoids hydration mismatches on auth-dependent UI).
  */
 export function useSiteMe(): {
-  user: SiteMeUser | null | undefined;
+  user: SiteMeUser | null;
   bookingHref: string;
 } {
-  const [user, setUser] = useState<SiteMeUser | null | undefined>(undefined);
+  const [user, setUser] = useState<SiteMeUser | null>(null);
+  const [meReady, setMeReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
-      if (cancelled) return;
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const u = data?.user as { email?: string; bookingVenueKind?: string } | undefined;
-        if (u?.email) {
-          setUser({ email: u.email, bookingVenueKind: u.bookingVenueKind });
+      try {
+        const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          const u = data?.user as { email?: string; bookingVenueKind?: string } | undefined;
+          if (u?.email) {
+            setUser({ email: u.email, bookingVenueKind: u.bookingVenueKind });
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
-      } else {
-        setUser(null);
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setMeReady(true);
       }
     })();
     return () => {
@@ -43,7 +52,8 @@ export function useSiteMe(): {
     };
   }, []);
 
-  const bookingHref = user ? bookingHrefForUser(user) : "/booking";
+  const effectiveUser = meReady ? user : null;
+  const bookingHref = effectiveUser ? bookingHrefForUser(effectiveUser) : "/booking";
 
-  return { user, bookingHref };
+  return { user: effectiveUser, bookingHref };
 }

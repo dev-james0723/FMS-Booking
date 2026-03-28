@@ -34,14 +34,21 @@ export async function getAmbassadorReferralPayloadForUser(
   const row = await db.referralCode.findFirst({
     where: { ambassadorUserId: userId },
     orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      code: true,
-      openCount: true,
-    },
+    select: { id: true, code: true },
   });
   if (!row) {
     throw new Error("REFERRAL_CODE_ROW_MISSING");
+  }
+
+  /** Read via raw SQL so a stale generated client (missing `openCount` on ReferralCode) still works. */
+  let linkOpens = 0;
+  try {
+    const openRows = await db.$queryRaw<Array<{ open_count: unknown }>>(
+      Prisma.sql`SELECT open_count FROM referral_codes WHERE id = ${row.id} LIMIT 1`
+    );
+    linkOpens = statInt(openRows[0]?.open_count);
+  } catch (e) {
+    console.error("[ambassador-referral-payload] open_count read", e);
   }
 
   let registrationCount = 0;
@@ -81,7 +88,7 @@ export async function getAmbassadorReferralPayloadForUser(
     code: row.code,
     shareUrl,
     stats: {
-      linkOpens: statInt(row.openCount),
+      linkOpens,
       registrations: statInt(registrationCount),
       rewardTimes: statInt(rewardTimes),
       rewardBonusSlotsTotal: statInt(rewardSlotsTotal),

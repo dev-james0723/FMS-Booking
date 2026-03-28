@@ -9,6 +9,7 @@ import {
   bookingIdentityTypeLabelZh,
   quotaTierLabelZh,
 } from "@/lib/identity-labels";
+import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 
 const HK = { timeZone: "Asia/Hong_Kong" } as const;
 
@@ -307,10 +308,12 @@ export function AdminUsersPanel() {
                   <td className="max-w-[13rem] px-3 py-3 align-top text-[11px] leading-snug text-slate-300">
                     <p className="font-medium text-slate-200">{quotaTierLabelZh(u.quotaTier)}</p>
                     <p className="mt-1 text-slate-500">
-                      今日 {u.bookingUsage.todayCommitted}/{u.bookingUsage.dailyMax} 節（{u.bookingUsage.todayKey}）
+                      今日 {sessionCountWithHoursPack("zh-HK", u.bookingUsage.todayCommitted)}／
+                      {sessionCountWithHoursPack("zh-HK", u.bookingUsage.dailyMax)}（{u.bookingUsage.todayKey}）
                     </p>
                     <p className="text-slate-500">
-                      連續 3 日最多 {u.bookingUsage.rollingSum}/{u.bookingUsage.rollingMax} 節
+                      連續 3 日最多 {sessionCountWithHoursPack("zh-HK", u.bookingUsage.rollingSum)}／
+                      {sessionCountWithHoursPack("zh-HK", u.bookingUsage.rollingMax)}
                     </p>
                     {u.cooldown.active && u.cooldown.nextBookingAt ? (
                       <p className="mt-1 text-amber-400/90">
@@ -360,7 +363,7 @@ export function AdminUsersPanel() {
                                   {br.status}
                                 </span>
                                 <span className="text-slate-500">
-                                  預約於 {fmt(br.requestedAt)} · {br.slotCount} 節 · 今次身份
+                                  預約於 {fmt(br.requestedAt)} · {sessionCountWithHoursPack("zh-HK", br.slotCount)} · 今次身份
                                   {bookingIdentityTypeLabelZh(br.bookingIdentityType)}
                                 </span>
                               </div>

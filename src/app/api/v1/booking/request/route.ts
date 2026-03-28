@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { syncBookingRequestToGoogleCalendar } from "@/lib/calendar/google-booking-sync";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
@@ -5,6 +6,8 @@ import { BookingRuleError, validateAndCreateBookingRequest } from "@/lib/booking
 import type { BookingIdentityType } from "@prisma/client";
 import { sendBookingSubmitted } from "@/lib/email/booking";
 import { sendBookingAdminNotification } from "@/lib/email/booking-admin-notify";
+import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
+import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -58,12 +61,20 @@ export async function POST(req: Request) {
     });
 
     if (full?.user.profile) {
+      const jar = await cookies();
+      const locale = localeFromCookieValue(jar.get(FMS_LOCALE_STORAGE_KEY)?.value);
+      const p = full.user.profile;
+      const greetingName =
+        locale === "en"
+          ? (p.nameEn?.trim() || p.nameZh)
+          : p.nameZh;
       await sendBookingSubmitted({
         userId: full.userId,
         toEmail: full.user.email,
-        userName: full.user.profile.nameZh,
+        greetingName,
         requestId: full.id,
         slotCount: full.allocations.length,
+        locale,
       });
     }
 

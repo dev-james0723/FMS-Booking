@@ -1,4 +1,13 @@
+import { sessionCountWithHoursPack, sessionHoursInnerLabel } from "@/lib/i18n/session-hours";
+import type { Locale as AppLocale } from "@/lib/i18n/types";
+
 type Locale = "zh" | "en";
+
+function sessionHoursNote(locale: Locale, n: number): string {
+  return locale === "zh"
+    ? `（${sessionHoursInnerLabel("zh-HK", n)}）`
+    : ` (${sessionHoursInnerLabel("en", n)})`;
+}
 
 const copy = {
   zh: {
@@ -169,25 +178,41 @@ export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
             <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-teal-500" aria-hidden />
             <span className="font-medium text-stone-900 dark:text-stone-50">{t.tierPersonal}</span>
           </div>
-          <div className="flex items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">5</span>
-            <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+          <div className="flex flex-col items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 text-center dark:border-stone-700">
+            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">
+              5<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+            </span>
+            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+              {sessionHoursNote(locale, 5)}
+            </span>
           </div>
-          <div className="flex items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">7</span>
-            <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+          <div className="flex flex-col items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 text-center dark:border-stone-700">
+            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">
+              7<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+            </span>
+            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+              {sessionHoursNote(locale, 7)}
+            </span>
           </div>
           <div className="flex items-center gap-2 border-t border-stone-200 px-3 py-3 sm:px-4 dark:border-stone-700">
             <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-violet-500" aria-hidden />
             <span className="font-medium text-stone-900 dark:text-stone-50">{t.tierTeaching}</span>
           </div>
-          <div className="flex items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">8</span>
-            <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+          <div className="flex flex-col items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 text-center dark:border-stone-700">
+            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">
+              8<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+            </span>
+            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+              {sessionHoursNote(locale, 8)}
+            </span>
           </div>
-          <div className="flex items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">16</span>
-            <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+          <div className="flex flex-col items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 text-center dark:border-stone-700">
+            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">
+              16<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+            </span>
+            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+              {sessionHoursNote(locale, 16)}
+            </span>
           </div>
         </div>
       </div>
@@ -197,14 +222,15 @@ export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
           const Icon = iconMap[cat.icon];
           const ring = iconStyles[cat.icon];
           let quotaLabel: string;
+          const appLoc: AppLocale = locale === "zh" ? "zh-HK" : "en";
           if (cat.quota === "personal") {
-            quotaLabel = `${t.tierPersonal} · 5 / 7`;
+            quotaLabel = `${t.tierPersonal} · ${sessionCountWithHoursPack(appLoc, 5)}／${sessionCountWithHoursPack(appLoc, 7)}`;
           } else if (cat.quota === "teaching") {
-            quotaLabel = `${t.tierTeaching} · 8 / 16`;
+            quotaLabel = `${t.tierTeaching} · ${sessionCountWithHoursPack(appLoc, 8)}／${sessionCountWithHoursPack(appLoc, 16)}`;
           } else if (cat.quota === "samePersonal") {
-            quotaLabel = `${t.sameAsPersonal} · 5 / 7`;
+            quotaLabel = `${t.sameAsPersonal} · ${sessionCountWithHoursPack(appLoc, 5)}／${sessionCountWithHoursPack(appLoc, 7)}`;
           } else {
-            quotaLabel = `${t.tierTeaching} · 8 / 16`;
+            quotaLabel = `${t.tierTeaching} · ${sessionCountWithHoursPack(appLoc, 8)}／${sessionCountWithHoursPack(appLoc, 16)}`;
           }
           return (
             <li

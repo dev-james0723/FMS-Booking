@@ -4,11 +4,15 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import type { BookingRequestStatus, BookingVenueKind } from "@prisma/client";
 import { LogoutButton } from "@/components/logout-button";
-import { UserHubAvatarSection } from "@/components/user-hub-avatar-section";
 import { displayVenueLabel } from "@/lib/booking-slot-display";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { accountPageHeading } from "@/lib/i18n/account-page-heading";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import {
+  joinSessionSumExpr,
+  sessionCountWithHoursPack,
+  sessionHoursParen,
+} from "@/lib/i18n/session-hours";
 import type { Locale } from "@/lib/i18n/types";
 import { AccountAmbassadorReferralSection } from "@/components/account-ambassador-referral-section";
 import type { AmbassadorReferralPayload } from "@/lib/referral/ambassador-referral-payload";
@@ -79,8 +83,6 @@ export type AccountPageViewProps = {
   preferredDateIsos: string[];
   preferredTimeText: string | null;
   wantsConsecutiveSlots: boolean | null;
-  favoriteAvatarAnimal: string | null;
-  avatarImageDataUrl: string | null;
   quotaTier: "individual" | "teaching";
   dailyMax: number;
   rollingMax: number;
@@ -418,11 +420,6 @@ export function AccountPageView(props: AccountPageViewProps) {
         </p>
       </header>
 
-      <UserHubAvatarSection
-        initialAnimal={props.favoriteAvatarAnimal}
-        initialImageDataUrl={props.avatarImageDataUrl}
-      />
-
       {props.referrerNameZh ? (
         <section
           className="rounded-2xl border border-violet-200/80 bg-violet-50/90 p-5 shadow-sm dark:border-violet-800/50 dark:bg-violet-950/40"
@@ -454,6 +451,8 @@ export function AccountPageView(props: AccountPageViewProps) {
             tier: tierLabel,
             dailyMax: String(props.dailyMax),
             rollingMax: String(props.rollingMax),
+            dailyMaxH: sessionHoursParen(locale, props.dailyMax),
+            rollingMaxH: sessionHoursParen(locale, props.rollingMax),
           })}
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -463,6 +462,9 @@ export function AccountPageView(props: AccountPageViewProps) {
               used: String(props.todayCommitted),
               max: String(props.dailyMax),
               remaining: String(props.todayRemaining),
+              usedH: sessionHoursParen(locale, props.todayCommitted),
+              maxH: sessionHoursParen(locale, props.dailyMax),
+              remainingH: sessionHoursParen(locale, props.todayRemaining),
             })}
             used={props.todayCommitted}
             max={props.dailyMax}
@@ -473,6 +475,7 @@ export function AccountPageView(props: AccountPageViewProps) {
             subtitle={tr("account.meterRollingSub", {
               used: String(props.rollingUsed),
               max: String(props.rollingMax),
+              maxH: sessionHoursParen(locale, props.rollingMax),
             })}
             used={props.rollingUsed}
             max={props.rollingMax}
@@ -513,6 +516,8 @@ export function AccountPageView(props: AccountPageViewProps) {
                 tier: tierLabel,
                 dailyMax: String(props.dailyMax),
                 rollingMax: String(props.rollingMax),
+                dailyMaxH: sessionHoursParen(locale, props.dailyMax),
+                rollingMaxH: sessionHoursParen(locale, props.rollingMax),
               })}
             </p>
             {props.rollingStory ? (
@@ -524,13 +529,17 @@ export function AccountPageView(props: AccountPageViewProps) {
                     d0: exampleDays[0]!,
                     d1: exampleDays[1]!,
                     d2: exampleDays[2]!,
-                    t0: String(props.rollingStory.fail.tri[0]),
-                    t1: String(props.rollingStory.fail.tri[1]),
-                    t2: String(props.rollingStory.fail.tri[2]),
-                    rollingMax: String(props.rollingMax),
+                    t0Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[0]!),
+                    t1Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[1]!),
+                    t2Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[2]!),
+                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
                     extraDay: exampleDays[props.rollingStory.fail.extraIdx]!,
-                    nextExpr: props.rollingStory.fail.next.join(locale === "en" ? " + " : "＋"),
-                    sumAfter: String(props.rollingStory.fail.sumAfter),
+                    nextExpr: joinSessionSumExpr(
+                      locale,
+                      props.rollingStory.fail.next,
+                      locale === "en" ? " + " : "＋"
+                    ),
+                    sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.fail.sumAfter),
                     windowSpan: exampleWindowSpan,
                   })}
                 </li>
@@ -540,33 +549,42 @@ export function AccountPageView(props: AccountPageViewProps) {
                     d0: exampleDays[0]!,
                     d1: exampleDays[1]!,
                     d2: exampleDays[2]!,
-                    a0: String(props.rollingStory.pass.tri0[0]),
-                    a1: String(props.rollingStory.pass.tri0[1]),
-                    a2: String(props.rollingStory.pass.tri0[2]),
-                    preSum: String(props.rollingMax - 2),
-                    tri1Expr: props.rollingStory.pass.tri1.join(locale === "en" ? " + " : "＋"),
-                    sumAfter: String(props.rollingStory.pass.sumAfter),
-                    rollingMax: String(props.rollingMax),
-                    thirdDay: String(props.rollingStory.pass.tri1[2]),
-                    dailyMax: String(props.dailyMax),
+                    a0Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[0]!),
+                    a1Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[1]!),
+                    a2Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[2]!),
+                    preSumPack: sessionCountWithHoursPack(locale, props.rollingMax - 2),
+                    tri1Expr: joinSessionSumExpr(
+                      locale,
+                      props.rollingStory.pass.tri1,
+                      locale === "en" ? " + " : "＋"
+                    ),
+                    sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.sumAfter),
+                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                    thirdDayPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri1[2]!),
+                    dailyMaxPack: sessionCountWithHoursPack(locale, props.dailyMax),
+                    aOneH: sessionHoursParen(locale, 1),
                   })}
                 </li>
                 <li>
                   <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelSlide")}</span>{" "}
-                  {tr("account.storySlide", { rollingMax: String(props.rollingMax) })}
+                  {tr("account.storySlide", {
+                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                  })}
                 </li>
               </ul>
             ) : (
               <ul className="list-disc space-y-1.5 pl-4 text-stone-500 dark:text-stone-500">
                 <li>
                   <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelCannot")}</span>{" "}
-                  {tr("account.genericCannot", { rollingMax: String(props.rollingMax) })}
+                  {tr("account.genericCannot", {
+                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                  })}
                 </li>
                 <li>
                   <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelCan")}</span>{" "}
                   {tr("account.genericCan", {
-                    rollingMax: String(props.rollingMax),
-                    dailyMax: String(props.dailyMax),
+                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                    dailyMaxPack: sessionCountWithHoursPack(locale, props.dailyMax),
                   })}
                 </li>
                 <li>
@@ -735,6 +753,7 @@ export function AccountPageView(props: AccountPageViewProps) {
                             {tr("account.sessionsVenue", {
                               sessions: String(m.sessionCount),
                               venue: displayVenueLabel(m.venueLabel, locale),
+                              sessionsH: sessionHoursParen(locale, m.sessionCount),
                             })}
                           </span>
                         </p>

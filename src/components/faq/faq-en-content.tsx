@@ -161,8 +161,8 @@ export function FaqEnContent() {
           </h2>
           <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
             The <strong>free experience</strong> requires <strong>following the official accounts</strong> and{" "}
-            <strong>reposting the designated posts with tags</strong>. These steps do <strong>not</strong> earn extra booking slots or bonus
-            sessions.
+            <strong>reposting the designated posts with tags</strong>. These steps do <strong>not</strong> earn extra booking slots (30 minutes =
+            0.5 hour each) or bonus sessions.
           </p>
           <FaqVisualCardList
             className="mt-5"
@@ -226,10 +226,10 @@ export function FaqEnContent() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="rounded-lg bg-stone-900 px-2.5 py-1 text-xs font-semibold text-stone-50 dark:bg-stone-100 dark:text-stone-900">
-                        +1 × 30 min per referral
+                        +1 session (0.5 hour) per referral
                       </span>
                       <span className="rounded-lg border border-stone-300 bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100">
-                        Up to 25 slots (25 successful referrals)
+                        Up to 25 slots (12.5 hours) (25 successful referrals)
                       </span>
                       <span className="rounded-lg border border-stone-300 px-2.5 py-1 text-xs font-medium text-stone-700 dark:border-stone-600 dark:text-stone-300">
                         Non-transferable · No cash value

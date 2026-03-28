@@ -1,5 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { google } from "googleapis";
+import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 import { HK_TZ } from "@/lib/time";
 import { identityFlagsToZh, userCategoryLabelZh } from "@/lib/identity-labels";
 import type { BookingAllocation, BookingRequest, BookingSlot, User, UserProfile } from "@prisma/client";
@@ -89,7 +90,7 @@ export async function syncBookingRequestToGoogleCalendar(
   const startStr = formatInTimeZone(start, HK_TZ, "yyyy-MM-dd'T'HH:mm:ss");
   const endStr = formatInTimeZone(end, HK_TZ, "yyyy-MM-dd'T'HH:mm:ss");
 
-  const summary = `FMS 預約｜${p?.nameZh ?? booking.user.email}｜${sorted.length} 節`;
+  const summary = `FMS 預約｜${p?.nameZh ?? booking.user.email}｜${sessionCountWithHoursPack("zh-HK", sorted.length)}`;
 
   try {
     const auth = new google.auth.JWT({

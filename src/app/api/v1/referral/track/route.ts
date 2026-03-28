@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { jsonOk } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { findReferralCodeByRaw } from "@/lib/referral/ambassador";
@@ -30,10 +31,9 @@ export async function POST(req: Request) {
     return jsonOk({ ok: true, counted: false, duplicate: true as const });
   }
 
-  await prisma.referralCode.update({
-    where: { id: row.id },
-    data: { openCount: { increment: 1 } },
-  });
+  await prisma.$executeRaw(
+    Prisma.sql`UPDATE referral_codes SET open_count = COALESCE(open_count, 0) + 1 WHERE id = ${row.id}`
+  );
 
   const res = NextResponse.json({ ok: true, counted: true as const });
   res.cookies.set(cookieName, "1", {

@@ -79,7 +79,11 @@ export function HomePageMain({
             {t("nav.bookingSlots")}
           </Link>
         ) : (
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+          <div
+            className={`flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center${
+              !bookingLive ? " pointer-events-none opacity-60" : ""
+            }`}
+          >
             <Link
               href="/login?next=/booking"
               className={`${bookingNavLoginPianoClass} w-full px-6 py-3 sm:w-auto sm:min-w-[12rem]`}

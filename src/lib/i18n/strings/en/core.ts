@@ -18,6 +18,7 @@ export const coreEn = {
     contact: "Contact",
     infoMenu: "Contact",
     faq: "FAQ",
+    directions: "How to get here",
     privacyPolicy: "Privacy policy",
     termsAndConditions: "Terms & conditions",
     switchToEnglish: "English",

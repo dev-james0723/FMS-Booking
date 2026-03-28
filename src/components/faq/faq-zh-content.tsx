@@ -157,7 +157,7 @@ export function FaqZhContent() {
             社群參與 <span className="text-stone-600 dark:text-stone-400">與推薦</span>
           </h2>
           <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            參加<strong>免費體驗</strong>須完成<strong>追蹤官方帳戶</strong>及<strong>轉發指定帖文並 tag</strong>。此兩項<strong>不會</strong>換取額外預約節數或
+            參加<strong>免費體驗</strong>須完成<strong>追蹤官方帳戶</strong>及<strong>轉發指定帖文並 tag</strong>。此兩項<strong>不會</strong>換取額外預約節數（每節 30 分鐘＝0.5 小時）或
             bonus slots。
           </p>
           <FaqVisualCardList
@@ -220,10 +220,10 @@ export function FaqZhContent() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="rounded-lg bg-stone-900 px-2.5 py-1 text-xs font-semibold text-stone-50 dark:bg-stone-100 dark:text-stone-900">
-                        每 1 人 → +1 節 30 分鐘
+                        每 1 人 → +1 節（0.5 小時）
                       </span>
                       <span className="rounded-lg border border-stone-300 bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100">
-                        活動期內最多 25 節（25 名推薦人）
+                        活動期內最多 25 節（12.5 小時）（25 名推薦人）
                       </span>
                       <span className="rounded-lg border border-stone-300 px-2.5 py-1 text-xs font-medium text-stone-700 dark:border-stone-600 dark:text-stone-300">
                         不可轉讓 · 不可兌現

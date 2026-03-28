@@ -209,8 +209,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         preferredDateIsos={preferredDateIsos(user.profile.preferredDates)}
         preferredTimeText={user.profile.preferredTimeText}
         wantsConsecutiveSlots={user.profile.wantsConsecutiveSlots}
-        favoriteAvatarAnimal={user.profile.favoriteAvatarAnimal}
-        avatarImageDataUrl={user.profile.avatarImageDataUrl}
         quotaTier={user.quotaTier}
         dailyMax={dailyMax}
         rollingMax={rollingMax}

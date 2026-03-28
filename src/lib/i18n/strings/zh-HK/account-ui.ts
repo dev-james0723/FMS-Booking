@@ -3,42 +3,42 @@ export const accountZhHK = {
   pageTitleOpenSpace: "大型樂器/開放空間使用者介面",
   limitsTitle: "預約節數上限（30 分鐘 = 1 節）",
   limitsIntro:
-    "帳戶「配額級別」為「{tier}」（與登記時歸類一致；雙重預約資格仍只佔同一套配額，不會加倍）。同一香港曆日最多 {dailyMax} 節；任何連續 3 個香港曆日內合共最多 {rollingMax} 節。",
+    "帳戶「配額級別」為「{tier}」（與登記時歸類一致；雙重預約資格仍只佔同一套配額，不會加倍）。同一香港曆日最多 {dailyMax} 節{dailyMaxH}；任何連續 3 個香港曆日內合共最多 {rollingMax} 節{rollingMaxH}。",
   quotaTierIndividual: "個人配額級別",
   quotaTierTeaching: "教學配額級別",
   meterTodayTitle: "今日（香港曆日）",
-  meterTodaySub: "已用 {used}／上限 {max} 節 · 尚可 {remaining} 節",
+  meterTodaySub: "已用 {used}／上限 {max} 節{maxH} · 尚可 {remaining} 節{remainingH}",
   meterRollingTitle: "滑動 3 日窗口",
-  meterRollingSub: "各連續三日合計中之最高值：{used}／上限 {max} 節*",
+  meterRollingSub: "各連續三日合計中之最高值：{used}／上限 {max} 節{maxH}*",
   slidingDiagramCaption: "任意連續三個香港曆日",
   slidingDay1: "第 1 日",
   slidingDay2: "第 2 日",
   slidingDay3: "第 3 日",
   slidingDiagramHint: "系統會檢查每一組「三日連續」的節數加總；上圖代表其中一組，實際會掃過所有可能組合並取最嚴的一個與上限比較。",
   rollingDetailsSummary: "詳細說明與例子",
-  todayUsed: "今日（{todayKey}）已用：{n} 節",
-  todayRemaining: "今日尚可預約（同日上限內）：{n} 節",
+  todayUsed: "今日（{todayKey}）已用：{n} 節{nH}",
+  todayRemaining: "今日尚可預約（同日上限內）：{n} 節{nH}",
   rollingUsedLine:
-    "目前「滑動 3 日」* 合計已用：{used} / {rollingMax} 節（提交新預約時系統會再連同新選時段驗證）",
+    "目前「滑動 3 日」* 合計已用：{used} / {rollingMax} 節{rollingMaxH}（提交新預約時系統會再連同新選時段驗證）",
   rollingFootnote:
     "*「滑動 3 日」：以香港曆日計，把任意連續三日的已預約節數加總；畫面上顯示的是「所有此類三日區間當中，合計最高的那一個」。日曆向前時，適用的三日範圍會跟住更替，故稱滑動（並非固定例如週一至週三）。提交新預約時會與新選時段一併重算。",
   exampleTitle: "例子（陳小明）",
   exampleName: "陳小明",
   exampleIntro:
-    "以下例子假設與你相同配額級別「{tier}」：單日最多 {dailyMax} 節，任何連續三曆日最多 {rollingMax} 節。",
+    "以下例子假設與你相同配額級別「{tier}」：單日最多 {dailyMax} 節{dailyMaxH}，任何連續三曆日最多 {rollingMax} 節{rollingMaxH}。",
   labelCannot: "不能預約：",
   labelCan: "可以預約：",
   labelSlide: "「滑動」的含意：",
   storyFail:
-    "{name} 在 {d0}、{d1}、{d2} 三日（依序）已有 {t0}、{t1}、{t2} 節，合計剛好 {rollingMax} 節。若他再選一段落在 {extraDay}，系統檢視「{windowSpan}」這個連續三日窗口，合計變成 {nextExpr} = {sumAfter} 節，超過 {rollingMax} 節，故無法提交。此例重點在於：「滑動三日」總和一旦已滿，即使加選當日於單日上限內仍有空位，系統仍會擋下（提交時「滑動三日」與「單日上限」會一併驗證）。",
+    "{name} 在 {d0}、{d1}、{d2} 三日（依序）已有 {t0Pack}、{t1Pack}、{t2Pack}，合計剛好 {rollingMaxPack}。若他再選一段落在 {extraDay}，系統檢視「{windowSpan}」這個連續三日窗口，合計變成 {nextExpr} = {sumAfterPack}，超過 {rollingMaxPack}，故無法提交。此例重點在於：「滑動三日」總和一旦已滿，即使加選當日於單日上限內仍有空位，系統仍會擋下（提交時「滑動三日」與「單日上限」會一併驗證）。",
   storyPass:
-    "若改為 {d0} {a0} 節、{d1} {a1} 節、{d2} {a2} 節（三日先合共 {preSum} 節），再於 {d2} 加 1 節，窗口變成 {tri1Expr} = {sumAfter} 節，不高於 {rollingMax} 節，且第三日僅 {thirdDay} 節，亦未超單日 {dailyMax} 節，即可通過。",
+    "若改為 {d0} 有 {a0Pack}、{d1} 有 {a1Pack}、{d2} 有 {a2Pack}（三日先合共 {preSumPack}），再於 {d2} 加 1 節{aOneH}，窗口變成 {tri1Expr} = {sumAfterPack}，不高於 {rollingMaxPack}，且第三日僅 {thirdDayPack}，亦未超單日 {dailyMaxPack}，即可通過。",
   storySlide:
-    "當較早的預約日已過或他改到較後的日期，系統改以 4/6–4/8、4/7–4/9 等較新的連續三日重算；因此未必永遠被同一組「4/5–4/7」卡住——只要每一個連續三日窗口的節數加總都不超 {rollingMax} 即可。",
+    "當較早的預約日已過或他改到較後的日期，系統改以 4/6–4/8、4/7–4/9 等較新的連續三日重算；因此未必永遠被同一組「4/5–4/7」卡住——只要每一個連續三日窗口的節數加總都不超 {rollingMaxPack} 即可。",
   genericCannot:
-    "當某一組連續三日內，已批核／待審核的節數加總已達 {rollingMax}，再於這三天中的任何一日加選新節，都會令至少一個三日窗口超標，系統即會拒絕。",
+    "當某一組連續三日內，已批核／待審核的節數加總已達 {rollingMaxPack}，再於這三天中的任何一日加選新節，都會令至少一個三日窗口超標，系統即會拒絕。",
   genericCan:
-    "只要每一個連續三日窗口的加總都不超過 {rollingMax} 節，且每一日亦不多於 {dailyMax} 節，即可提交。",
+    "只要每一個連續三日窗口的加總都不超過 {rollingMaxPack}，且每一日亦不多於 {dailyMaxPack}，即可提交。",
   genericSlide:
     "隨日期推進，系統會改以較新的連續三日（例如 4/6–4/8）重算，而非固定週一至週三；故限制會「跟住日曆滑動」。",
   sectionContact: "個人及聯絡",
@@ -81,7 +81,7 @@ export const accountZhHK = {
   emptyBookings: "暫未有預約紀錄。",
   statusLine: "狀態：{status}",
   requestedAtLine: "預約時間：{time}",
-  sessionsVenue: "（{sessions} 節 · {venue}）",
+  sessionsVenue: "（{sessions} 節{sessionsH} · {venue}）",
   shortcuts: "捷徑",
   goBooking: "前往預約時段",
   bookingLocked: "預約未開放或須先更改密碼",
@@ -99,9 +99,9 @@ export const accountZhHK = {
   },
   ambassadorPlanTitle: "D Ambassador 推薦計劃",
   ambassadorSectionIntro:
-    "請分享下方專屬連結或 QR code。親友開啟連結時系統會記錄次數；若對方經你的推薦通道完成登記，合資格 Ambassador 可獲額外 30 分鐘獎勵節數（受活動條款及名額所限）。",
+    "請分享下方專屬連結或 QR code。親友開啟連結時系統會記錄次數；若對方經你的推薦通道完成登記，合資格 Ambassador 可獲額外獎勵節數（每節 30 分鐘＝0.5 小時）（受活動條款及名額所限）。",
   ambassadorRewardRules:
-    "推薦獎賞：每成功推薦 1 位新登記者可獲 1 節 30 分鐘 bonus slot，本活動期間每位 Ambassador 最多 25 節（25 名推薦人）；須視乎名額及時段供應，不可轉讓、不可兌換現金，所有 bonus slot 額外時段只可於今次免費體驗活動後使用，亦即 5 月 3 日後。屆時幻樂空間會分批提醒合資格推薦人何時可進行房間預約。",
+    "推薦獎賞：每成功推薦 1 位新登記者可獲 1 節（0.5 小時）bonus slot，本活動期間每位 Ambassador 最多 25 節（12.5 小時）（25 名推薦人）；須視乎名額及時段供應，不可轉讓、不可兌換現金，所有 bonus slot 額外時段只可於今次免費體驗活動後使用，亦即 5 月 3 日後。屆時幻樂空間會分批提醒合資格推薦人何時可進行房間預約。",
   ambassadorShareLink: "專屬分享連結",
   ambassadorCopyLink: "複製連結",
   ambassadorLinkCopied: "已複製",
@@ -110,7 +110,7 @@ export const accountZhHK = {
   ambassadorStatOpens: "連結開啟次數（已記錄）",
   ambassadorStatRegisters: "經推薦完成登記人數",
   ambassadorStatRewards: "已獲獎勵",
-  ambassadorStatRewardsValue: "共 {times} 次 · 累計 {slots} 節獎勵",
+  ambassadorStatRewardsValue: "共 {times} 次 · 累計 {slots} 節{slotsH}獎勵",
   ambassadorLoading: "載入推薦工具中…",
   ambassadorOptInIntro:
     "登記時未選擇成為 D Ambassador 的話，你仍可在此加入計劃。確認後系統會即時為你產生專屬分享連結、QR code，並開始統計連結開啟與推薦登記。",

@@ -85,6 +85,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href={withBasePath("/directions")} className={footerLinkClass}>
+                  {t("nav.directions")}
+                </Link>
+              </li>
+              <li>
                 <Link href={withBasePath("/privacy")} className={footerLinkClass}>
                   {t("nav.privacyPolicy")}
                 </Link>

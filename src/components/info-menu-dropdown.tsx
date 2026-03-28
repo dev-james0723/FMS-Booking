@@ -70,6 +70,14 @@ export function InfoMenuDropdown() {
             {t("nav.faq")}
           </Link>
           <Link
+            href="/directions"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.directions")}
+          </Link>
+          <Link
             href="/open-space-booking"
             className={itemClass}
             role="menuitem"

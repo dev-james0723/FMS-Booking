@@ -184,6 +184,12 @@ export function RegistrationForm() {
       ? "https://d-festival.org/dmasters/en-us"
       : "https://d-festival.org/zh-hk/dmasters";
   const router = useRouter();
+  const registrationIdempotencyKey = useMemo(() => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+    return `reg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -628,18 +634,46 @@ export function RegistrationForm() {
     try {
       const res = await fetch(withBasePath("/api/v1/registration"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": registrationIdempotencyKey,
+        },
         body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      const rawText = await res.text();
+      let data: unknown = {};
+      try {
+        data = rawText.length > 0 ? JSON.parse(rawText) : {};
+      } catch {
+        data = {};
+      }
+      const apiData = data && typeof data === "object" && data !== null ? data : {};
+      const errObj =
+        "error" in apiData &&
+        apiData.error &&
+        typeof apiData.error === "object" &&
+        apiData.error !== null
+          ? (apiData.error as { message?: string; code?: string; details?: unknown })
+          : undefined;
       if (!res.ok) {
         let msg =
           res.status === 422
-            ? formatRegistrationApiError(data, t, locale)
-            : typeof data?.error?.message === "string"
-              ? data.error.message
-              : t("reg.submitFail");
-        const det = data?.error?.details;
+            ? formatRegistrationApiError(apiData, t, locale)
+            : typeof errObj?.message === "string"
+              ? errObj.message
+              : locale === "en"
+                ? `Submission failed (HTTP ${res.status}). Please try again or contact the organisers.`
+                : `提交失敗（伺服器回應 HTTP ${res.status}）。請稍後再試或聯絡主辦方。`;
+        if (typeof errObj?.code === "string" && errObj.code.length > 0) {
+          msg += locale === "en" ? ` [${errObj.code}]` : `［${errObj.code}］`;
+        }
+        if (!errObj?.message && rawText.length > 0 && rawText.length < 400 && rawText.trim().startsWith("<")) {
+          msg +=
+            locale === "en"
+              ? " The server returned a non-JSON error page (often a timeout or crash). Please retry."
+              : " 伺服器回傳了非 JSON 的錯誤頁（常見於逾時或程式崩潰），請稍後再試。";
+        }
+        const det = errObj?.details;
         if (
           det &&
           typeof det === "object" &&
@@ -654,20 +688,28 @@ export function RegistrationForm() {
         setLoading(false);
         return;
       }
+      const okPayload = apiData as {
+        tempPassword?: string;
+        emailSent?: boolean;
+        emailChannel?: string;
+        devNote?: string;
+        emailError?: string;
+        socialFollowSetupToken?: string;
+      };
       try {
         sessionStorage.setItem(
           "fms_registration_success",
           JSON.stringify({
             email,
-            tempPassword: typeof data?.tempPassword === "string" ? data.tempPassword : undefined,
-            emailSent: !!data?.emailSent,
-            emailChannel: typeof data?.emailChannel === "string" ? data.emailChannel : undefined,
-            devNote: typeof data?.devNote === "string" ? data.devNote : undefined,
-            emailError: typeof data?.emailError === "string" ? data.emailError : undefined,
+            tempPassword: typeof okPayload.tempPassword === "string" ? okPayload.tempPassword : undefined,
+            emailSent: !!okPayload.emailSent,
+            emailChannel: typeof okPayload.emailChannel === "string" ? okPayload.emailChannel : undefined,
+            devNote: typeof okPayload.devNote === "string" ? okPayload.devNote : undefined,
+            emailError: typeof okPayload.emailError === "string" ? okPayload.emailError : undefined,
             socialFollowOptIn: socialFollowClaimed,
             socialFollowSetupToken:
-              typeof data?.socialFollowSetupToken === "string"
-                ? data.socialFollowSetupToken
+              typeof okPayload.socialFollowSetupToken === "string"
+                ? okPayload.socialFollowSetupToken
                 : null,
           })
         );

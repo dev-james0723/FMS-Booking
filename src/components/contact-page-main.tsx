@@ -2,22 +2,20 @@
 
 import { useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import {
+  CONTACT_PHONE_E164,
+  CONTACT_PUBLIC_EMAIL,
+  CONTACT_WHATSAPP_URL,
+  gmailComposeUrl,
+} from "@/lib/contact-public";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { getSocialFollowUrl } from "@/lib/social-follow";
-
-const PHONE_E164 = "+85291636378";
-const PUBLIC_EMAIL = "fantasiamusicspace@gmail.com";
-const WHATSAPP_SHORTCUT_URL = "https://wa.link/y4ody9";
 
 const contactLinkClass =
   "font-medium text-amber-700 underline decoration-amber-700/70 underline-offset-2 hover:text-amber-600 dark:text-amber-500 dark:decoration-amber-500/70 dark:hover:text-amber-400";
 
 const socialBtnClass =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-stone-300 bg-surface px-5 py-2.5 text-sm font-medium text-stone-800 transition-colors hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800";
-
-function gmailComposeUrl(to: string) {
-  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}`;
-}
 
 export function ContactPageMain() {
   const { t, locale } = useTranslation();
@@ -90,7 +88,7 @@ export function ContactPageMain() {
             {t("contact.phoneLabel")}
           </p>
           <a
-            href={`tel:${PHONE_E164}`}
+            href={`tel:${CONTACT_PHONE_E164}`}
             className={`mt-1 inline-block text-lg ${contactLinkClass}`}
             aria-label={t("contact.phoneAria")}
           >
@@ -102,7 +100,7 @@ export function ContactPageMain() {
             {t("contact.emailLabel")}
           </p>
           <a
-            href={gmailComposeUrl(PUBLIC_EMAIL)}
+            href={gmailComposeUrl(CONTACT_PUBLIC_EMAIL)}
             target="_blank"
             rel="noopener noreferrer"
             className={`mt-1 inline-block text-lg break-all ${contactLinkClass}`}
@@ -204,7 +202,7 @@ export function ContactPageMain() {
         </h2>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
-            href={WHATSAPP_SHORTCUT_URL}
+            href={CONTACT_WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className={socialBtnClass}

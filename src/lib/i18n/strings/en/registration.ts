@@ -37,7 +37,7 @@ export const regEn = {
   sectionBasic: "Basic information",
   sectionUserType: "User category & registration profile",
   regProfileHint:
-    "This records your background and eligibility. Booking limits use one quota tier per account; dual eligibility does not double your quota. Individual / teacher-referred: up to 5 sessions per day and 7 in any rolling 3 calendar days. Teaching-only or dual practice+teaching (teaching tier): up to 8 per day and 16 in any rolling 3 days.",
+    "This records your background and eligibility. Booking limits (30 minutes = 0.5 hour per session) use one quota tier per account; dual eligibility does not double your quota. Individual / teacher-referred: up to 5 sessions per day (2.5 hours) and 7 in any rolling 3 calendar days (3.5 hours). Teaching-only or dual practice+teaching (teaching tier): up to 8 per day (4 hours) and 16 in any rolling 3 days (8 hours).",
   regProfilePersonal: "Individual user",
   regProfileTeaching: "Teaching / with students",
   regProfileTeacherReferred: "Student referred by a teacher",

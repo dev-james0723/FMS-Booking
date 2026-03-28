@@ -11,7 +11,7 @@ export const bookingZhHK = {
   portal: {
     title: "預約系統",
     intro:
-      "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限按帳戶配額級別統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。所有預約仍需主辦方審核，並非自動確認。",
+      "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按帳戶配額級別統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。所有預約仍需主辦方審核，並非自動確認。",
     linkCalendar: "月曆總覽（時間軸）",
     linkHistory: "預約紀錄",
     linkAccount: "我的帳戶",
@@ -75,7 +75,7 @@ export const bookingZhHK = {
   request: {
     loadSlotsError: "無法載入時段",
     dailyCapHint:
-      "此日（{dayKey}）已達您身分類別之每日上限：最多 {dailyMax} 格（每格 30 分鐘），無法再多選一格。",
+      "此日（{dayKey}）已達您身分類別之每日上限：最多 {dailyMax} 格{dailyMaxH}（每格 30 分鐘），無法再多選一格。",
     submitError: "提交失敗",
     notOpenBanner:
       "預約尚未正式開放。請先於月曆點選活動期內日子，預覽 30 分鐘一格的時段版面；時段在開放前會鎖定，無法選取或提交。",
@@ -106,10 +106,10 @@ export const bookingZhHK = {
     ruleCardSlotSummary: "每格預約為 30 分鐘（半小時）。",
     ruleCardIndividualTitle: "個人配額級別",
     ruleCardIndividualSummary:
-      "個人練習／一般個人使用者，或老師推薦之學生 — 每日最多 5 節；任何連續 3 個曆日內最多 7 節。",
+      "個人練習／一般個人使用者，或老師推薦之學生 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
     ruleCardTeachingTitle: "教學配額級別",
     ruleCardTeachingSummary:
-      "教學、帶學生，或同時有教學與練習需求（帳戶屬此級別）— 每日最多 8 節；任何連續 3 個曆日內最多 16 節。",
+      "教學、帶學生，或同時有教學與練習需求（帳戶屬此級別）— 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。",
     ruleCardCooldownTitle: "提交冷卻",
     ruleCardCooldownSummary: "每次成功提交預約後，須等待 3 小時方可再提交新的預約。",
     ruleCardIdentityTitle: "雙重身份",
@@ -120,11 +120,11 @@ export const bookingZhHK = {
       "即使具雙重身份資格，所有節數仍按同一配額級別統一計算，不會分開或加倍。",
     ruleSlotLen: "每節時段為 30 分鐘。",
     ruleQuotaIndividual:
-      "個人使用者／老師推薦之學生（個人配額級別）：每日最多 5 節（2.5 小時）；任何連續 3 個曆日內合共最多 7 節。",
+      "個人使用者／老師推薦之學生（個人配額級別）：每日最多 5 節（2.5 小時）；任何連續 3 個曆日內合共最多 7 節（3.5 小時）。",
     ruleQuotaTeaching:
-      "教學／帶學生使用者（教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節。",
+      "教學／帶學生使用者（教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節（8 小時）。",
     ruleQuotaDual:
-      "同時有教學及練習需求之使用者（帳戶為教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節。",
+      "同時有教學及練習需求之使用者（帳戶為教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節（8 小時）。",
     ruleCooldown: "每次成功提交預約後，須等待 3 小時方可再提交新的預約。",
     ruleDualPick:
       "如同時具備個人與教學資格，每次預約須選擇今次使用之身份類別（供主辦方及統計之用）。",
@@ -134,9 +134,9 @@ export const bookingZhHK = {
     submitted: "預約已提交（參考編號：{id}）。主辦方審核後將以電郵通知。",
     viewHistory: "查看紀錄",
     linkCalendarOverview: "月曆總覽（時間軸）",
-    limitsTitle: "節數追蹤（香港日期）",
+    limitsTitle: "節數追蹤（香港日期；每節 30 分鐘＝0.5 小時）",
     limitsToday:
-      "今日（{todayKey}）已用 {committed} 節，尚可 {remaining} 節（每日上限 {dailyMax}）。配額級別：{tier}。",
+      "今日（{todayKey}）已用 {committed} 節{committedH}，尚可 {remaining} 節{remainingH}（每日上限 {dailyMax} 節{dailyMaxH}）。配額級別：{tier}。",
     limitsCardToday: "今日",
     limitsCardRolling: "連續 3 個曆日",
     limitsUsedLabel: "已用",
@@ -149,28 +149,28 @@ export const bookingZhHK = {
     limitsEligibilityIndividual: "個人",
     limitsEligibilityTeaching: "教學",
     limitsMeterAriaToday:
-      "香港日期 {date}：已用 {used} 節，每日上限 {max} 節，尚可 {remaining} 節。",
+      "香港日期 {date}：已用 {used} 節{usedH}，每日上限 {max} 節{maxH}，尚可 {remaining} 節{remainingH}。",
     limitsMeterAriaRolling:
-      "連續三個曆日內已計 {used} 節，上限 {max} 節，尚可 {remaining} 節。",
+      "連續三個曆日內已計 {used} 節{usedH}，上限 {max} 節{maxH}，尚可 {remaining} 節{remainingH}。",
     tierTeachingQuota: "教學配額級別",
     tierIndividualQuota: "個人配額級別",
-    limitsRollingCommitted: "連續 3 個曆日內已計 {sum} 節（上限 {max} 節）。",
+    limitsRollingCommitted: "連續 3 個曆日內已計 {sum} 節{sumH}（上限 {max} 節{maxH2}）。",
     limitsRollingWindow: "目前滾動可選範圍（香港日期）：{start} 至 {end}。",
     limitsEligibility: "帳戶資格：個人 {ind} · 教學 {tea}",
     yes: "有",
     no: "無",
     cooldownLine: "你正處於預約冷卻時間，約於 {until}（香港時間）後可再提交新的預約。",
     limitsPickHint:
-      "每格 30 分鐘。同一日選滿 {dailyMax} 格後再選會顯示紅色提示並無法加入。",
+      "每格 30 分鐘。同一日選滿 {dailyMax} 格{dailyMaxH}後再選會顯示紅色提示並無法加入。",
     wouldExceedTitle: "目前所選時段會超出上限：",
-    exceedDaily: "同一日超過 {dailyMax} 節{datePart}。",
+    exceedDaily: "同一日超過 {dailyMax} 節{dailyMaxH}{datePart}。",
     exceedDailyDate: "（{date}）",
     exceedRolling:
-      "連續 3 個曆日內合計 {rollingSum} 節，超過上限 {rollingMax} 節。",
+      "連續 3 個曆日內合計 {rollingSum} 節{rollingSumH}，超過上限 {rollingMax} 節{rollingMaxH}。",
     monthTitle: "{year} 年 {month} 月（香港）",
     prevMonth: "上一個月",
     nextMonth: "下一個月",
-    dotTitle: "尚有 {n} 格可預約",
+    dotTitle: "尚有 {n} 格{nH}可預約",
     fullLabel: "滿",
     hintPickDayLive:
       "請先選擇一日；綠點代表該日仍有可預約時段。可預約範圍：由今日起計未來 {windowDays} 個曆日內（含今日），且不晚於 {lastDay}。",
@@ -185,11 +185,11 @@ export const bookingZhHK = {
       "選擇活動日後，將列出該日實際可預約的 30 分鐘時段預覽（4 月 3 日 11:00–20:00；其餘活動日 06:00–20:00），僅供體驗操作。",
     noSlotsDay: "此日暫無可預約時段（或已全部滿額）。",
     previewSlotSuffix: "預覽（未開放）",
-    remainingSlots: "剩 {n}",
+    remainingSlots: "剩 {n}{nH}",
     notOpenYet: "而家尚未開始預約，請留意正式開放時間{suffix}。",
     notOpenFallback: "（請以主辦公布為準）",
     submitting: "提交中…",
-    submitWithCount: "提交預約（已選 {n} 節）",
+    submitWithCount: "提交預約（已選 {n} 節{nH}）",
     linkHistory: "預約紀錄",
     footnote:
       "配額以圖示區塊為準；實際批核仍視乎供應及主辦安排。",

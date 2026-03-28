@@ -7,6 +7,7 @@ import {
   type UserCalendarMergedBlock,
 } from "@/lib/booking/user-calendar-blocks";
 import { prisma } from "@/lib/prisma";
+import { sessionCountWithHoursPack, sessionHoursParenZh } from "@/lib/i18n/session-hours";
 import { HK_TZ } from "@/lib/time";
 import { buildBookingCalendarDescription, getVenueCalendarEnv } from "@/lib/venue-calendar";
 
@@ -83,7 +84,7 @@ function statusLabelZh(status: string): string {
 
 function buildEventBody(block: UserCalendarMergedBlock) {
   const prefix = bookingCalendarTitlePrefix(block.requestStatus, block.venueKind);
-  const summary = `${prefix}｜${block.sessionCount} 節（30 分鐘）`;
+  const summary = `${prefix}｜${sessionCountWithHoursPack("zh-HK", block.sessionCount)}（每節 30 分鐘）`;
   const startStr = formatInTimeZone(block.mergedStart, HK_TZ, "yyyy-MM-dd'T'HH:mm:ss");
   const endStr = formatInTimeZone(block.mergedEnd, HK_TZ, "yyyy-MM-dd'T'HH:mm:ss");
   const venueBlock = buildBookingCalendarDescription();
@@ -93,7 +94,7 @@ function buildEventBody(block: UserCalendarMergedBlock) {
     `狀態：${statusLabelZh(block.requestStatus)}`,
     block.venueLabel ? `場地：${block.venueLabel}` : "",
     `時段（香港時間）：${slotLine}`,
-    `節數：${block.sessionCount}`,
+    `節數：${block.sessionCount}${sessionHoursParenZh(block.sessionCount)}`,
   ]
     .filter(Boolean)
     .join("\n");
