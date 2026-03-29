@@ -29,8 +29,8 @@ export function HomePartnerLogos() {
           <Image
             src={withBasePath("/branding/d-festival-young-pianist.png")}
             alt={t("partner.dfestivalAlt")}
-            width={1600}
-            height={539}
+            width={10221}
+            height={383}
             className="h-auto max-h-[6rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7rem]"
             priority
           />
