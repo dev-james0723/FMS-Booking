@@ -44,10 +44,10 @@ export function HomePartnerLogos() {
 
         <div className="partner-float-right flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
           <Image
-            src={withBasePath("/branding/fantasia-music-space.webp")}
+            src={withBasePath("/branding/fantasia-music-space.png")}
             alt={t("partner.fmsAlt")}
-            width={1024}
-            height={1024}
+            width={2481}
+            height={2481}
             className="h-auto max-h-[6.5rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7.5rem]"
             priority
           />

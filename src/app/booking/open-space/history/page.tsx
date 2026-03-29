@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { BookingHistoryPageMain } from "@/components/booking-history-page-main";
 import { getSessionFromCookies } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { isGoogleCalendarUserOAuthConfigured } from "@/lib/calendar/google-user-calendar";
 import { userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
+import { prisma } from "@/lib/prisma";
 
 export default async function OpenSpaceBookingHistoryPage() {
   const session = await getSessionFromCookies();
@@ -20,6 +21,11 @@ export default async function OpenSpaceBookingHistoryPage() {
   }
 
   return (
-    <BookingHistoryPageMain venueKind="open_space" bookingPathPrefix="/booking/open-space" />
+    <BookingHistoryPageMain
+      venueKind="open_space"
+      bookingPathPrefix="/booking/open-space"
+      googleCalendarOAuthReady={isGoogleCalendarUserOAuthConfigured()}
+      googleCalendarLinked={Boolean(user?.googleCalendarRefreshToken?.trim())}
+    />
   );
 }

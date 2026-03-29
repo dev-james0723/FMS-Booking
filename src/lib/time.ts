@@ -58,3 +58,34 @@ export function formatInstantForBookingOpensZhHk(d: Date): string {
 export function formatInstantForBookingOpensEn(d: Date): string {
   return formatInTimeZone(d, HK_TZ, "d MMM yyyy 'at' h:mm a");
 }
+
+/**
+ * Account / history lines: booking request timestamp in Hong Kong.
+ * Uses date-fns-tz only so server (Node) and client match; `toLocaleString` can differ (e.g. U+202F).
+ */
+export function formatRequestedAtForAccountUi(d: Date, locale: "en" | "zh-HK"): string {
+  if (locale === "en") {
+    return formatInTimeZone(d, HK_TZ, "d/M/yyyy, h:mm:ss a");
+  }
+  const datePart = formatInTimeZone(d, HK_TZ, "d/M/yyyy");
+  const hour24 = Number(formatInTimeZone(d, HK_TZ, "H"));
+  const minute = Number(formatInTimeZone(d, HK_TZ, "m"));
+  const second = Number(formatInTimeZone(d, HK_TZ, "s"));
+  let period: string;
+  let h12: number;
+  if (hour24 === 0) {
+    period = "上午";
+    h12 = 12;
+  } else if (hour24 < 12) {
+    period = "上午";
+    h12 = hour24;
+  } else if (hour24 === 12) {
+    period = "下午";
+    h12 = 12;
+  } else {
+    period = "下午";
+    h12 = hour24 - 12;
+  }
+  const timePart = `${period}${h12}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
+  return `${datePart} ${timePart}`;
+}

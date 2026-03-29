@@ -15,6 +15,7 @@ import {
   gmailComposeUrl,
 } from "@/lib/contact-public";
 import { escapeHtml } from "@/lib/email/escape-html";
+import { formatBookingSlotsSummaryForMail } from "@/lib/email/booking-slots-summary";
 import { getSocialFollowUrl } from "@/lib/social-follow";
 
 function absAppUrl(path: string): string {
@@ -36,12 +37,15 @@ function driveFolderUrl(): string | null {
 
 const btnStyle =
   "display:inline-block;margin:6px 0;padding:10px 18px;background:#1c1917;color:#fff;text-decoration:none;border-radius:9999px;font-size:14px;font-weight:500;";
-const btnGhostStyle =
-  "display:inline-block;margin:6px 8px 6px 0;padding:8px 14px;background:#f5f5f4;color:#1c1917;text-decoration:none;border-radius:9999px;font-size:13px;border:1px solid #e7e5e4;";
 
-function linkButton(href: string, label: string, ghost = false): string {
-  const st = ghost ? btnGhostStyle : btnStyle;
-  return `<a href="${escapeHtml(href)}" style="${st}">${escapeHtml(label)}</a>`;
+function linkButton(href: string, label: string): string {
+  return `<a href="${escapeHtml(href)}" style="${btnStyle}">${escapeHtml(label)}</a>`;
+}
+
+function compactNavLinks(items: [string, string][]): string {
+  return `<ul style="margin:12px 0 0;padding-left:18px;font-size:14px;line-height:1.65;color:#44403c;">
+${items.map(([u, l]) => `  <li style="margin:0 0 3px;"><a href="${escapeHtml(u)}" style="color:#b45309;">${escapeHtml(l)}</a></li>`).join("\n")}
+</ul>`;
 }
 
 function cameraBlocksForBookingMail(
@@ -133,12 +137,14 @@ export function buildBookingSubmittedMail(
     greetingName: string;
     requestId: string;
     slotCount: number;
+    slots: { startsAt: Date; endsAt: Date }[];
     cameraRentalOptIn: boolean;
     cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
   },
 ): { subject: string; text: string; html: string } {
   const safeName = escapeHtml(params.greetingName);
   const sessions = sessionCountWithHoursPack(locale, params.slotCount);
+  const timeSummary = formatBookingSlotsSummaryForMail(locale, params.slots);
   const driveUrl = driveFolderUrl();
   const igUrl = getSocialFollowUrl("fantasia_space_ig");
   const fbUrl = getSocialFollowUrl("fantasia_space_fb");
@@ -158,7 +164,7 @@ export function buildBookingSubmittedMail(
   };
 
   const logoDf = absAppUrl("/branding/d-festival-young-pianist.png");
-  const logoFms = absAppUrl("/branding/fantasia-music-space.webp");
+  const logoFms = absAppUrl("/branding/fantasia-music-space.png");
 
   const cameraMail = cameraBlocksForBookingMail(
     locale,
@@ -167,7 +173,7 @@ export function buildBookingSubmittedMail(
   );
 
   if (locale === "en") {
-    const subject = "Booking received | D Festival × Fantasia Music Space";
+    const subject = "Booking confirmed | D Festival × Fantasia Music Space";
     const rulesBlock = [
       "Important rules (please read)",
       "",
@@ -183,7 +189,7 @@ export function buildBookingSubmittedMail(
     const driveBlock = driveUrl
       ? [
           "",
-          "Venue & facility reference (Google Drive folder):",
+          "Building access (door / Wi‑Fi), venue and facility reference (Google Drive folder):",
           driveUrl,
         ].join("\n")
       : [
@@ -194,13 +200,13 @@ export function buildBookingSubmittedMail(
     const text = [
       `Hello ${params.greetingName},`,
       "",
-      `We have received your booking request (reference: ${params.requestId}), totalling ${sessions}.`,
-      "All requests are reviewed by the organiser; nothing is automatically confirmed.",
-      `You can sign in and check status here: ${urls.history}`,
+      "Your booking status: CONFIRMED.",
       "",
-      rulesBlock,
-      driveBlock,
-      cameraMail.text,
+      `You have booked ${sessions}. Scheduled times (Hong Kong Time):`,
+      ...timeSummary.textLines.map((line) => `  • ${line}`),
+      "",
+      `Reference: ${params.requestId}`,
+      `View your bookings: ${urls.history}`,
       "",
       "Quick links:",
       `• View my booking history: ${urls.history}`,
@@ -211,6 +217,10 @@ export function buildBookingSubmittedMail(
       `• Privacy policy: ${urls.privacy}`,
       `• Terms & conditions: ${urls.terms}`,
       `• Contact: ${urls.contact}`,
+      "",
+      rulesBlock,
+      driveBlock,
+      cameraMail.text,
       "",
       "Contact us",
       `Phone / WhatsApp: ${CONTACT_PHONE_DISPLAY}`,
@@ -234,7 +244,7 @@ export function buildBookingSubmittedMail(
 </div>`;
 
     const driveHtml = driveUrl
-      ? `<p style="margin:16px 0 8px;font-size:14px;">Venue, facilities and reference files are in this Google Drive folder:</p>
+      ? `<p style="margin:16px 0 8px;font-size:14px;">Building access (door / Wi‑Fi), venue and facility reference materials are in this Google Drive folder:</p>
   <p style="margin:0 0 16px;">${linkButton(driveUrl, "Open Google Drive folder")}</p>`
       : `<p style="margin:16px 0;font-size:13px;color:#78716c;">More venue details are on the site under Open Space booking info and related pages.</p>`;
 
@@ -257,23 +267,27 @@ export function buildBookingSubmittedMail(
     <tr><td style="padding:20px 24px;border-radius:12px;background:#fff;border:1px solid #e7e5e4;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
         <tr>
-          <td style="vertical-align:middle;text-align:center;padding:8px 6px;">
-            <img src="${escapeHtml(logoDf)}" alt="D Festival Young Pianist Program" width="200" style="max-width:100%;height:auto;display:inline-block;" />
+          <td width="50%" style="vertical-align:middle;text-align:center;padding:10px 8px;">
+            <img src="${escapeHtml(logoDf)}" alt="D Festival Young Pianist Program" style="max-width:100%;max-height:96px;width:auto;height:auto;display:inline-block;object-fit:contain;" />
           </td>
-          <td style="vertical-align:middle;text-align:center;padding:8px 6px;">
-            <img src="${escapeHtml(logoFms)}" alt="Fantasia Music Space" width="120" style="max-width:100%;height:auto;display:inline-block;" />
+          <td width="50%" style="vertical-align:middle;text-align:center;padding:10px 8px;">
+            <img src="${escapeHtml(logoFms)}" alt="Fantasia Music Space" style="max-width:100%;max-height:96px;width:auto;height:auto;display:inline-block;object-fit:contain;" />
           </td>
         </tr>
       </table>
       <p style="margin:0 0 12px;">Hello ${safeName},</p>
-      <p style="margin:0 0 12px;">We have received your booking request (reference: <strong>${escapeHtml(params.requestId)}</strong>), totalling <strong>${escapeHtml(sessions)}</strong>.</p>
-      <p style="margin:0 0 12px;">All requests are reviewed by the organiser; <strong>nothing is automatically confirmed</strong>.</p>
-      <p style="margin:0 0 20px;">${linkButton(urls.history, "View my booking history")}</p>
+      <div style="margin:0 0 14px;padding:10px 14px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;font-size:14px;line-height:1.55;color:#065f46;">
+        <p style="margin:0;font-weight:700;">Status: Confirmed</p>
+      </div>
+      <p style="margin:0 0 8px;">You have booked <strong>${escapeHtml(sessions)}</strong>. Your scheduled times:</p>
+      ${timeSummary.htmlBlock}
+      <p style="margin:14px 0 16px;font-size:14px;">Reference: <strong>${escapeHtml(params.requestId)}</strong></p>
+      <p style="margin:0 0 12px;">${linkButton(urls.history, "View my booking history")}</p>
+      <p style="margin:0 0 4px;font-weight:600;font-size:14px;color:#44403c;">Quick links</p>
+      ${compactNavLinks(navLabels)}
       ${rulesHtml}
       ${driveHtml}
       ${cameraMail.html}
-      <p style="margin:24px 0 8px;font-weight:600;font-size:14px;color:#44403c;">Site links</p>
-      <div style="margin:0 0 20px;">${navLabels.map(([u, l]) => linkButton(u, l, true)).join("")}</div>
       <p style="margin:20px 0 8px;font-weight:600;font-size:14px;color:#44403c;">Contact us</p>
       <p style="margin:0;font-size:14px;line-height:1.7;">
         Phone / WhatsApp: <a href="${escapeHtml(urls.tel)}" style="color:#b45309;">+852 9163 6378</a><br />
@@ -291,7 +305,7 @@ export function buildBookingSubmittedMail(
     return { subject, text, html };
   }
 
-  const subject = "已收到您的預約｜D Festival × 幻樂空間";
+  const subject = "預約已確認｜D Festival × 幻樂空間";
   const rulesBlock = [
     "重要規則（請務必閱讀）",
     "",
@@ -305,9 +319,11 @@ export function buildBookingSubmittedMail(
   ].join("\n");
 
   const driveBlock = driveUrl
-    ? ["", "場地、設施及相關參考資料（Google Drive 資料夾）：", driveUrl].join(
-        "\n",
-      )
+    ? [
+        "",
+        "大門/Wi-Fi密碼、活動場地和設施之參考資料（Google Drive 資料夾）：",
+        driveUrl,
+      ].join("\n")
     : ["", "場地說明亦可於本網站「開放空間預約說明」及相關頁面查閱。"].join(
         "\n",
       );
@@ -315,13 +331,13 @@ export function buildBookingSubmittedMail(
   const text = [
     `${params.greetingName} 您好，`,
     "",
-    `我們已收到您的預約申請（參考編號：${params.requestId}），共 ${sessions}。`,
-    "所有預約均需由主辦方審核，並非自動確認。",
-    `您可登入帳戶於此查看狀態：${urls.history}`,
+    "預約狀態：已確認",
     "",
-    rulesBlock,
-    driveBlock,
-    cameraMail.text,
+    `您本次共預約 ${sessions}，時段如下（香港時間）：`,
+    ...timeSummary.textLines.map((line) => `  • ${line}`),
+    "",
+    `參考編號：${params.requestId}`,
+    `查看預約紀錄：${urls.history}`,
     "",
     "本網站連結：",
     `• 查看我的預約紀錄：${urls.history}`,
@@ -332,6 +348,10 @@ export function buildBookingSubmittedMail(
     `• 私隱條例：${urls.privacy}`,
     `• 條款與細則：${urls.terms}`,
     `• 聯絡資訊：${urls.contact}`,
+    "",
+    rulesBlock,
+    driveBlock,
+    cameraMail.text,
     "",
     "聯絡我們",
     `電話／WhatsApp：${CONTACT_PHONE_DISPLAY}`,
@@ -355,7 +375,7 @@ export function buildBookingSubmittedMail(
 </div>`;
 
   const driveHtml = driveUrl
-    ? `<p style="margin:16px 0 8px;font-size:14px;">有關活動場地、設施及參考資料已整理於以下 Google Drive 資料夾：</p>
+    ? `<p style="margin:16px 0 8px;font-size:14px;">有關大門/Wi-Fi密碼、活動場地和設施之參考資料已整理於以下 Google Drive 資料夾：</p>
   <p style="margin:0 0 16px;">${linkButton(driveUrl, "開啟 Google Drive 資料夾")}</p>`
     : `<p style="margin:16px 0;font-size:13px;color:#78716c;">場地說明亦可於本網站「開放空間預約說明」及相關頁面查閱。</p>`;
 
@@ -378,23 +398,27 @@ export function buildBookingSubmittedMail(
     <tr><td style="padding:20px 24px;border-radius:12px;background:#fff;border:1px solid #e7e5e4;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
         <tr>
-          <td style="vertical-align:middle;text-align:center;padding:8px 6px;">
-            <img src="${escapeHtml(logoDf)}" alt="D Festival 青年鋼琴家藝術節" width="200" style="max-width:100%;height:auto;display:inline-block;" />
+          <td width="50%" style="vertical-align:middle;text-align:center;padding:10px 8px;">
+            <img src="${escapeHtml(logoDf)}" alt="D Festival 青年鋼琴家藝術節" style="max-width:100%;max-height:96px;width:auto;height:auto;display:inline-block;object-fit:contain;" />
           </td>
-          <td style="vertical-align:middle;text-align:center;padding:8px 6px;">
-            <img src="${escapeHtml(logoFms)}" alt="幻樂空間 Fantasia Music Space" width="120" style="max-width:100%;height:auto;display:inline-block;" />
+          <td width="50%" style="vertical-align:middle;text-align:center;padding:10px 8px;">
+            <img src="${escapeHtml(logoFms)}" alt="幻樂空間 Fantasia Music Space" style="max-width:100%;max-height:96px;width:auto;height:auto;display:inline-block;object-fit:contain;" />
           </td>
         </tr>
       </table>
       <p style="margin:0 0 12px;">${safeName} 您好，</p>
-      <p style="margin:0 0 12px;">我們已收到您的預約申請（參考編號：<strong>${escapeHtml(params.requestId)}</strong>），共 <strong>${escapeHtml(sessions)}</strong>。</p>
-      <p style="margin:0 0 12px;">所有預約均需由主辦方審核，<strong>並非自動確認</strong>。</p>
-      <p style="margin:0 0 20px;">${linkButton(urls.history, "查看我的預約紀錄")}</p>
+      <div style="margin:0 0 14px;padding:10px 14px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;font-size:14px;line-height:1.55;color:#065f46;">
+        <p style="margin:0;font-weight:700;">預約狀態：已確認</p>
+      </div>
+      <p style="margin:0 0 8px;">您本次共預約 <strong>${escapeHtml(sessions)}</strong>，時段如下：</p>
+      ${timeSummary.htmlBlock}
+      <p style="margin:14px 0 16px;font-size:14px;">參考編號：<strong>${escapeHtml(params.requestId)}</strong></p>
+      <p style="margin:0 0 12px;">${linkButton(urls.history, "查看我的預約紀錄")}</p>
+      <p style="margin:0 0 4px;font-weight:600;font-size:14px;color:#44403c;">本網站連結</p>
+      ${compactNavLinks(navLabels)}
       ${rulesHtml}
       ${driveHtml}
       ${cameraMail.html}
-      <p style="margin:24px 0 8px;font-weight:600;font-size:14px;color:#44403c;">本網站連結</p>
-      <div style="margin:0 0 20px;">${navLabels.map(([u, l]) => linkButton(u, l, true)).join("")}</div>
       <p style="margin:20px 0 8px;font-weight:600;font-size:14px;color:#44403c;">聯絡我們</p>
       <p style="margin:0;font-size:14px;line-height:1.7;">
         電話／WhatsApp：<a href="${escapeHtml(urls.tel)}" style="color:#b45309;">+852 9163 6378</a><br />

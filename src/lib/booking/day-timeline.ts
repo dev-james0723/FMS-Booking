@@ -1,19 +1,31 @@
 import { fromZonedTime } from "date-fns-tz";
-import { CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY } from "@/lib/booking/campaign-constants";
 import { HK_TZ } from "@/lib/time";
 
-/** Timeline axis (display): 06:00–20:00 Hong Kong for all days. */
+/** Timeline axis (display): 06:00–20:00 Hong Kong for all campaign days. */
 export const TIMELINE_START_HOUR = 6;
 export const TIMELINE_END_HOUR = 20;
 
-/** First campaign day only: bookable slots from 11:00. */
-export const TIMELINE_FIRST_DAY_START_HOUR = 11;
+/** Half-hour steps from start (06:00) to end (20:00), i.e. 28 segments, 29 tick marks. */
+export const TIMELINE_HALF_HOUR_SEGMENT_COUNT =
+  (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 2;
 
-/** First hour (HKT) for which bookable slots are generated for this calendar date. */
-export function bookableStartHourForCampaignDateKey(dateKey: string): number {
-  if (dateKey === CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY) {
-    return TIMELINE_FIRST_DAY_START_HOUR;
+/** Labels for each half-hour tick on the axis (06:00 … 20:00). */
+export function listHalfHourTimelineTickLabels(): string[] {
+  const labels: string[] = [];
+  const startMin = TIMELINE_START_HOUR * 60;
+  const endMin = TIMELINE_END_HOUR * 60;
+  for (let m = startMin; m <= endMin; m += 30) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    labels.push(
+      `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`
+    );
   }
+  return labels;
+}
+
+/** First hour (HKT) for bookable 30-minute slots on each campaign day (06:00–20:00). */
+export function bookableStartHourForCampaignDateKey(_dateKey: string): number {
   return TIMELINE_START_HOUR;
 }
 

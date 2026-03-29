@@ -1,4 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
+import { CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY } from "@/lib/booking/campaign-constants";
 import { prisma } from "@/lib/prisma";
 import {
   FALLBACK_SYSTEM_SETTINGS,
@@ -11,6 +12,8 @@ import { HK_TZ } from "@/lib/time";
 export const PUBLIC_SETTING_KEYS = [
   "site_registration_opens_at",
   "booking_opens_at",
+  /** Shown on the booking UI so logged-in clients match server test-mode bypass (not a secret). */
+  "booking_test_mode",
   "booking_reminder_scheduled_at",
   "campaign_starts_at",
   "campaign_ends_at",
@@ -112,12 +115,52 @@ export function instantSettingToUtcIso(value: unknown): string | null {
   return d ? d.toISOString() : null;
 }
 
+/** Same truth as admin `booking_test_mode`; kept here to avoid circular imports. */
+export function parseBookingTestModeSetting(raw: unknown): boolean {
+  return raw === true || raw === "true" || raw === 1;
+}
+
+/**
+ * Align with `parseBookingOpensAt` (lib/booking/booking-opens-at) without importing it
+ * (would create settings ↔ booking-opens-at cycle).
+ */
+function bookingOpensInstantForEffectiveNow(raw: unknown): Date | null {
+  const d = parseInstantSetting(raw);
+  if (!d) return null;
+  const key = d.toLocaleDateString("en-CA", { timeZone: HK_TZ });
+  if (key === "2026-03-31") {
+    return fromZonedTime(`${CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY}T11:00:00`, HK_TZ);
+  }
+  return d;
+}
+
+function defaultTestModeEffectiveNow(all: Record<string, unknown>): Date {
+  const opens = bookingOpensInstantForEffectiveNow(all["booking_opens_at"]);
+  if (opens) return opens;
+  const camp = parseInstantSetting(all["campaign_starts_at"]);
+  if (camp) {
+    const key = camp.toLocaleDateString("en-CA", { timeZone: HK_TZ });
+    return fromZonedTime(`${key}T11:00:00`, HK_TZ);
+  }
+  return fromZonedTime(`${CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY}T11:00:00`, HK_TZ);
+}
+
+/** When true, public settings may include `booking_effective_now_iso` so the booking UI matches server rules. */
+export function shouldExposeBookingEffectiveNowIso(all: Record<string, unknown>): boolean {
+  const staged = all["staging_simulated_now"];
+  if (typeof staged === "string" && staged.trim().length > 0) return true;
+  return parseBookingTestModeSetting(all["booking_test_mode"]);
+}
+
 /** Use when you already loaded settings (avoids a second DB round-trip). */
 export function getEffectiveNowFromSettings(all: Record<string, unknown>): Date {
   const raw = all["staging_simulated_now"];
-  if (typeof raw === "string" && raw.length > 0) {
-    const d = new Date(raw);
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    const d = new Date(raw.trim());
     if (!Number.isNaN(d.getTime())) return d;
+  }
+  if (parseBookingTestModeSetting(all["booking_test_mode"])) {
+    return defaultTestModeEffectiveNow(all);
   }
   return new Date();
 }

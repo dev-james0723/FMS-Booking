@@ -80,7 +80,6 @@ export async function syncBookingRequestToGoogleCalendar(
 
   const description = [
     `預約編號：${booking.id}`,
-    `狀態：${booking.status}`,
     cameraLine,
     `姓名：${p?.nameZh ?? "—"}`,
     `Email：${booking.user.email}`,

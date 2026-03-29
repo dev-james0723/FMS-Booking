@@ -47,7 +47,7 @@ export function FaqEnContent() {
                 variant: "violet",
                 icon: "calendar",
                 title: "Campaign window (example)",
-                tags: ["3 Apr–3 May 2026", "3 Apr: 11:00–20:00", "Other days: 06:00–20:00", "Hong Kong time"],
+                tags: ["3 Apr–3 May 2026", "Daily: 06:00–20:00", "Hong Kong time"],
               },
               {
                 variant: "sky",

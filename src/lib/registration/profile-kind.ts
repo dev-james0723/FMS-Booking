@@ -36,6 +36,7 @@ export function deriveRegistrationProfile(kind: RegistrationProfileKind): Derive
         teacherRecommended: false,
       };
     case "teacher_referred_student":
+      // Same numeric caps as personal_user (5/day, 7 / rolling 3d); not teaching tier.
       return {
         categoryCode: "personal",
         individualEligible: true,

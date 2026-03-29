@@ -1,10 +1,11 @@
 export const bookingZhHK = {
   status: {
-    pending: "待審核",
-    approved: "已批核",
+    pending: "已確認",
+    approved: "已確認",
     rejected: "未能安排",
     waitlisted: "後補",
     cancelled: "已取消",
+    rescheduled: "已更改",
     no_show: "缺席",
     completed: "已完成",
   },
@@ -14,7 +15,7 @@ export const bookingZhHK = {
       "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按",
     introQuotaLinkLabel: "帳戶配額級別",
     introAfterQuotaLink:
-      "統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。所有預約仍需主辦方審核，並非自動確認。",
+      "統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。成功提交後，所選時段即屬已確認預約。",
     linkCalendar: "月曆總覽（時間軸）",
     linkHistory: "預約紀錄",
     linkAccount: "我的帳戶",
@@ -72,12 +73,13 @@ export const bookingZhHK = {
     ctaBooking: "前往開放空間預約（已登入）",
   },
   historyPage: {
-    title: "預約紀錄",
-    note: "狀態由主辦方更新；如有疑問請聯絡客服。",
+    titleStudioRoom: "琴室預約紀錄",
+    titleOpenSpace: "大型樂器/開放空間預約紀錄",
     back: "返回預約系統",
   },
   calendarPage: {
-    title: "預約月曆總覽",
+    titleStudioRoom: "琴室預約月曆總覽",
+    titleOpenSpace: "大型樂器 / 開放空間預約月曆總覽",
     intro: "",
     backBooking: "返回預約",
     linkHistory: "預約紀錄",
@@ -88,6 +90,12 @@ export const bookingZhHK = {
     empty: "暫未有預約紀錄。",
     submittedAt: "提交時間：",
     bonusSlot: "使用 bonus 時段",
+    syncToGoogleCalendar: "同步到 Google Calendar",
+    filterByDateLabel: "跳到某日預約",
+    filterByDateAll: "全部日期",
+    filterSituationLabel: "預約情況",
+    filterSituationAll: "全部狀態",
+    noRowsForFilters: "沒有符合篩選條件的預約紀錄。",
   },
   request: {
     loadSlotsError: "無法載入時段",
@@ -123,16 +131,16 @@ export const bookingZhHK = {
     ruleCardSlotSummary: "每格預約為 30 分鐘（半小時）。",
     ruleCardIndividualTitle: "個人配額級別",
     ruleCardIndividualSummary:
-      "個人練習／一般個人使用者 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
+      "個人練習／一般個人使用者 — 每日最多 5 個 30 分鐘的時段（2 小時 30 分鐘）；任何連續 3 個曆日內最多 7 個 30 分鐘的時段（3 小時 30 分鐘）。",
     ruleCardTeacherReferredTitle: "老師推薦之學生配額級別",
     ruleCardTeacherReferredSummary:
-      "經老師推薦參與、登記時填寫老師資料之帳戶；節數上限與「個人配額級別」相同 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
+      "經老師推薦參與、登記時填寫老師資料之帳戶；節數上限與「個人配額級別」相同 — 每日最多 5 個 30 分鐘的時段（2 小時 30 分鐘）；任何連續 3 個曆日內最多 7 個 30 分鐘的時段（3 小時 30 分鐘）。",
     ruleCardTeachingTitle: "教學配額級別",
     ruleCardTeachingSummary:
-      "僅具教學或帶學生資格（無個人練習資格）之帳戶 — 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。",
+      "僅具教學或帶學生資格（無個人練習資格）之帳戶 — 每日最多 8 個 30 分鐘的時段（4 小時）；任何連續 3 個曆日內最多 16 個 30 分鐘的時段（8 小時）。",
     ruleCardDualQuotaTitle: "雙重資格配額級別",
     ruleCardDualQuotaSummary:
-      "同時具備個人練習與教學／帶學生資格之帳戶，配額級別為「教學配額級別」— 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。節數不按身份分開兩套計算。",
+      "同時具備個人練習與教學／帶學生資格之帳戶，配額級別為「教學配額級別」— 每日最多 8 個 30 分鐘的時段（4 小時）；任何連續 3 個曆日內最多 16 個 30 分鐘的時段（8 小時）。節數不按身份分開兩套計算。",
     ruleCardCooldownTitle: "提交冷卻",
     ruleCardCooldownSummary: "每次成功提交預約後，須等待 3 小時方可再提交新的預約。",
     ruleCardIdentityTitle: "雙重身份",
@@ -143,18 +151,23 @@ export const bookingZhHK = {
       "即使具雙重身份資格，所有節數仍按同一配額級別統一計算，不會分開或加倍。",
     ruleSlotLen: "每節時段為 30 分鐘。",
     ruleQuotaIndividual:
-      "個人使用者／老師推薦之學生（個人配額級別）：每日最多 5 節（2.5 小時）；任何連續 3 個曆日內合共最多 7 節（3.5 小時）。",
+      "個人使用者／老師推薦之學生（個人配額級別）：每日最多 5 個 30 分鐘的時段（2 小時 30 分鐘）；任何連續 3 個曆日內合共最多 7 個 30 分鐘的時段（3 小時 30 分鐘）。",
     ruleQuotaTeaching:
-      "教學／帶學生使用者（教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節（8 小時）。",
+      "教學／帶學生使用者（教學配額級別）：每日最多 8 個 30 分鐘的時段（4 小時）；任何連續 3 個曆日內合共最多 16 個 30 分鐘的時段（8 小時）。",
     ruleQuotaDual:
-      "同時有教學及練習需求之使用者（帳戶為教學配額級別）：每日最多 8 節（4 小時）；任何連續 3 個曆日內合共最多 16 節（8 小時）。",
+      "同時有教學及練習需求之使用者（帳戶為教學配額級別）：每日最多 8 個 30 分鐘的時段（4 小時）；任何連續 3 個曆日內合共最多 16 個 30 分鐘的時段（8 小時）。",
     ruleCooldown: "每次成功提交預約後，須等待 3 小時方可再提交新的預約。",
     ruleDualPick:
       "如同時具備個人與教學資格，每次預約須選擇今次使用之身份類別（供主辦方及統計之用）。",
     ruleSingleQuota:
       "即使具雙重身份資格，所有節數仍按同一帳戶配額級別統一計算，不會分開累積。",
     refresh: "重新整理",
-    submitted: "預約已提交（參考編號：{id}）。主辦方審核後將以電郵通知。",
+    submitted: "預約已確認（參考編號：{id}）。確認電郵已發送至你的信箱。",
+    confirmModalTitle: "預約已確認",
+    confirmModalRefLabel: "參考編號",
+    confirmModalEmailHint: "確認電郵已發送至你的信箱。",
+    confirmModalRefUnknown: "完整編號可於下方「查看紀錄」中查閱。",
+    confirmModalDismiss: "關閉",
     viewHistory: "查看紀錄",
     linkCalendarOverviewStudioRoom: "現時琴室預約狀況——月曆總覽（時間軸）",
     linkCalendarOverviewOpenSpace: "現時大型樂器 / 開放空間預約情況——月曆總覽（時間軸）",
@@ -196,17 +209,22 @@ export const bookingZhHK = {
     nextMonth: "下一個月",
     dotTitle: "尚有 {n} 格{nH}可預約",
     fullLabel: "滿",
+    noInventoryLabel: "無時段",
+    notYetOpenLabel: "未開放",
     hintPickDayLive:
       "請先選擇一日；綠點代表該日仍有可預約時段。可預約範圍：由今日起計未來 {windowDays} 個曆日內（含今日），且不晚於 {lastDay}。",
+    hintPickDayTestMode:
+      "測試模式：伺服器以正式開放後之規則運作（滾動 {windowDays} 日）。請先選擇一日；綠點代表該日仍有可預約時段；「未開放」表示該日尚未進入可預約範圍。",
     hintPickDayPreview:
       "開放預約前，可點選活動期（{range}）內任何一日預覽時段。正式開放後，只可選未來 {windowDays} 個曆日內（含今日）、且不晚於 {lastDay} 的日子。",
     slotsTitleLive: "{day} 可選時段",
     slotsTitlePreview: "{day} 時段預覽（尚未開放選取）",
     slotsTitleNone: "請在上面的月曆上選擇一日",
     loadingSlots: "載入時段中…",
-    emptyHintLive: "選擇日期後，此處將列出該日所有仍可預約的時段。",
+    emptyHintLive:
+      "選擇日期後，此處將列出該日所有時段；已被預約之時段會以紅框顯示且無法選取。",
     emptyHintPreview:
-      "選擇活動日後，將列出該日實際可預約的 30 分鐘時段預覽（4 月 3 日 11:00–20:00；其餘活動日 06:00–20:00），僅供體驗操作。",
+      "選擇活動日後，將列出該日實際可預約的 30 分鐘時段預覽（每日香港時間 06:00–20:00），僅供體驗操作。",
     noSlotsDay: "此日暫無可預約時段（或已全部滿額）。",
     previewSlotSuffix: "預覽（未開放）",
     remainingSlots: "剩 {n}{nH}",
@@ -214,9 +232,21 @@ export const bookingZhHK = {
     notOpenFallback: "（請以主辦公布為準）",
     submitting: "提交中…",
     submitWithCount: "提交預約（已選 {n} 節{nH}）",
+    submitDisabledCamera: "請先勾選是否需要租用攝錄機，並跟隨畫面上之付款選項完成選擇。",
+    submitDisabledCooldown: "預約冷卻期間內無法提交，請稍後再試。",
+    submitDisabledDaily:
+      "所選時段超出「每日上限」；請減少同一日之節數或調整其他日子。",
+    submitDisabledRolling:
+      "所選時段超出「連續 3 個曆日」合計上限；請減少節數後再提交。",
+    dailyCapModalTitle: "已達每日可選上限",
+    dailyCapModalBodyIndividual:
+      "您目前為個人配額級別（個人使用者或老師推薦之學生）：同一香港曆日最多只可預約 5 個時間段（每段 30 分鐘，即 2 小時 30 分鐘）。再選下一格將超出上限。",
+    dailyCapModalBodyTeaching:
+      "您目前為教學配額級別：同一香港曆日最多只可預約 8 個時間段（每段 30 分鐘，即 4 小時）。再選下一格將超出上限。",
+    dailyCapModalOk: "我知道了",
     linkHistory: "預約紀錄",
     footnote:
-      "配額以圖示區塊為準；實際批核仍視乎供應及主辦安排。",
+      "配額以圖示區塊為準；名額先到先得，以系統成功提交為準。",
     thisBookingIdentityTitle: "今次預約身份類別（必填）",
     identityIndividual: "個人使用者（練習／個人使用）",
     identityTeaching: "教學／帶學生使用者",
@@ -244,7 +274,8 @@ export const bookingZhHK = {
       "您已選擇需要租用攝錄機，請先完成付款確認（已付款、或選擇預約後付款）。",
   },
   cal: {
-    overviewTitle: "{range} · 總覽",
+    overviewTitleStudioRoom: "{range} · 琴室時段總覽",
+    overviewTitleOpenSpace: "{range} · 大型樂器／開放空間時段總覽",
     overviewIntro: "",
     refresh: "重新整理",
     loading: "載入中…",
@@ -253,14 +284,14 @@ export const bookingZhHK = {
     monthMay: "2026 年 5 月（活動尾段）",
     leaveOverview: "離開月曆總覽",
     legend:
-      "綠底：當日仍有可預約時段 · 紅底：當日已無任何可預約時段（已滿或已關閉） · 灰底：未有時段或不在免費體驗期內",
+      "綠底：當日仍有可預約時段 · 紅底：當日已無任何可預約時段（時段已被預約或已關閉） · 灰底：未有時段或不在免費體驗期內",
     legendStudioHold:
       "（僅琴室月曆）時間軸上灰色時段：此時段不適用於預約（不影響開放空間預約）。",
     selectedDate: "已選日期：{date}（香港時間）",
     timelineRange:
       "時間軸範圍：{start}:00 – {end}:00（香港時間）",
     textListTitle: "當日時段",
-    sectionBooked: "已滿／已被預約",
+    sectionBooked: "已預約",
     sectionAvailable: "仍可預約",
     sectionClosed: "已關閉",
     noSlotData: "此日沒有時段資料。",
@@ -268,7 +299,7 @@ export const bookingZhHK = {
   },
   timeline: {
     statusClosed: "已關閉",
-    statusFull: "已滿／已被預約",
+    statusFull: "已預約",
     statusOpen: "尚有名額",
     studioHoldCaption: "此時段不適用於預約",
     bookedThis: "此節已被預約",

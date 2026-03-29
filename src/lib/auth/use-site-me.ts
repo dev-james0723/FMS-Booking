@@ -5,9 +5,11 @@ import {
   createElement,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 
 export type SiteMeUser = {
@@ -47,16 +49,25 @@ export function SiteMeProvider({
 
 /**
  * Current session for public chrome (header, footer, home CTA).
- * Uses the server-verified session snapshot until `/api/v1/me` returns so logged-in users
- * never briefly see the logged-out login buttons after redirect.
+ * Uses the server-verified session snapshot while `/api/v1/me` is (re)loading for the
+ * current route so the first paint matches SSR, then prefers the API result.
+ *
+ * Refetches on every pathname change because client navigations (e.g. login → /booking)
+ * do not remount the provider: a one-time fetch would keep stale `null` after sign-in
+ * until a full page reload.
  */
 export function useSiteMe(): {
   user: SiteMeUser | null;
   bookingHref: string;
 } {
   const serverUser = useContext(SiteMeServerUserContext);
-  const [clientUser, setClientUser] = useState<SiteMeUser | null>(null);
-  const [fetchDone, setFetchDone] = useState(false);
+  const pathname = usePathname();
+  /** `undefined` = not yet resolved for this pathname; fall back to `serverUser`. */
+  const [clientUser, setClientUser] = useState<SiteMeUser | null | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    setClientUser(undefined);
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,20 +88,19 @@ export function useSiteMe(): {
         }
       } catch {
         if (!cancelled) setClientUser(null);
-      } finally {
-        if (!cancelled) setFetchDone(true);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
-  const user = fetchDone
-    ? (clientUser ?? null)
-    : serverUser !== undefined
-      ? serverUser
-      : null;
+  const user =
+    clientUser !== undefined
+      ? clientUser
+      : serverUser !== undefined
+        ? serverUser
+        : null;
   const bookingHref = user ? bookingHrefForUser(user) : "/booking";
 
   return { user, bookingHref };

@@ -1,5 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireAdminSession } from "@/lib/auth/require-admin";
+import { effectiveCapacityTotalForSlot } from "@/lib/booking/booking-rules";
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { identityFlagsToZh, userCategoryLabelZh } from "@/lib/identity-labels";
 import { prisma } from "@/lib/prisma";
@@ -61,12 +62,13 @@ export async function GET(req: Request) {
     date,
     slots: slots.map((s) => {
       const used = s.allocations.length;
-      const remaining = Math.max(0, s.capacityTotal - used);
+      const cap = effectiveCapacityTotalForSlot(s);
+      const remaining = Math.max(0, cap - used);
       return {
         id: s.id,
         startsAt: s.startsAt.toISOString(),
         endsAt: s.endsAt.toISOString(),
-        capacityTotal: s.capacityTotal,
+        capacityTotal: cap,
         isOpen: s.isOpen,
         venueLabel: s.venueLabel,
         used,

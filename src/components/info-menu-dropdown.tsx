@@ -12,7 +12,7 @@ import {
 } from "@/lib/nav-icon-button-classes";
 
 const panelClass =
-  "absolute right-0 z-[100] mt-1 min-w-[min(100vw-2rem,29.5rem)] rounded-xl border border-stone-200 bg-[color:var(--chrome-bg)] py-1 shadow-lg dark:border-stone-700";
+  "absolute right-0 z-[100] mt-1 min-w-[min(100vw-2rem,29.5rem)] rounded-xl border border-stone-200 bg-white/95 py-1 shadow-lg backdrop-blur-xl backdrop-saturate-150 dark:border-stone-700 dark:bg-stone-950/95";
 
 const itemClass =
   "flex w-full items-center gap-2 px-4 sm:px-3.5 py-2.5 text-left text-sm text-stone-800 transition hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800";

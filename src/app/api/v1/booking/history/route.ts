@@ -26,6 +26,16 @@ export async function GET(req: Request) {
         include: { slot: true },
         orderBy: { slot: { startsAt: "asc" } },
       },
+      statusLogs: {
+        where: {
+          meta: {
+            path: ["action"],
+            equals: "admin_reschedule",
+          },
+        },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
 
@@ -34,6 +44,7 @@ export async function GET(req: Request) {
     bookings: rows.map((r) => ({
       id: r.id,
       status: r.status,
+      hasStaffReschedule: r.statusLogs.length > 0,
       requestedAt: r.requestedAt.toISOString(),
       bookingIdentityType: r.bookingIdentityType,
       usesBonusSlot: r.usesBonusSlot,

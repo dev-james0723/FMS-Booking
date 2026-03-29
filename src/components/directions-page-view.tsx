@@ -515,10 +515,10 @@ function RegionRouteFigure({
         <div className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/50 py-1.5 pl-2 pr-1.5 shadow-md backdrop-blur-sm">
           <ArrowTowardFantasiaLogo className="shrink-0 text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.5)]" />
           <Image
-            src={withBasePath("/branding/fantasia-music-space.webp")}
+            src={withBasePath("/branding/fantasia-music-space.png")}
             alt=""
-            width={40}
-            height={40}
+            width={2481}
+            height={2481}
             className="h-10 w-10 object-contain"
           />
         </div>

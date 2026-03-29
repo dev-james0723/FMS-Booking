@@ -1,4 +1,4 @@
-import type { BookingIdentityType, QuotaTier } from "@prisma/client";
+import type { BookingIdentityType, BookingVenueKind, QuotaTier } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { BookingRuleError } from "@/lib/booking/booking-errors";
 import {
@@ -88,6 +88,18 @@ export function cooldownRemainingMs(lastBookingAt: Date | null, now: Date): numb
   return Math.max(0, until - now.getTime());
 }
 
+/**
+ * Piano studio slots are exclusive (one active booking per 30-minute row). Legacy rows may still
+ * have capacity_total > 1 from older scripts — availability and booking checks must not
+ * allow a second booking for the same cell.
+ */
+export function effectiveCapacityTotalForSlot(slot: {
+  capacityTotal: number;
+  venueKind: BookingVenueKind;
+}): number {
+  return slot.venueKind === "studio_room" ? 1 : slot.capacityTotal;
+}
+
 type DbClient = Prisma.TransactionClient | typeof prisma;
 
 export async function loadSlotUsageCountsDb(
@@ -100,6 +112,31 @@ export async function loadSlotUsageCountsDb(
       bookingSlotId: { in: slotIds },
       status: { in: ["pending", "approved"] },
       request: { status: { in: ["pending", "approved", "waitlisted"] } },
+    },
+    select: { bookingSlotId: true },
+  });
+  const map = new Map<string, number>();
+  for (const a of allocs) {
+    map.set(a.bookingSlotId, (map.get(a.bookingSlotId) ?? 0) + 1);
+  }
+  return map;
+}
+
+/** Like `loadSlotUsageCountsDb` but ignores allocations belonging to one booking request (for admin reschedule / availability). */
+export async function loadSlotUsageCountsDbExcludingRequest(
+  db: DbClient,
+  slotIds: string[],
+  excludeBookingRequestId: string | null
+): Promise<Map<string, number>> {
+  if (slotIds.length === 0) return new Map();
+  const allocs = await db.bookingAllocation.findMany({
+    where: {
+      bookingSlotId: { in: slotIds },
+      status: { in: ["pending", "approved"] },
+      request: { status: { in: ["pending", "approved", "waitlisted"] } },
+      ...(excludeBookingRequestId
+        ? { bookingRequestId: { not: excludeBookingRequestId } }
+        : {}),
     },
     select: { bookingSlotId: true },
   });

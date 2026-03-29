@@ -53,7 +53,7 @@ export const accountZhHK = {
   storySlide:
     "當較早的預約日已過或他改到較後的日期，系統改以 4/6–4/8、4/7–4/9 等較新的連續三日重算；因此未必永遠被同一組「4/5–4/7」卡住——只要每一個連續三日窗口的節數加總都不超 {rollingMaxPack} 即可。",
   genericCannot:
-    "當某一組連續三日內，已批核／待審核的節數加總已達 {rollingMaxPack}，再於這三天中的任何一日加選新節，都會令至少一個三日窗口超標，系統即會拒絕。",
+    "當某一組連續三日內，已確認預約的節數加總已達 {rollingMaxPack}，再於這三天中的任何一日加選新節，都會令至少一個三日窗口超標，系統即會拒絕。",
   genericCan:
     "只要每一個連續三日窗口的加總都不超過 {rollingMaxPack}，且每一日亦不多於 {dailyMaxPack}，即可提交。",
   genericSlide:
@@ -105,9 +105,15 @@ export const accountZhHK = {
   },
   emptyBookings: "暫未有預約紀錄。",
   statusLine: "狀態：{status}",
+  bookingRefLine: "參考編號 {id}",
   requestedAtLine: "預約時間：{time}",
   sessionsVenue: "（{sessions} 節{sessionsH} · {venue}）",
   shortcuts: "捷徑",
+  quickNavAria: "常用連結",
+  quickNavStudioHistory: "琴室預約紀錄",
+  quickNavOpenSpaceHistory: "大型樂器／開放空間預約紀錄",
+  quickNavPasskeysDetail: "管理通行密鑰",
+  logout: "登出",
   goBooking: "前往預約時段",
   goBookingStudioRooms: "前往琴室預約",
   goOpenSpaceBooking: "前往開放空間預約",

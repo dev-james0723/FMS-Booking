@@ -29,8 +29,8 @@ function Form() {
       setLoading(false);
       return;
     }
-    router.push(next);
     router.refresh();
+    router.push(next);
     setLoading(false);
   }
 

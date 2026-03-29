@@ -56,8 +56,9 @@ export const coreZhHK = {
     tagline: "D Festival × Fantasia Music Space",
     title: "限時免費琴室體驗預約",
     lead:
-      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際有限公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。可預約時段（香港時間）：4 月 3 日 11:00–20:00；其餘活動日 06:00–20:00。",
+      "由 D Festival 青年鋼琴家藝術節與幻樂空間攜手推出，並由香港幻樂國際有限公司贊助。{campaignRange}期間，限時免費開放予本地音樂工作者預約，用作練習、教學、排練、試奏、錄影或彩排等音樂相關用途。可預約時段（香港時間）：每日 06:00–20:00。",
     registerCta: "登記資料及建立帳戶",
+    bookNowCta: "立即預約時段",
     loginCta: "預約系統登入",
     loginDisabledHint:
       "預約將於開放時間後啟用；您仍可先完成登記及建立帳戶。",

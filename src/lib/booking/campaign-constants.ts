@@ -1,7 +1,6 @@
 /**
  * Free experience window (Hong Kong calendar dates).
- * - First day (`CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY`): bookable 11:00–20:00.
- * - All other days in range: bookable 06:00–20:00.
+ * Bookable 30-minute slots each day: 06:00–20:00 HKT (last interval 19:30–20:00).
  */
 export const CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY = "2026-04-03";
 export const CAMPAIGN_EXPERIENCE_LAST_DAY_KEY = "2026-05-03";

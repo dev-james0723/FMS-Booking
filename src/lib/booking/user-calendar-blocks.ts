@@ -14,9 +14,8 @@ export function bookingCalendarTitlePrefix(
     venueKind === "open_space" ? "幻樂空間 · 開放空間" : "幻樂空間 · 琴室";
   switch (status) {
     case "approved":
-      return place;
     case "pending":
-      return `【待審核】${place}`;
+      return place;
     case "waitlisted":
       return `【後補】${place}`;
     default:

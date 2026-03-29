@@ -10,6 +10,7 @@ export async function sendBookingSubmitted(params: {
   greetingName: string;
   requestId: string;
   slotCount: number;
+  slots: { startsAt: Date; endsAt: Date }[];
   locale: Locale;
   cameraRentalOptIn: boolean;
   cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
@@ -18,6 +19,7 @@ export async function sendBookingSubmitted(params: {
     greetingName: params.greetingName,
     requestId: params.requestId,
     slotCount: params.slotCount,
+    slots: params.slots,
     cameraRentalOptIn: params.cameraRentalOptIn,
     cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
   });

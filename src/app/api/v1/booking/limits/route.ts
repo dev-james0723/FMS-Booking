@@ -10,7 +10,7 @@ import {
   getQuotaNumericLimits,
   rollingWindowEndDateKey,
 } from "@/lib/booking/booking-rules";
-import { maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
+import { hkCalendarDaysBetween, maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
 import {
   parseBookingNumericSettings,
   parseCampaignDateKeys,
@@ -87,7 +87,24 @@ export async function GET(req: Request) {
   const dualEligible =
     profile != null && profile.individualEligible && profile.teachingEligible;
 
-  const rollingEndKey = rollingWindowEndDateKey(todayKey);
+  let rollingEndKey = rollingWindowEndDateKey(todayKey);
+  let rollingStartKey = todayKey;
+  let rollingCalendarDays = ROLLING_WINDOW_CALENDAR_DAYS;
+  if (startKey && endKey) {
+    if (todayKey > endKey) {
+      rollingStartKey = endKey;
+      rollingEndKey = endKey;
+      rollingCalendarDays = 1;
+    } else if (todayKey < startKey) {
+      rollingStartKey = startKey;
+      rollingEndKey = rollingWindowEndDateKey(startKey);
+      if (rollingEndKey > endKey) rollingEndKey = endKey;
+      rollingCalendarDays = hkCalendarDaysBetween(rollingStartKey, rollingEndKey) + 1;
+    } else {
+      if (rollingEndKey > endKey) rollingEndKey = endKey;
+      rollingCalendarDays = hkCalendarDaysBetween(rollingStartKey, rollingEndKey) + 1;
+    }
+  }
   const cooldownRemaining = cooldownRemainingMs(user.lastBookingAt, now);
   const cooldownActive = cooldownRemaining > 0;
   const nextBookingAt =
@@ -101,8 +118,8 @@ export async function GET(req: Request) {
     limits: { dailyMax, rollingMax },
     todayKey,
     rollingWindow: {
-      calendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
-      startKey: todayKey,
+      calendarDays: rollingCalendarDays,
+      startKey: rollingStartKey,
       endKey: rollingEndKey,
     },
     eligibility: profile

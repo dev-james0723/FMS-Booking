@@ -49,9 +49,9 @@ export const regEn = {
   regProfileQuotaHint:
     "Choose a category to see its booking slot limits (per day and across any three consecutive calendar days).",
   quotaPreviewTitle: "Booking slot limits for this category",
-  quotaDailyLine: "Per day: up to {blocks} slots (about {hours} in total)",
+  quotaDailyLine: "Per day: up to {blocks} {slotMinutes}-minute slots ({hours} in total)",
   quotaRollingLine:
-    "Across any {days} consecutive calendar days: up to {blocks} slots (about {hours} in total)",
+    "Across any {days} consecutive calendar days: up to {blocks} {slotMinutes}-minute slots ({hours} in total)",
   categoryUseReminder:
     "Please use free sessions in line with the user category you selected, and make sure what you do on site matches that category. If organisers see during your booking that your activity clearly does not match it (for example you chose “Teaching / with students” but mainly practise on your own), they may cancel that booking and may turn down future booking requests from you.",
   regProfilePersonal: "Individual user",

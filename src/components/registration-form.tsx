@@ -155,6 +155,7 @@ function RegistrationProfileQuotaPanel(props: {
           <p className="text-sm text-stone-700 dark:text-stone-300">
             {props.tr("reg.quotaDailyLine", {
               blocks: String(dailyMax),
+              slotMinutes: String(props.slotDurationMinutes),
               hours: dHours,
             })}
           </p>
@@ -168,6 +169,7 @@ function RegistrationProfileQuotaPanel(props: {
             {props.tr("reg.quotaRollingLine", {
               days: String(ROLLING_WINDOW_CALENDAR_DAYS),
               blocks: String(rollingMax),
+              slotMinutes: String(props.slotDurationMinutes),
               hours: rHours,
             })}
           </p>

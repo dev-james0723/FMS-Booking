@@ -2,14 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import type { BookingRequestStatus, BookingVenueKind } from "@prisma/client";
-import { LogoutButton } from "@/components/logout-button";
-import { displayVenueLabel } from "@/lib/booking-slot-display";
-import {
-  buildMonthGrid,
-  hkDateKeysTouchingInterval,
-  isoInstantToHkDateKey,
-} from "@/lib/hk-calendar-client";
+import type { BookingVenueKind } from "@prisma/client";
+import { withBasePath } from "@/lib/base-path";
+import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { accountPageHeading } from "@/lib/i18n/account-page-heading";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import {
@@ -20,7 +15,6 @@ import {
 import type { Locale } from "@/lib/i18n/types";
 import { AccountAmbassadorReferralSection } from "@/components/account-ambassador-referral-section";
 import type { AmbassadorReferralPayload } from "@/lib/referral/ambassador-referral-payload";
-import { AccountGoogleCalendarPanel } from "@/components/account-google-calendar-panel";
 import {
   BookingIconCalendarRolling,
   BookingIconMentorStudent,
@@ -59,20 +53,6 @@ export type RollingLimitStoryPayload = {
   };
 };
 
-type MergedSlotPayload = {
-  startIso: string;
-  endIso: string;
-  sessionCount: number;
-  venueLabel: string | null;
-};
-
-type BookingPayload = {
-  id: string;
-  status: BookingRequestStatus;
-  requestedAtIso: string;
-  merged: MergedSlotPayload[];
-};
-
 export type AccountPageViewProps = {
   nameZh: string;
   email: string;
@@ -95,13 +75,6 @@ export type AccountPageViewProps = {
   todayRemaining: number;
   rollingUsed: number;
   rollingStory: RollingLimitStoryPayload | null;
-  studioBookings: BookingPayload[];
-  openSpaceBookings: BookingPayload[];
-  canBook: boolean;
-  bookingBasePath: string;
-  googleCalendarOAuthReady: boolean;
-  googleCalendarLinked: boolean;
-  googleCalendarFlash: string | null;
   /** D Ambassador display name when this account registered via a referral link. */
   referrerNameZh: string | null;
   /** Registration / account opt-in to D Ambassador (loads referral tools when true). */
@@ -118,6 +91,63 @@ export type AccountPageViewProps = {
 };
 
 const EXAMPLE_DATE_ISOS = ["2026-04-05", "2026-04-06", "2026-04-07"] as const;
+
+/** Stock: passkeys Unsplash photo-1633265486064. Logout: open-door portal image (local PNG). */
+function AccountQuickNavTile(props: {
+  imageSrc: string;
+  /** CSS `background-position` (e.g. piano focal left). */
+  imagePosition?: string;
+  borderClassName: string;
+  overlayClassName: string;
+  overlayHoverClassName: string;
+  textClassName: string;
+  activeOpacityClassName?: string;
+  className: string;
+  children: ReactNode;
+} & ({ kind: "link"; href: string } | { kind: "button"; onClick: () => void })) {
+  const bgUrl = `url("${withBasePath(props.imageSrc)}")`;
+  const sharedInner = (
+    <>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-no-repeat opacity-[0.92] saturate-[0.52] contrast-[0.97] dark:opacity-[0.88] dark:saturate-[0.48]"
+        style={{
+          backgroundImage: bgUrl,
+          backgroundPosition: props.imagePosition ?? "center",
+        }}
+      />
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 z-[1] transition-colors ${props.overlayClassName} ${props.overlayHoverClassName}`}
+      />
+      <span
+        className={`relative z-[2] flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-0.5 text-center ${props.textClassName}`}
+      >
+        {props.children}
+      </span>
+    </>
+  );
+
+  const shellClass = [
+    "relative isolate flex h-full w-full min-h-0 flex-col overflow-hidden transition-[transform,opacity]",
+    props.borderClassName,
+    props.activeOpacityClassName ?? "active:opacity-90",
+    props.className,
+  ].join(" ");
+
+  if (props.kind === "link") {
+    return (
+      <Link href={props.href} className={shellClass}>
+        {sharedInner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={props.onClick} className={shellClass}>
+      {sharedInner}
+    </button>
+  );
+}
 
 function formatExampleDayLabel(iso: string, locale: Locale): string {
   const [y, mo, da] = iso.split("-").map((x) => parseInt(x, 10));
@@ -320,49 +350,6 @@ function uniqueYearMonthsFromPrefsIsos(isos: string[]): { year: number; month1: 
   return uniqueYearMonthsFromDateKeys(keys);
 }
 
-function bookedDateKeysFromMerged(merged: MergedSlotPayload[]): Set<string> {
-  const set = new Set<string>();
-  for (const m of merged) {
-    for (const k of hkDateKeysTouchingInterval(m.startIso, m.endIso)) {
-      set.add(k);
-    }
-  }
-  return set;
-}
-
-function formatMergedBlockHkRange(startIso: string, endIso: string, locale: Locale): string {
-  const loc = locale === "en" ? "en-HK" : "zh-HK";
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  const sk = isoInstantToHkDateKey(startIso);
-  const ek = isoInstantToHkDateKey(endIso);
-  const startOpts: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Hong_Kong",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  const endTime: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Hong_Kong",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  const endFull: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Hong_Kong",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  if (sk === ek) {
-    return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endTime)}`;
-  }
-  return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endFull)}`;
-}
-
 function AccountCalendarMonthReadonly(props: {
   year: number;
   month1: number;
@@ -478,152 +465,6 @@ function AccountPreferredTimesVisual(props: {
   );
 }
 
-function statusLabel(status: BookingRequestStatus, t: (p: string) => string): string {
-  const path = `booking.status.${status}`;
-  const label = t(path);
-  return label === path ? status : label;
-}
-
-function AccountBookingList(props: {
-  bookings: BookingPayload[];
-  locale: Locale;
-  emptyLabelKey: string;
-  dash: string;
-  listSep: string;
-  t: (path: string) => string;
-  tr: (path: string, vars: Record<string, string>) => string;
-}) {
-  const loc = props.locale === "en" ? "en-HK" : "zh-HK";
-  const calWeekdays = [
-    props.t("reg.weekday.sun"),
-    props.t("reg.weekday.mon"),
-    props.t("reg.weekday.tue"),
-    props.t("reg.weekday.wed"),
-    props.t("reg.weekday.thu"),
-    props.t("reg.weekday.fri"),
-    props.t("reg.weekday.sat"),
-  ];
-  if (props.bookings.length === 0) {
-    const msg = props.t(props.emptyLabelKey);
-    const fallback = props.t("account.emptyBookings");
-    return (
-      <li className="text-sm text-stone-500 dark:text-stone-500">
-        {msg === props.emptyLabelKey ? fallback : msg}
-      </li>
-    );
-  }
-  return (
-    <>
-      {props.bookings.map((b) => {
-        const stLabel = statusLabel(b.status, props.t);
-        const bookedSet = bookedDateKeysFromMerged(b.merged);
-        const bookedMonths = uniqueYearMonthsFromDateKeys([...bookedSet]);
-        const bookedDatesText =
-          bookedSet.size === 0
-            ? props.dash
-            : [...bookedSet]
-                .sort()
-                .map((iso) => {
-                  const [y, mo, da] = iso.split("-").map((x) => parseInt(x, 10));
-                  if (!y || !mo || !da) return iso;
-                  return new Date(y, mo - 1, da).toLocaleDateString(loc, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    weekday: "short",
-                  });
-                })
-                .join(props.listSep);
-        const slotsAria = b.merged
-          .map((m) =>
-            `${formatMergedBlockHkRange(m.startIso, m.endIso, props.locale)} ${props.tr("account.sessionsVenue", {
-              sessions: String(m.sessionCount),
-              venue: displayVenueLabel(m.venueLabel, props.locale),
-              sessionsH: sessionHoursParen(props.locale, m.sessionCount),
-            })}`.trim()
-          )
-          .join(props.locale === "en" ? "; " : "；");
-
-        return (
-          <li
-            key={b.id}
-            className="rounded-xl border border-stone-100 dark:border-stone-800 bg-stone-50 p-4 dark:bg-stone-900/80"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-stone-900 dark:text-stone-50">
-                {props.tr("account.statusLine", { status: stLabel })}
-              </span>
-              <span className="text-xs text-stone-500 dark:text-stone-500">
-                {props.tr("account.requestedAtLine", {
-                  time: new Date(b.requestedAtIso).toLocaleString(loc, { timeZone: "Asia/Hong_Kong" }),
-                })}
-              </span>
-            </div>
-            <dl className="mt-4 space-y-4 text-sm">
-              <div className="border-b border-stone-100 pb-4 dark:border-stone-800">
-                <dt className="text-stone-500 dark:text-stone-500">{props.t("account.dtBookedDates")}</dt>
-                <dd className="mt-3 text-stone-800 dark:text-stone-200">
-                  {bookedSet.size === 0 ? (
-                    <p>{props.dash}</p>
-                  ) : (
-                    <div
-                      className="flex flex-wrap gap-3"
-                      role="group"
-                      aria-label={bookedDatesText}
-                    >
-                      {bookedMonths.map(({ year, month1 }) => (
-                        <AccountCalendarMonthReadonly
-                          key={`${b.id}-${year}-${month1}`}
-                          year={year}
-                          month1={month1}
-                          selected={bookedSet}
-                          weekdays={calWeekdays}
-                          monthTitle={new Date(year, month1 - 1, 1).toLocaleDateString(loc, {
-                            year: "numeric",
-                            month: "long",
-                          })}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-stone-500 dark:text-stone-500">{props.t("account.dtBookedTimes")}</dt>
-                <dd className="mt-3 text-stone-800 dark:text-stone-200">
-                  {b.merged.length === 0 ? (
-                    <p>{props.dash}</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2" role="group" aria-label={slotsAria}>
-                      {b.merged.map((m, idx) => (
-                        <span
-                          key={`${b.id}-slot-${idx}`}
-                          className="inline-flex max-w-full flex-col gap-0.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-left text-xs font-medium text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-200"
-                        >
-                          <span className="break-words">
-                            {formatMergedBlockHkRange(m.startIso, m.endIso, props.locale)}
-                          </span>
-                          <span className="text-[11px] font-normal text-violet-800/90 dark:text-violet-300/90">
-                            {props.tr("account.sessionsVenue", {
-                              sessions: String(m.sessionCount),
-                              venue: displayVenueLabel(m.venueLabel, props.locale),
-                              sessionsH: sessionHoursParen(props.locale, m.sessionCount),
-                            })}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </li>
-        );
-      })}
-    </>
-  );
-}
-
 export function AccountPageView(props: AccountPageViewProps) {
   const { t, tr, locale } = useTranslation();
   const dash = t("account.dash");
@@ -680,6 +521,11 @@ export function AccountPageView(props: AccountPageViewProps) {
   const instrumentDisplay = props.instrumentField.trim() ? props.instrumentField.trim() : dash;
   const isStudioChannel = props.bookingVenueKind === "studio_room";
 
+  async function handleLogout() {
+    await fetch(withBasePath("/api/v1/auth/logout"), { method: "POST" });
+    window.location.href = withBasePath("/");
+  }
+
   return (
     <main className="mx-auto max-w-3xl space-y-10 px-5 sm:px-4 py-12">
       <header>
@@ -699,6 +545,78 @@ export function AccountPageView(props: AccountPageViewProps) {
           </p>
         </section>
       ) : null}
+
+      <nav
+        className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm"
+        aria-label={t("account.quickNavAria")}
+      >
+        {/*
+          Viewports below md: 2×2 square tiles in the spirit of the mobile drawer home / theme cells (slightly tighter type).
+          md and up: original pill row.
+        */}
+        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-3">
+          <div className="aspect-square min-h-0 min-w-0 md:contents">
+            <AccountQuickNavTile
+              kind="link"
+              href="/booking/history"
+              imageSrc="/account/studio-booking-history-bg.png"
+              imagePosition="28% center"
+              borderClassName="border border-violet-600/90 shadow-sm"
+              overlayClassName="bg-violet-800/72 dark:bg-violet-950/66"
+              overlayHoverClassName="hover:bg-violet-700/64 dark:hover:bg-violet-900/58"
+              textClassName="text-sm font-semibold leading-snug text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)] md:text-base"
+              className="rounded-lg px-1.5 py-2 md:inline-flex md:h-auto md:min-h-[2.75rem] md:w-auto md:rounded-full md:px-4 md:py-2.5"
+            >
+              {t("account.quickNavStudioHistory")}
+            </AccountQuickNavTile>
+          </div>
+          <div className="aspect-square min-h-0 min-w-0 md:contents">
+            <AccountQuickNavTile
+              kind="link"
+              href="/booking/open-space/history"
+              imageSrc="/account/open-space-booking-history-bg.png"
+              imagePosition="center center"
+              borderClassName="border border-teal-600/50 shadow-sm dark:border-teal-500/40"
+              overlayClassName="bg-teal-950/58 dark:bg-teal-950/52"
+              overlayHoverClassName="hover:bg-teal-900/50 dark:hover:bg-teal-950/46"
+              textClassName="text-sm font-semibold leading-snug text-teal-50 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] dark:text-teal-100 md:text-base"
+              className="rounded-lg px-1.5 py-2 md:inline-flex md:h-auto md:min-h-[2.75rem] md:w-auto md:rounded-full md:border-teal-600/50 md:px-4 md:py-2.5"
+            >
+              {t("account.quickNavOpenSpaceHistory")}
+            </AccountQuickNavTile>
+          </div>
+          <div className="aspect-square min-h-0 min-w-0 md:contents">
+            <AccountQuickNavTile
+              kind="link"
+              href="/account/passkeys"
+              imageSrc="/account/passkeys-nav-bg.jpg"
+              imagePosition="center center"
+              borderClassName="border border-indigo-500/40 shadow-sm dark:border-indigo-500/40"
+              overlayClassName="bg-slate-900/76 dark:bg-indigo-950/48"
+              overlayHoverClassName="hover:bg-slate-800/72 dark:hover:bg-indigo-950/42"
+              textClassName="text-sm font-semibold leading-snug text-indigo-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] md:text-base"
+              className="rounded-lg px-1.5 py-2 hover:border-indigo-400/60 md:inline-flex md:h-auto md:min-h-[2.75rem] md:w-auto md:rounded-full md:px-4 md:py-2.5"
+            >
+              {t("account.quickNavPasskeysDetail")}
+            </AccountQuickNavTile>
+          </div>
+          <div className="aspect-square min-h-0 min-w-0 md:contents">
+            <AccountQuickNavTile
+              kind="button"
+              onClick={() => void handleLogout()}
+              imageSrc="/account/logout-nav-bg.png"
+              imagePosition="center center"
+              borderClassName="border border-rose-700/45 shadow-sm dark:border-rose-600/40"
+              overlayClassName="bg-rose-950/56 dark:bg-rose-950/52"
+              overlayHoverClassName="hover:bg-rose-900/48 dark:hover:bg-rose-950/46"
+              textClassName="text-sm font-semibold leading-snug text-rose-50 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] dark:text-rose-100 md:text-base"
+              className="rounded-lg px-1.5 py-2 md:inline-flex md:h-auto md:min-h-[2.75rem] md:w-auto md:rounded-full md:px-4 md:py-2.5"
+            >
+              {t("account.logout")}
+            </AccountQuickNavTile>
+          </div>
+        </div>
+      </nav>
 
       <AccountAmbassadorReferralSection
         wantsAmbassador={props.wantsAmbassador}
@@ -1023,165 +941,6 @@ export function AccountPageView(props: AccountPageViewProps) {
           )}
         </dl>
       </section>
-
-      <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.sectionBookings")}</h2>
-          <AccountGoogleCalendarPanel
-            oauthReady={props.googleCalendarOAuthReady}
-            linked={props.googleCalendarLinked}
-          />
-        </div>
-        {props.googleCalendarFlash ? (
-          <p
-            className={`mt-2 text-xs ${
-              props.googleCalendarFlash === "connected"
-                ? "text-violet-700 dark:text-violet-300"
-                : "text-rose-600 dark:text-rose-400"
-            }`}
-          >
-            {(() => {
-              const path = `account.gcalFlash.${props.googleCalendarFlash}`;
-              const msg = t(path);
-              return msg === path ? "" : msg;
-            })()}
-          </p>
-        ) : null}
-        <p className="mt-2 text-xs text-stone-500 dark:text-stone-500">{t("account.gcalSyncNote")}</p>
-
-        {isStudioChannel ? (
-          <div className="mt-6 space-y-8">
-            <div>
-              <h3 className="font-serif text-lg font-semibold text-stone-900 dark:text-stone-50">
-                {t("account.sectionBookingsStudio")}
-              </h3>
-              <ul className="mt-4 space-y-6">
-                <AccountBookingList
-                  bookings={props.studioBookings}
-                  locale={locale}
-                  emptyLabelKey="account.emptyBookingsStudio"
-                  dash={dash}
-                  listSep={listSep}
-                  t={t}
-                  tr={tr}
-                />
-              </ul>
-            </div>
-            <div className="rounded-xl border border-violet-200/90 bg-violet-50/80 p-5 dark:border-violet-800/50 dark:bg-violet-950/30">
-              <p className="text-sm leading-relaxed text-violet-950 dark:text-violet-100">
-                {t("account.openSpaceChannelIntro")}
-              </p>
-              {props.canBook ? (
-                <Link
-                  href="/booking/open-space"
-                  className="mt-4 inline-flex rounded-full bg-violet-800 px-6 py-2.5 text-sm font-medium text-white hover:bg-violet-900 dark:bg-violet-600 dark:hover:bg-violet-500"
-                >
-                  {t("account.goOpenSpaceBooking")}
-                </Link>
-              ) : null}
-            </div>
-            <div>
-              <h3 className="font-serif text-lg font-semibold text-stone-900 dark:text-stone-50">
-                {t("account.sectionBookingsOpenSpace")}
-              </h3>
-              <ul className="mt-4 space-y-6">
-                <AccountBookingList
-                  bookings={props.openSpaceBookings}
-                  locale={locale}
-                  emptyLabelKey="account.emptyBookingsOpenSpace"
-                  dash={dash}
-                  listSep={listSep}
-                  t={t}
-                  tr={tr}
-                />
-              </ul>
-            </div>
-          </div>
-        ) : (
-          <ul className="mt-6 space-y-6">
-            <AccountBookingList
-              bookings={props.openSpaceBookings}
-              locale={locale}
-              emptyLabelKey="account.emptyBookings"
-              dash={dash}
-              listSep={listSep}
-              t={t}
-              tr={tr}
-            />
-          </ul>
-        )}
-      </section>
-
-      <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
-        <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.shortcuts")}</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {props.canBook ? (
-            isStudioChannel ? (
-              <>
-                <Link
-                  href="/booking"
-                  className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white hover:bg-stone-800"
-                >
-                  {t("account.goBookingStudioRooms")}
-                </Link>
-                <Link
-                  href="/booking/open-space"
-                  className="rounded-full border border-violet-400 bg-violet-50 px-6 py-2.5 text-sm font-medium text-violet-950 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:bg-violet-900/60"
-                >
-                  {t("account.goOpenSpaceBooking")}
-                </Link>
-              </>
-            ) : (
-              <Link
-                href={props.bookingBasePath}
-                className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white hover:bg-stone-800"
-              >
-                {t("account.goBooking")}
-              </Link>
-            )
-          ) : (
-            <span className="rounded-full bg-stone-200 px-6 py-2.5 text-sm text-stone-500 dark:text-stone-500">
-              {t("account.bookingLocked")}
-            </span>
-          )}
-          <Link
-            href="/account/passkeys"
-            className="rounded-full border border-stone-300 dark:border-stone-600 bg-surface px-6 py-2.5 text-sm text-stone-800 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800"
-          >
-            {t("account.managePasskeys")}
-          </Link>
-          {isStudioChannel ? (
-            <span className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-              <Link href="/booking/history" className="text-stone-700 dark:text-stone-300 underline">
-                {t("account.textHistoryStudio")}
-              </Link>
-              <Link
-                href="/booking/open-space/history"
-                className="text-stone-700 dark:text-stone-300 underline"
-              >
-                {t("account.textHistoryOpenSpace")}
-              </Link>
-            </span>
-          ) : (
-            <Link
-              href={`${props.bookingBasePath}/history`}
-              className="text-sm text-stone-700 dark:text-stone-300 underline"
-            >
-              {t("account.textHistory")}
-            </Link>
-          )}
-        </div>
-      </section>
-
-      <div className="flex flex-wrap gap-3 border-t border-stone-200 dark:border-stone-700 pt-8">
-        <LogoutButton />
-        <Link
-          href="/"
-          className="rounded-full border border-stone-300 dark:border-stone-600 px-6 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
-        >
-          {t("account.backHome")}
-        </Link>
-      </div>
     </main>
   );
 }

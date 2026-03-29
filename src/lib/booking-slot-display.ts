@@ -1,3 +1,4 @@
+import { isoInstantToHkDateKey } from "@/lib/hk-calendar-client";
 import type { Locale } from "@/lib/i18n/types";
 
 const HK = "Asia/Hong_Kong";
@@ -61,4 +62,38 @@ export function displayVenueLabel(
     return locale === "en" ? "Venue" : "場地";
   }
   return label.replace(/Studio A/g, "Room No.2");
+}
+
+/** Same calendar day in HKT: date + start–end times; spans two HK days uses full end stamp. */
+export function formatMergedBlockHkRange(startIso: string, endIso: string, locale: Locale): string {
+  const loc = locale === "en" ? "en-HK" : "zh-HK";
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const sk = isoInstantToHkDateKey(startIso);
+  const ek = isoInstantToHkDateKey(endIso);
+  const startOpts: Intl.DateTimeFormatOptions = {
+    timeZone: HK,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  const endTime: Intl.DateTimeFormatOptions = {
+    timeZone: HK,
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  const endFull: Intl.DateTimeFormatOptions = {
+    timeZone: HK,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  if (sk === ek) {
+    return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endTime)}`;
+  }
+  return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endFull)}`;
 }

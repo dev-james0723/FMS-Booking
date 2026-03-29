@@ -71,11 +71,12 @@ function LoginForm() {
       return;
     }
     if (data.mustChangePassword) {
+      router.refresh();
       router.push(`/account/change-password?next=${encodeURIComponent(next)}`);
     } else {
+      router.refresh();
       router.push(next);
     }
-    router.refresh();
     setLoading(false);
   }
 
@@ -130,11 +131,12 @@ function LoginForm() {
         return;
       }
       if (verData?.mustChangePassword) {
+        router.refresh();
         router.push(`/account/change-password?next=${encodeURIComponent(next)}`);
       } else {
+        router.refresh();
         router.push(next);
       }
-      router.refresh();
     } catch {
       setError(t("login.errNetwork"));
     } finally {

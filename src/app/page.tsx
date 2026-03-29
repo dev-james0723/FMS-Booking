@@ -9,6 +9,9 @@ import {
 import { formatInstantForBookingOpensZhHk } from "@/lib/time";
 import { getVenueCalendarEnv } from "@/lib/venue-calendar";
 
+/** Booking/test-mode flags must reflect DB on each request so countdown and CTAs stay in sync. */
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const all = await getAllSettings();
   const settings: Record<string, unknown> = {};

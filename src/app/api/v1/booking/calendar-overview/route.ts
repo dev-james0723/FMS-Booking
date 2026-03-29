@@ -47,9 +47,8 @@ export async function GET(req: Request) {
   const now = await getEffectiveNow();
   const bookingLive = isBookingPortalLiveFromSettings(settings, now);
 
-  const rows = bookingLive
-    ? await listSlotsForCalendarView({ from: start, to: end, venueKind })
-    : [];
+  /** Real occupancy for overview even when new submissions are closed (`booking_live` false). */
+  const rows = await listSlotsForCalendarView({ from: start, to: end, venueKind });
 
   return jsonOk({
     booking_live: bookingLive,

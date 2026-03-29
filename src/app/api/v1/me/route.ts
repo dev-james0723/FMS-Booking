@@ -3,7 +3,7 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
 import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
-import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
+import { getAllSettings, getEffectiveNow } from "@/lib/settings";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -24,9 +24,9 @@ export async function GET() {
     return jsonError("NOT_FOUND", "User not found", 404);
   }
 
-  const settings = await getPublicSettings();
+  const settings = await getAllSettings();
   const now = await getEffectiveNow();
-  const bookingOpen = isBookingPortalLiveFromSettings(settings as Record<string, unknown>, now);
+  const bookingOpen = isBookingPortalLiveFromSettings(settings, now);
 
   const canAccessBookingPortal =
     user.hasCompletedRegistration &&

@@ -14,6 +14,7 @@ export type { BookingGateErrorCode } from "@/lib/booking/booking-errors";
 import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import {
   assertCooldownAllowsBooking,
+  effectiveCapacityTotalForSlot,
   getQuotaNumericLimits,
   isSlotDateWithinRollingWindow,
   loadSlotUsageCountsDb,
@@ -196,7 +197,8 @@ export async function validateAndCreateBookingRequest(params: {
       const usage = await loadSlotUsageCountsDb(tx, uniqueSlotIds);
       for (const s of slots) {
         const used = usage.get(s.id) ?? 0;
-        if (used >= s.capacityTotal) {
+        const cap = effectiveCapacityTotalForSlot(s);
+        if (used >= cap) {
           throw new BookingRuleError("SLOT_FULL", "該時段已被預約，請選擇其他時間。", {
             slotId: s.id,
           });
@@ -267,7 +269,7 @@ export async function validateAndCreateBookingRequest(params: {
       const req = await tx.bookingRequest.create({
         data: {
           userId,
-          status: BookingRequestStatus.pending,
+          status: BookingRequestStatus.approved,
           venueKind: venueFromSlots,
           bookingIdentityType: resolvedIdentity,
           userCategoryAtRequest: u.category?.code ?? categoryCode,
@@ -283,7 +285,7 @@ export async function validateAndCreateBookingRequest(params: {
           data: {
             bookingRequestId: req.id,
             bookingSlotId: s.id,
-            status: "pending",
+            status: "approved",
           },
         });
       }
@@ -299,7 +301,7 @@ export async function validateAndCreateBookingRequest(params: {
         data: {
           bookingRequestId: req.id,
           fromStatus: null,
-          toStatus: BookingRequestStatus.pending,
+          toStatus: BookingRequestStatus.approved,
           actorType: "system",
           actorId: null,
         },
@@ -361,10 +363,12 @@ export async function listAvailability(params: {
   const usage = await loadSlotUsageCountsDb(prisma, ids);
   return slots.map((s) => {
     const booked = usage.get(s.id) ?? 0;
+    const cap = effectiveCapacityTotalForSlot(s);
     return {
       ...s,
+      capacityTotal: cap,
       bookedCount: booked,
-      remaining: Math.max(0, s.capacityTotal - booked),
+      remaining: Math.max(0, cap - booked),
     };
   });
 }
@@ -385,10 +389,12 @@ export async function listSlotsForCalendarView(params: {
   const usage = await loadSlotUsageCountsDb(prisma, ids);
   return slots.map((s) => {
     const booked = usage.get(s.id) ?? 0;
+    const cap = effectiveCapacityTotalForSlot(s);
     return {
       ...s,
+      capacityTotal: cap,
       bookedCount: booked,
-      remaining: Math.max(0, s.capacityTotal - booked),
+      remaining: Math.max(0, cap - booked),
     };
   });
 }

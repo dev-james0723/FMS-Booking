@@ -7,6 +7,7 @@ import {
   summarizeDaySlotsText,
   type TimelineSlotInput,
 } from "@/components/day-slots-timeline";
+import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
@@ -17,7 +18,7 @@ import { TIMELINE_END_HOUR, TIMELINE_START_HOUR } from "@/lib/booking/day-timeli
 import { buildCampaignPreviewTimelineSlots } from "@/lib/booking/preview-slots";
 import { applyStudioRoomCalendarHoldsToTimelineSlots } from "@/lib/booking/studio-room-calendar-holds";
 import { withBasePath } from "@/lib/base-path";
-import { buildMonthGrid } from "@/lib/hk-calendar-client";
+import { addDaysToDateKey, buildMonthGrid, isHkDayBookable } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
 
@@ -35,6 +36,25 @@ function defaultSelectedDay(): string {
   }
   if (t < CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY) return CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY;
   return CAMPAIGN_EXPERIENCE_LAST_DAY_KEY;
+}
+
+function firstLiveRollingCampaignDay(todayKey: string): string {
+  let dk = CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY;
+  for (;;) {
+    if (dk > CAMPAIGN_EXPERIENCE_LAST_DAY_KEY) return defaultSelectedDay();
+    if (
+      isHkDayBookable({
+        dateKey: dk,
+        todayKey,
+        campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
+        campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
+        rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+      })
+    ) {
+      return dk;
+    }
+    dk = addDaysToDateKey(dk, 1);
+  }
 }
 
 function isSelectableCampaignDay(dateKey: string | null): dateKey is string {
@@ -70,6 +90,9 @@ function MonthCalendarBlock(props: {
   onSelect: (key: string) => void;
   weekdays: readonly string[];
   footer?: ReactNode;
+  /** When true, only HK dates inside the rolling booking window are selectable and coloured by availability. */
+  rollingLive: boolean;
+  todayKey: string;
 }) {
   const grid = useMemo(
     () => buildMonthGrid(props.year, props.month1),
@@ -90,8 +113,18 @@ function MonthCalendarBlock(props: {
             return <div key={`pad-${idx}`} />;
           }
           const key = cell.dateKey;
-          const selectable = isSelectableCampaignDay(key);
-          const sum = daySummary(props.slots, key);
+          const inCampaign = isSelectableCampaignDay(key);
+          const inRolling =
+            !props.rollingLive ||
+            isHkDayBookable({
+              dateKey: key,
+              todayKey: props.todayKey,
+              campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
+              campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
+              rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+            });
+          const selectable = inCampaign && inRolling;
+          const sum = selectable ? daySummary(props.slots, key) : { total: 0, openAvailable: 0, openFull: 0, closed: 0 };
           const isSel = key === props.selected;
           let cellBg =
             "bg-surface hover:bg-stone-100 dark:hover:bg-neutral-800";
@@ -146,6 +179,10 @@ export function BookingCalendarOverviewPanel(props: {
   const { venueKind, bookingPathPrefix } = props;
   const { t, tr, locale } = useTranslation();
   const overviewIntro = t("booking.cal.overviewIntro");
+  const overviewTitleKey =
+    venueKind === "studio_room"
+      ? ("booking.cal.overviewTitleStudioRoom" as const)
+      : ("booking.cal.overviewTitleOpenSpace" as const);
   const campaignRange =
     locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
   const weekdays = useMemo(
@@ -170,16 +207,40 @@ export function BookingCalendarOverviewPanel(props: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const todayKey = hkTodayYmd();
+
+  useEffect(() => {
+    if (!bookingLive) {
+      return;
+    }
+    setSelected((prev) =>
+      isHkDayBookable({
+        dateKey: prev,
+        todayKey,
+        campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
+        campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
+        rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+      })
+        ? prev
+        : firstLiveRollingCampaignDay(todayKey)
+    );
+  }, [bookingLive, todayKey]);
+
   const previewSlots = useMemo(() => buildCampaignPreviewTimelineSlots(), []);
 
   const displaySlots = useMemo((): TimelineSlotInput[] => {
-    const base: TimelineSlotInput[] = !bookingLive ? previewSlots : apiSlots;
+    const hasLivePayload = apiSlots.length > 0;
+    const base: TimelineSlotInput[] = hasLivePayload
+      ? apiSlots
+      : !loading && !bookingLive
+        ? previewSlots
+        : [];
     return applyStudioRoomCalendarHoldsToTimelineSlots(
       venueKind,
       base,
-      !bookingLive ? "preview" : "live"
+      hasLivePayload ? "live" : "preview"
     ) as TimelineSlotInput[];
-  }, [apiSlots, bookingLive, previewSlots, venueKind]);
+  }, [apiSlots, bookingLive, loading, previewSlots, venueKind]);
 
   const fetchOverviewData = useCallback(async () => {
     const q = new URLSearchParams({ from: range.from, to: range.to, venue: venueKind });
@@ -220,6 +281,26 @@ export function BookingCalendarOverviewPanel(props: {
     };
   }, [fetchOverviewData]);
 
+  useEffect(() => {
+    const tick = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        void (async () => {
+          const result = await fetchOverviewData();
+          if (!result.ok) return;
+          setError(null);
+          setBookingLive(result.bookingLive);
+          setApiSlots(result.slots);
+        })();
+      }
+    };
+    const id = window.setInterval(tick, 45_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, [fetchOverviewData]);
+
   const refreshOverview = useCallback(() => {
     void (async () => {
       setLoading(true);
@@ -254,7 +335,7 @@ export function BookingCalendarOverviewPanel(props: {
       <div className="space-y-3">
         <div>
           <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">
-            {tr("booking.cal.overviewTitle", { range: campaignRange })}
+            {tr(overviewTitleKey, { range: campaignRange })}
           </h2>
           {overviewIntro.trim() ? (
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">{overviewIntro}</p>
@@ -286,6 +367,8 @@ export function BookingCalendarOverviewPanel(props: {
           selected={selected}
           onSelect={setSelected}
           weekdays={weekdays}
+          rollingLive={bookingLive}
+          todayKey={todayKey}
           footer={
             <Link
               href={bookingPathPrefix}
@@ -303,13 +386,20 @@ export function BookingCalendarOverviewPanel(props: {
           selected={selected}
           onSelect={setSelected}
           weekdays={weekdays}
+          rollingLive={bookingLive}
+          todayKey={todayKey}
         />
       </div>
 
-      <div className="text-center text-xs text-stone-500 dark:text-stone-500">
-        <p>{t("booking.cal.legend")}</p>
+      <div
+        className="text-center text-xs text-stone-500 dark:text-stone-500"
+        suppressHydrationWarning
+      >
+        <p suppressHydrationWarning>{t("booking.cal.legend")}</p>
         {venueKind === "studio_room" ? (
-          <p className="mt-1.5">{t("booking.cal.legendStudioHold")}</p>
+          <p className="mt-1.5" suppressHydrationWarning>
+            {t("booking.cal.legendStudioHold")}
+          </p>
         ) : null}
       </div>
 

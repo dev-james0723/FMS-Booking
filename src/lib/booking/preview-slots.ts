@@ -9,9 +9,9 @@ import { HK_TZ } from "@/lib/time";
 
 const PREVIEW_SLOT_MS = 30 * 60 * 1000;
 
-/** Matches seeded slot capacity; timeline treats remaining > 0 as “available” (green). */
-export const PREVIEW_SLOT_TIMELINE_CAPACITY = 2;
-export const PREVIEW_SLOT_TIMELINE_REMAINING = 2;
+/** Synthetic preview only; match one seat per cell so colours align with live inventory. */
+export const PREVIEW_SLOT_TIMELINE_CAPACITY = 1;
+export const PREVIEW_SLOT_TIMELINE_REMAINING = 1;
 
 export type PreviewSlotRow = {
   id: string;
@@ -34,7 +34,7 @@ export type OverviewTimelineSlotPayload = {
 
 /**
  * Synthetic slots for UX preview before `booking_opens_at`.
- * Matches campaign bookable hours (first day 11:00–20:00; other days 06:00–20:00).
+ * Matches campaign bookable hours (06:00–20:00 HKT each day).
  */
 export function buildPreviewSlotsForHkDay(dateKey: string): PreviewSlotRow[] {
   const startHour = bookableStartHourForCampaignDateKey(dateKey);

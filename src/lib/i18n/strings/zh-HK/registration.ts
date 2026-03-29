@@ -48,8 +48,8 @@ export const regZhHK = {
   regProfileQuotaHint:
     "請先選擇使用者類別，以查看相應的預約時段配額（單日及連續三日內之上限）。",
   quotaPreviewTitle: "此類別的預約時段配額",
-  quotaDailyLine: "單日最多可預約 {blocks} 個時段（約 {hours}）",
-  quotaRollingLine: "連續 {days} 個曆日內最多可預約 {blocks} 個時段（約 {hours}）",
+  quotaDailyLine: "單日最多可預約 {blocks} 個 {slotMinutes} 分鐘的時段（{hours}）",
+  quotaRollingLine: "連續 {days} 個曆日內最多可預約 {blocks} 個 {slotMinutes} 分鐘的時段（{hours}）",
   categoryUseReminder:
     "請依你所選的使用者類別使用免費時段，並確保現場活動與該類別相符。若主辦方於預約時段內發現實際用途與所選類別明顯不符（例如已選「教學／帶學生」類別，卻以個人練習為主），主辦方可取消該次預約，並得視乎情況拒絕該使用者日後之預約申請。",
   regProfilePersonal: "個人使用者",

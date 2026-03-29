@@ -33,9 +33,6 @@ export function HomePageMain({
   const { user: meUser, bookingHref } = useSiteMe();
   const campaignRange = t("campaign.dateRange");
 
-  const bookSlotsBtnClass =
-    "bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200";
-
   return (
     <main className="mx-auto max-w-5xl px-5 sm:px-4 pb-16 pt-6 sm:pt-8">
       <HomePartnerLogos />
@@ -53,10 +50,10 @@ export function HomePageMain({
 
       <div className="mx-auto mt-12 max-w-lg space-y-6">
         <Link
-          href="/register"
+          href={meUser ? bookingHref : "/register"}
           className="block rounded-xl border border-emerald-950/25 bg-emerald-800 px-6 py-5 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-900 dark:border-emerald-950/40 dark:bg-emerald-800 dark:text-white dark:hover:bg-emerald-900"
         >
-          {t("home.registerCta")}
+          {meUser ? t("home.bookNowCta") : t("home.registerCta")}
         </Link>
         <BookingOpensCalendarReminder
           bookingOpensAtIso={bookingOpensAtIso}
@@ -71,15 +68,8 @@ export function HomePageMain({
         />
       </div>
 
-      <div className="mx-auto mt-10 flex w-full max-w-lg flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-        {meUser ? (
-          <Link
-            href={bookingHref}
-            className={`w-full rounded-full px-8 py-3 text-center text-sm font-medium text-white transition sm:w-auto ${bookSlotsBtnClass}`}
-          >
-            {t("nav.bookingSlots")}
-          </Link>
-        ) : (
+      {!meUser && (
+        <div className="mx-auto mt-10 flex w-full max-w-lg flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
           <div
             className={`flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center${
               !bookingLive ? " pointer-events-none opacity-60" : ""
@@ -98,8 +88,8 @@ export function HomePageMain({
               {t("nav.loginBookingOpenSpace")}
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {!bookingLive && !meUser && (
         <p className="mt-4 text-center text-xs text-stone-500 dark:text-stone-500">
           {t("home.loginDisabledHint")}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { AdminBookingRescheduleModal } from "@/components/admin-booking-reschedule-modal";
 import { withBasePath } from "@/lib/base-path";
 import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 import { bookingIdentityTypeLabelZh } from "@/lib/identity-labels";
@@ -16,8 +17,16 @@ type BookingRow = {
   venueKind?: string;
   bookingIdentityType: string;
   user: { id: string; email: string; nameZh: string | null };
-  slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
+  slots: { id: string; startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
+
+function adminStatusBadge(status: string): string {
+  if (status === "approved") return "booked";
+  if (status === "cancelled") return "cancelled";
+  return status;
+}
+
+const ACTIONABLE = new Set(["approved", "pending", "waitlisted"]);
 
 export function AdminBookingsPanel() {
   const searchParams = useSearchParams();
@@ -30,6 +39,7 @@ export function AdminBookingsPanel() {
   const [filter, setFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [rescheduleRow, setRescheduleRow] = useState<BookingRow | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -54,21 +64,21 @@ export function AdminBookingsPanel() {
     return () => window.clearTimeout(id);
   }, [load]);
 
-  async function act(
-    id: string,
-    path: "approve" | "reject" | "waitlist",
-    note?: string
-  ) {
-    setBusy(id + path);
-    const init: RequestInit = { method: "PATCH" };
-    if (path === "reject") {
-      init.headers = { "Content-Type": "application/json" };
-      init.body = JSON.stringify({ note: note ?? null });
+  async function cancelBooking(id: string) {
+    if (
+      !window.confirm(
+        "確定要取消此用戶的預約？原有時段會釋出，並會向用戶發送通知電郵。"
+      )
+    ) {
+      return;
     }
-    const res = await fetch(withBasePath(`/api/v1/admin/bookings/${id}/${path}`), init);
+    setBusy(id + "cancel");
+    const res = await fetch(withBasePath(`/api/v1/admin/bookings/${id}/cancel`), {
+      method: "POST",
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      alert(data?.error?.message ?? "操作失敗");
+      alert(data?.error?.message ?? "取消失敗");
     }
     await load();
     setBusy(null);
@@ -76,6 +86,16 @@ export function AdminBookingsPanel() {
 
   return (
     <div className="space-y-6">
+      {rescheduleRow && (
+        <AdminBookingRescheduleModal
+          open
+          bookingId={rescheduleRow.id}
+          venue={venueTab}
+          currentSlots={rescheduleRow.slots}
+          onClose={() => setRescheduleRow(null)}
+          onApplied={() => void load()}
+        />
+      )}
       {userIdFilter && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-800/80 bg-sky-950/40 px-5 sm:px-4 py-3 text-sm text-sky-100">
           <span>正在按用戶篩選預約（與「登記用戶」聯動）。</span>
@@ -125,10 +145,11 @@ export function AdminBookingsPanel() {
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="">全部</option>
-            <option value="pending">pending</option>
-            <option value="approved">approved</option>
-            <option value="rejected">rejected</option>
+            <option value="approved">booked</option>
+            <option value="cancelled">cancelled</option>
+            <option value="pending">pending（舊資料）</option>
             <option value="waitlisted">waitlisted</option>
+            <option value="rejected">rejected</option>
           </select>
         </label>
         <button
@@ -168,15 +189,17 @@ export function AdminBookingsPanel() {
                   </Link>
                 </td>
                 <td className="px-3 py-3 align-top">
-                  <span className="rounded bg-slate-800 px-2 py-0.5 text-xs">{r.status}</span>
+                  <span className="rounded bg-slate-800 px-2 py-0.5 text-xs">
+                    {adminStatusBadge(r.status)}
+                  </span>
                 </td>
                 <td className="px-3 py-3 align-top text-xs text-slate-300">
                   {bookingIdentityTypeLabelZh(r.bookingIdentityType)}
                 </td>
                 <td className="px-3 py-3 align-top text-xs text-slate-300">
                   <ul className="space-y-1">
-                    {r.slots.map((s, i) => (
-                      <li key={i}>
+                    {r.slots.map((s) => (
+                      <li key={s.id}>
                         {formatSlotListLineZhDateEnRange(s.startsAt, s.endsAt)}
                         {s.venueLabel != null && s.venueLabel !== ""
                           ? ` · ${displayVenueLabel(s.venueLabel)}`
@@ -186,37 +209,23 @@ export function AdminBookingsPanel() {
                   </ul>
                 </td>
                 <td className="px-3 py-3 align-top">
-                  {(r.status === "pending" || r.status === "waitlisted") && (
+                  {ACTIONABLE.has(r.status) && (
                     <div className="flex flex-col gap-1">
                       <button
                         type="button"
                         disabled={!!busy}
-                        onClick={() => void act(r.id, "approve")}
-                        className="rounded bg-emerald-700 px-2 py-1 text-xs text-white hover:bg-emerald-600 disabled:opacity-40"
+                        onClick={() => setRescheduleRow(r)}
+                        className="rounded bg-sky-800 px-2 py-1 text-xs text-white hover:bg-sky-700 disabled:opacity-40"
                       >
-                        批核
+                        更改時段
                       </button>
-                      {r.status === "pending" && (
-                        <button
-                          type="button"
-                          disabled={!!busy}
-                          onClick={() => void act(r.id, "waitlist")}
-                          className="rounded bg-amber-700 px-2 py-1 text-xs text-white hover:bg-amber-600 disabled:opacity-40"
-                        >
-                          後補
-                        </button>
-                      )}
                       <button
                         type="button"
                         disabled={!!busy}
-                        onClick={() => {
-                          const note = window.prompt("拒絕原因（可留空）");
-                          if (note === null) return;
-                          void act(r.id, "reject", note);
-                        }}
+                        onClick={() => void cancelBooking(r.id)}
                         className="rounded bg-red-900/80 px-2 py-1 text-xs text-white hover:bg-red-800 disabled:opacity-40"
                       >
-                        拒絕
+                        取消預約
                       </button>
                     </div>
                   )}

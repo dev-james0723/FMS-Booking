@@ -6,6 +6,7 @@ import {
   userCategoryLabelZh,
 } from "@/lib/identity-labels";
 import { formatHkRange } from "@/lib/booking/day-timeline";
+import { formatBookingSlotsSummaryForMail } from "@/lib/email/booking-slots-summary";
 import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
@@ -43,13 +44,23 @@ export async function sendBookingAdminNotification(
   const categoryZh = userCategoryLabelZh(categoryCode);
   const identities = p ? identityFlagsToZh(p.identityFlags).join("、") : "—";
 
-  const slots = [...booking.allocations]
-    .sort((a, b) => a.slot.startsAt.getTime() - b.slot.startsAt.getTime())
-    .map((a) =>
-      formatHkRange(a.slot.startsAt, a.slot.endsAt)
-    );
+  const sortedAlloc = [...booking.allocations].sort(
+    (a, b) => a.slot.startsAt.getTime() - b.slot.startsAt.getTime(),
+  );
+  const slotIntervals = sortedAlloc.map((a) => ({
+    startsAt: a.slot.startsAt,
+    endsAt: a.slot.endsAt,
+  }));
+  const slotLineStrs = sortedAlloc.map((a) =>
+    formatHkRange(a.slot.startsAt, a.slot.endsAt),
+  );
+  const timeSummary = formatBookingSlotsSummaryForMail("zh-HK", slotIntervals);
+  const statusZh =
+    booking.status === "approved"
+      ? "已確認（系統即時通過）"
+      : booking.status;
 
-  const subject = `【新預約】${p?.nameZh ?? booking.user.email}｜${sessionCountWithHoursPack("zh-HK", slots.length)}｜${booking.id.slice(0, 8)}`;
+  const subject = `【新預約】${p?.nameZh ?? booking.user.email}｜${sessionCountWithHoursPack("zh-HK", slotLineStrs.length)}｜${booking.id.slice(0, 8)}`;
 
   const venueLine =
     booking.venueKind === "open_space"
@@ -67,8 +78,12 @@ export async function sendBookingAdminNotification(
   const lines = [
     `有新的預約提交。`,
     ``,
+    `預約節數：${sessionCountWithHoursPack("zh-HK", slotLineStrs.length)}`,
+    `預約狀態：${statusZh}`,
+    `時段摘要（香港時間）：`,
+    ...timeSummary.textLines.map((line) => `  ${line}`),
+    ``,
     `預約編號：${booking.id}`,
-    `預約狀態：${booking.status}`,
     venueLine,
     cameraLine,
     `使用者類別（提交當刻）：${categoryZh}`,
@@ -87,8 +102,8 @@ export async function sendBookingAdminNotification(
     `身份標籤：${identities}`,
     `樂器／領域：${p?.instrumentField ?? "—"}`,
     ``,
-    `—— 時段 ——`,
-    ...slots.map((s, i) => `${i + 1}. ${s}（香港時間）`),
+    `—— 各節時段 ——`,
+    ...slotLineStrs.map((s, i) => `${i + 1}. ${s}（香港時間）`),
     ``,
     `Bonus 時段：${booking.usesBonusSlot ? "是" : "否"}`,
   ];
@@ -100,6 +115,12 @@ export async function sendBookingAdminNotification(
 <html lang="zh-HK"><head><meta charset="utf-8" /></head>
 <body style="margin:0;padding:20px;font-family:system-ui,sans-serif;font-size:14px;line-height:1.55;color:#1c1917;">
   <h1 style="font-size:18px;margin:0 0 12px;">新預約</h1>
+  <div style="margin:0 0 16px;padding:12px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:14px;line-height:1.55;color:#14532d;">
+    <p style="margin:0 0 6px;"><strong>預約節數：</strong>${safe(sessionCountWithHoursPack("zh-HK", slotLineStrs.length))}</p>
+    <p style="margin:0 0 8px;"><strong>預約狀態：</strong>${safe(statusZh)}</p>
+    <p style="margin:0 0 4px;font-weight:600;">時段摘要（香港時間）</p>
+    ${timeSummary.htmlBlock}
+  </div>
   <p style="margin:0 0 8px;">預約編號：<code>${safe(booking.id)}</code></p>
   <p style="margin:0 0 16px;">使用者類別：${safe(categoryZh)}</p>
   <table style="border-collapse:collapse;width:100%;max-width:520px;">
@@ -109,8 +130,8 @@ export async function sendBookingAdminNotification(
     <tr><td style="padding:6px 0;border-bottom:1px solid #e7e5e4;color:#78716c;">IG 追蹤</td><td style="padding:6px 0;border-bottom:1px solid #e7e5e4;">${safe(igLine(p))}</td></tr>
     <tr><td style="padding:6px 0;border-bottom:1px solid #e7e5e4;color:#78716c;">性別</td><td style="padding:6px 0;border-bottom:1px solid #e7e5e4;">未有記錄（登記表單未收集）</td></tr>
   </table>
-  <p style="margin:16px 0 6px;font-weight:600;">時段（香港時間）</p>
-  <ul style="margin:0;padding-left:20px;">${slots.map((s) => `<li>${safe(s)}</li>`).join("")}</ul>
+  <p style="margin:16px 0 6px;font-weight:600;">各節時段（香港時間）</p>
+  <ul style="margin:0;padding-left:20px;">${slotLineStrs.map((s) => `<li>${safe(s)}</li>`).join("")}</ul>
 </body></html>`;
 
   if (process.env.NODE_ENV === "development") {

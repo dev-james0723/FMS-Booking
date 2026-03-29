@@ -1,10 +1,11 @@
 export const bookingEn = {
   status: {
-    pending: "Pending review",
-    approved: "Approved",
+    pending: "Confirmed",
+    approved: "Confirmed",
     rejected: "Not available",
     waitlisted: "Waitlisted",
     cancelled: "Cancelled",
+    rescheduled: "Rescheduled",
     no_show: "No-show",
     completed: "Completed",
   },
@@ -14,7 +15,7 @@ export const bookingEn = {
       "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single ",
     introQuotaLinkLabel: "quota tier",
     introAfterQuotaLink:
-      " per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
+      " per account; after each successful submission you must wait 3 hours before submitting again. When your submission succeeds, the slots you picked are confirmed.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
@@ -72,12 +73,13 @@ export const bookingEn = {
     ctaBooking: "Open Space booking (logged in)",
   },
   historyPage: {
-    title: "Booking history",
-    note: "Status is updated by the organiser; contact support if you have questions.",
+    titleStudioRoom: "Piano studio booking history",
+    titleOpenSpace: "Large instruments / Open Space booking history",
     back: "Back to booking",
   },
   calendarPage: {
-    title: "Booking calendar overview",
+    titleStudioRoom: "Piano studio booking — calendar overview",
+    titleOpenSpace: "Large instruments / Open Space booking — calendar overview",
     intro: "",
     backBooking: "Back to booking",
     linkHistory: "Booking history",
@@ -88,6 +90,12 @@ export const bookingEn = {
     empty: "No bookings yet.",
     submittedAt: "Submitted: ",
     bonusSlot: "Bonus slot",
+    syncToGoogleCalendar: "Sync to Google Calendar",
+    filterByDateLabel: "Jump to a booked day",
+    filterByDateAll: "All days",
+    filterSituationLabel: "Booking status",
+    filterSituationAll: "All statuses",
+    noRowsForFilters: "No bookings match your filters.",
   },
   request: {
     loadSlotsError: "Could not load slots",
@@ -156,7 +164,12 @@ export const bookingEn = {
       "Even with dual eligibility, all sessions count toward one quota tier — limits are not doubled.",
     refresh: "Refresh",
     submitted:
-      "Request submitted (reference: {id}). You will be notified by email after review.",
+      "Booking confirmed (reference: {id}). A confirmation email has been sent to your inbox.",
+    confirmModalTitle: "Booking confirmed",
+    confirmModalRefLabel: "Reference",
+    confirmModalEmailHint: "A confirmation email has been sent to your inbox.",
+    confirmModalRefUnknown: "You can see the full reference under “View history”.",
+    confirmModalDismiss: "Close",
     viewHistory: "View history",
     linkCalendarOverviewStudioRoom:
       "Current piano studio booking status — calendar overview (timeline)",
@@ -201,17 +214,22 @@ export const bookingEn = {
     nextMonth: "Next month",
     dotTitle: "{n} slots{nH} available",
     fullLabel: "Full",
+    noInventoryLabel: "No slots",
+    notYetOpenLabel: "Not open",
     hintPickDayLive:
       "Pick a day first; a green dot means slots are still available. Live booking: only the next {windowDays} calendar days from today (inclusive), not after {lastDay}.",
+    hintPickDayTestMode:
+      "Test mode: same live rules (rolling {windowDays} days). Pick a day first; a green dot means slots remain; “Not open” means that calendar day is outside the rolling window.",
     hintPickDayPreview:
       "Before booking opens, tap any day in the campaign ({range}) to preview. After opening, only the next {windowDays} calendar days (inclusive), not after {lastDay}.",
     slotsTitleLive: "{day} · available slots",
     slotsTitlePreview: "{day} · slot preview (not selectable yet)",
     slotsTitleNone: "Choose a day on the calendar above",
     loadingSlots: "Loading slots…",
-    emptyHintLive: "After you pick a date, remaining bookable slots for that day appear here.",
+    emptyHintLive:
+      "After you pick a date, every slot for that day is listed here. Booked slots show with a red border and cannot be selected.",
     emptyHintPreview:
-      "After you pick a campaign day, a preview of 30-minute bookable slots appears here (3 Apr 11:00–20:00; all other campaign days 06:00–20:00), for practice only.",
+      "After you pick a campaign day, a preview of 30-minute bookable slots appears here (06:00–20:00 Hong Kong time each day), for practice only.",
     noSlotsDay: "No bookable slots for this day (or all full).",
     previewSlotSuffix: "Preview (not open)",
     remainingSlots: "{n} left{nH}",
@@ -219,9 +237,22 @@ export const bookingEn = {
     notOpenFallback: " (as announced by the organiser)",
     submitting: "Submitting…",
     submitWithCount: "Submit request ({n} sessions{nH})",
+    submitDisabledCamera:
+      "Choose whether you need camera rental and complete the on-screen payment option first.",
+    submitDisabledCooldown: "Booking cooldown is active; please try again later.",
+    submitDisabledDaily:
+      "Your selection exceeds the per-day limit; reduce slots on one day or spread them across dates.",
+    submitDisabledRolling:
+      "Your selection exceeds the rolling three-calendar-day limit; reduce slots before submitting.",
+    dailyCapModalTitle: "Daily slot limit",
+    dailyCapModalBodyIndividual:
+      "Individual quota tier: at most 5 half-hour slots (2.5 hours) per Hong Kong calendar day. Selecting another would go over the limit.",
+    dailyCapModalBodyTeaching:
+      "Teaching quota tier: at most 8 half-hour slots (4 hours) per Hong Kong calendar day. Selecting another would go over the limit.",
+    dailyCapModalOk: "OK",
     linkHistory: "Booking history",
     footnote:
-      "Quotas follow the guide above; approval still depends on availability and the organiser.",
+      "Quotas follow the guide above; slots are first-come, first-served and confirmed when the system accepts your submission.",
     thisBookingIdentityTitle: "Identity for this booking (required)",
     identityIndividual: "Individual (practice / personal use)",
     identityTeaching: "Teaching / with students",
@@ -249,7 +280,8 @@ export const bookingEn = {
       "You chose camcorder rental — please confirm payment (paid, or pay after booking) before submitting.",
   },
   cal: {
-    overviewTitle: "{range} · overview",
+    overviewTitleStudioRoom: "{range} · studio room slots",
+    overviewTitleOpenSpace: "{range} · large instruments / Open Space slots",
     overviewIntro: "",
     refresh: "Refresh",
     loading: "Loading…",
@@ -264,7 +296,7 @@ export const bookingEn = {
     selectedDate: "Selected date: {date} (Hong Kong time)",
     timelineRange: "Timeline: {start}:00 – {end}:00 (Hong Kong time)",
     textListTitle: "Slots today",
-    sectionBooked: "Full / taken",
+    sectionBooked: "Booked",
     sectionAvailable: "Available",
     sectionClosed: "Closed",
     noSlotData: "No slot data for this day.",
@@ -272,7 +304,7 @@ export const bookingEn = {
   },
   timeline: {
     statusClosed: "Closed",
-    statusFull: "Full / taken",
+    statusFull: "Booked",
     statusOpen: "Open",
     studioHoldCaption: "This time slot is not available for booking",
     bookedThis: "This slot is taken",

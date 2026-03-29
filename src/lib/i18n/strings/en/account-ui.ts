@@ -57,7 +57,7 @@ export const accountEn = {
   storySlide:
     "When earlier dates pass or bookings move later, the system recalculates using newer 3-day windows (e.g. 6–8 Apr, 7–9 Apr). You are not stuck forever on one fixed window—as long as every 3-day window sums to at most {rollingMaxPack}.",
   genericCannot:
-    "If approved or pending sessions in some three consecutive days already total {rollingMaxPack}, adding a session on any of those days would push at least one window over the limit, so the system rejects it.",
+    "If confirmed sessions in some three consecutive days already total {rollingMaxPack}, adding a session on any of those days would push at least one window over the limit, so the system rejects it.",
   genericCan:
     "You can submit if every 3-day window totals at most {rollingMaxPack} and each single day is at most {dailyMaxPack}.",
   genericSlide:
@@ -109,9 +109,15 @@ export const accountEn = {
   },
   emptyBookings: "No bookings yet.",
   statusLine: "Status: {status}",
+  bookingRefLine: "Reference {id}",
   requestedAtLine: "Requested: {time}",
   sessionsVenue: "({sessions} sessions{sessionsH} · {venue})",
   shortcuts: "Shortcuts",
+  quickNavAria: "Quick links",
+  quickNavStudioHistory: "Studio room booking records",
+  quickNavOpenSpaceHistory: "Large instrument / open space booking records",
+  quickNavPasskeysDetail: "Manage passkeys",
+  logout: "Log out",
   goBooking: "Go to booking",
   goBookingStudioRooms: "Book studio room",
   goOpenSpaceBooking: "Book open space",

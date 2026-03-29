@@ -56,8 +56,9 @@ export const coreEn = {
     tagline: "D Festival × Fantasia Music Space",
     title: "Limited-time free piano studio experience",
     lead:
-      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Hong Kong Fantasia International Music Management Ltd. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. Bookable hours (Hong Kong time): 3 April 11:00–20:00; all other campaign days 06:00–20:00.",
+      "Presented by the D Festival Young Pianist Program and Fantasia Music Space, sponsored by Hong Kong Fantasia International Music Management Ltd. During {campaignRange}, free slots are offered for a limited time to local music practitioners for practice, rehearsal, try-outs, pre-recording run-throughs, and other music-related uses. Bookable hours (Hong Kong time): 06:00–20:00 every campaign day.",
     registerCta: "Register & create account",
+    bookNowCta: "Book a time slot now",
     loginCta: "Booking login",
     loginDisabledHint:
       "Booking activates after the opening time; you can still register and create an account first.",

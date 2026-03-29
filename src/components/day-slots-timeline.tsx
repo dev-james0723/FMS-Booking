@@ -149,7 +149,7 @@ export function DaySlotsTimeline({
                   名額 {used}/{s.capacityTotal}
                 </div>
               )}
-              {s.venueLabel && (
+              {isAdmin && s.venueLabel && (
                 <div className="shrink-0 truncate text-center text-[10px] opacity-90 sm:text-[11px]">
                   {s.venueLabel}
                 </div>

@@ -28,7 +28,11 @@ export async function GET(req: Request) {
     take: 200,
     include: {
       user: { include: { profile: true } },
-      allocations: { include: { slot: true }, orderBy: { slot: { startsAt: "asc" } } },
+      allocations: {
+        where: { status: { in: ["pending", "approved"] } },
+        include: { slot: true },
+        orderBy: { slot: { startsAt: "asc" } },
+      },
     },
   });
 

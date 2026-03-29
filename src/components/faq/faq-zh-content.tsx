@@ -46,7 +46,7 @@ export function FaqZhContent() {
                 variant: "violet",
                 icon: "calendar",
                 title: "體驗期間（例子）",
-                tags: ["2026/4/3–5/3", "4/3：11:00–20:00", "其餘活動日：06:00–20:00", "香港時間"],
+                tags: ["2026/4/3–5/3", "每日：06:00–20:00", "香港時間"],
               },
               {
                 variant: "sky",

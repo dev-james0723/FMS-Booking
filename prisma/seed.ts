@@ -87,7 +87,7 @@ async function main() {
           rows.push({
             startsAt,
             endsAt,
-            capacityTotal: 2,
+            capacityTotal: 1,
             isOpen: true,
             venueLabel: "幻樂空間 · Room No.2",
             venueKind: BookingVenueKind.studio_room,

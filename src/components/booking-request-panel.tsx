@@ -9,6 +9,7 @@ import {
   formatSlotTimeRangeEn,
 } from "@/lib/booking-slot-display";
 import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import { parseBookingTestMode } from "@/lib/booking/booking-portal-live";
 import { shiftHkDateKey } from "@/lib/booking/hk-dates";
 import {
   buildMonthGrid,
@@ -36,6 +37,8 @@ import {
   BookingIconTeaching,
 } from "@/components/booking-quota-icons";
 import { BookingRulesVisual } from "@/components/booking-rules-visual";
+import { BookingConfirmedModal } from "@/components/booking-confirmed-modal";
+import { RegistrationErrorModal } from "@/components/registration-error-modal";
 import { useSiteMe } from "@/lib/auth/use-site-me";
 import {
   CAMERA_RENTAL_HERO_PATH,
@@ -177,7 +180,7 @@ export function BookingRequestPanel(props: {
   );
 
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
-  const [monthSlots, setMonthSlots] = useState<SlotRow[]>([]);
+  const [allMonthSlots, setAllMonthSlots] = useState<SlotRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [monthOverride, setMonthOverride] = useState<string | null>(null);
@@ -188,6 +191,8 @@ export function BookingRequestPanel(props: {
   const [limits, setLimits] = useState<LimitsPayload | null>(null);
   const [blockFlashSlotId, setBlockFlashSlotId] = useState<string | null>(null);
   const [dailyCapHint, setDailyCapHint] = useState<string | null>(null);
+  const [dailyCapModalOpen, setDailyCapModalOpen] = useState(false);
+  const [serverEffectiveNowMs, setServerEffectiveNowMs] = useState<number | null>(null);
   const [dualEligible, setDualEligible] = useState(false);
   const [bookingPortalOpen, setBookingPortalOpen] = useState(false);
   const [meGatesLoaded, setMeGatesLoaded] = useState(false);
@@ -208,11 +213,12 @@ export function BookingRequestPanel(props: {
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
+    if (serverEffectiveNowMs != null) return;
     const id = window.setInterval(() => setNowMs(Date.now()), 60_000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [serverEffectiveNowMs]);
 
-  const todayKey = hkTodayKeyFromMs(nowMs);
+  const todayKey = hkTodayKeyFromMs(serverEffectiveNowMs ?? nowMs);
 
   const campaign = useMemo(
     () => parseCampaignDateKeysFromSettings(settings),
@@ -241,6 +247,16 @@ export function BookingRequestPanel(props: {
     const res = await fetch(withBasePath("/api/v1/public/settings"));
     const data = await res.json();
     setSettings(data.settings ?? {});
+    const iso =
+      data && typeof data === "object" && typeof data.booking_effective_now_iso === "string"
+        ? data.booking_effective_now_iso
+        : null;
+    if (iso) {
+      const parsed = new Date(iso).getTime();
+      setServerEffectiveNowMs(Number.isNaN(parsed) ? null : parsed);
+    } else {
+      setServerEffectiveNowMs(null);
+    }
   }, []);
 
   const loadMonthSlots = useCallback(async () => {
@@ -255,11 +271,11 @@ export function BookingRequestPanel(props: {
     const data = await res.json();
     if (!res.ok) {
       setError(data?.error?.message ?? t("booking.request.loadSlotsError"));
-      setMonthSlots([]);
+      setAllMonthSlots([]);
       setLoading(false);
       return;
     }
-    setMonthSlots(data.slots.filter((s: SlotRow) => s.remaining > 0));
+    setAllMonthSlots(Array.isArray(data.slots) ? data.slots : []);
     setLoading(false);
   }, [monthRange.from, monthRange.to, t, venueKind]);
 
@@ -336,10 +352,28 @@ export function BookingRequestPanel(props: {
 
   const bookingOpensAt =
     typeof settings?.booking_opens_at === "string" ? settings.booking_opens_at : null;
-  const bookingLiveFromSettings =
+  const bookingTestMode = parseBookingTestMode(settings?.booking_test_mode);
+  const bookingOpensPassed =
     bookingOpensAt != null && nowMs >= new Date(bookingOpensAt).getTime();
-  /** After `/me` returns, use server gate (includes booking test mode). Before that, time-based avoids a flash when the portal is officially open. */
-  const bookingLive = meGatesLoaded ? bookingPortalOpen : bookingLiveFromSettings;
+  /** Test mode must win even if `/me` gate desyncs; otherwise QA cannot pick dates. */
+  const bookingLive =
+    bookingTestMode || (meGatesLoaded ? bookingPortalOpen : bookingOpensPassed);
+
+  useEffect(() => {
+    if (!bookingLive) return;
+    const tick = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        void loadMonthSlots();
+      }
+    };
+    const id = window.setInterval(tick, 45_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, [bookingLive, loadMonthSlots]);
+
   const bookingOpensAtLabel =
     bookingOpensAt != null
       ? locale === "en"
@@ -352,17 +386,30 @@ export function BookingRequestPanel(props: {
     if (!bookingLive) {
       return buildPreviewSlotsForHkDay(selectedDayKey);
     }
-    return monthSlots.filter((s) => slotStartsAtToHkDateKey(s.startsAt) === selectedDayKey);
-  }, [monthSlots, selectedDayKey, bookingLive]);
+    return allMonthSlots
+      .filter((s) => slotStartsAtToHkDateKey(s.startsAt) === selectedDayKey)
+      .slice()
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  }, [allMonthSlots, selectedDayKey, bookingLive]);
 
-  const availableCountByDay = useMemo(() => {
+  const freeSlotsByDay = useMemo(() => {
     const m = new Map<string, number>();
-    for (const s of monthSlots) {
+    for (const s of allMonthSlots) {
+      if (s.remaining <= 0) continue;
       const k = slotStartsAtToHkDateKey(s.startsAt);
       m.set(k, (m.get(k) ?? 0) + 1);
     }
     return m;
-  }, [monthSlots]);
+  }, [allMonthSlots]);
+
+  const totalSlotsByDay = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of allMonthSlots) {
+      const k = slotStartsAtToHkDateKey(s.startsAt);
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  }, [allMonthSlots]);
 
   const monthGrid = useMemo(
     () => buildMonthGrid(viewYear, viewMonth),
@@ -385,7 +432,7 @@ export function BookingRequestPanel(props: {
   function selectedCountOnDay(dayKey: string, sel: Set<string>): number {
     let n = 0;
     for (const id of sel) {
-      const s = monthSlots.find((x) => x.id === id);
+      const s = allMonthSlots.find((x) => x.id === id);
       if (s && slotStartsAtToHkDateKey(s.startsAt) === dayKey) n++;
     }
     return n;
@@ -393,8 +440,8 @@ export function BookingRequestPanel(props: {
 
   function tryToggleSlot(id: string) {
     if (!bookingLive) return;
-    const slot = monthSlots.find((s) => s.id === id);
-    if (!slot) return;
+    const slot = allMonthSlots.find((s) => s.id === id);
+    if (!slot || slot.remaining <= 0) return;
 
     if (selected.has(id)) {
       setSelected((prev) => {
@@ -419,6 +466,7 @@ export function BookingRequestPanel(props: {
         })
       );
       window.setTimeout(() => setDailyCapHint(null), 4500);
+      setDailyCapModalOpen(true);
       return;
     }
 
@@ -503,6 +551,18 @@ export function BookingRequestPanel(props: {
         })()
       : null;
 
+  const submitDisabledNoSelection = selected.size === 0 || submitting || !bookingLive;
+  const submitDisabledLimits =
+    limits != null &&
+    selected.size > 0 &&
+    (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling);
+  const submitDisabledCooldown = limits?.cooldown?.active === true;
+  const submitDisabled =
+    submitDisabledNoSelection ||
+    cameraSubmitBlocking ||
+    submitDisabledCooldown ||
+    submitDisabledLimits;
+
   return (
     <div className="space-y-6">
       {!bookingLive && (
@@ -540,14 +600,12 @@ export function BookingRequestPanel(props: {
           {error}
         </div>
       )}
-      {done && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 sm:px-4 py-2 text-sm text-emerald-900">
-          {tr("booking.request.submitted", { id: done })}
-          <Link href={`${bookingPathPrefix}/history`} className="ml-2 underline">
-            {t("booking.request.viewHistory")}
-          </Link>
-        </div>
-      )}
+      <BookingConfirmedModal
+        open={Boolean(done)}
+        bookingRequestId={done ?? ""}
+        historyHref={`${bookingPathPrefix}/history`}
+        onDismiss={() => setDone(null)}
+      />
 
       {dailyCapHint && (
         <p
@@ -908,18 +966,20 @@ export function BookingRequestPanel(props: {
               Boolean(campaign.start && campaign.end) &&
               dk >= campaign.start! &&
               dk <= campaign.end!;
-            const bookable = inCampaignRange
-              ? bookingLive
-                ? isHkDayBookable({
-                    dateKey: dk,
-                    todayKey,
-                    campaignStart: campaign.start!,
-                    campaignEnd: campaign.end!,
-                    rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
-                  })
-                : true
-              : false;
-            const avail = availableCountByDay.get(dk) ?? 0;
+            const inRollingWindow =
+              inCampaignRange &&
+              isHkDayBookable({
+                dateKey: dk,
+                todayKey,
+                campaignStart: campaign.start!,
+                campaignEnd: campaign.end!,
+                rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+              });
+            const bookable = inCampaignRange ? (bookingLive ? inRollingWindow : true) : false;
+            const notYetOpen =
+              bookingLive && inCampaignRange && dk >= todayKey && !inRollingWindow;
+            const free = freeSlotsByDay.get(dk) ?? 0;
+            const total = totalSlotsByDay.get(dk) ?? 0;
             const isSelected = selectedDayKey === dk;
             return (
               <button
@@ -938,20 +998,30 @@ export function BookingRequestPanel(props: {
                 }`}
               >
                 <span className="font-medium">{Number(dk.slice(8, 10))}</span>
-                {bookingLive && bookable && avail > 0 && (
+                {bookingLive && bookable && free > 0 && (
                   <span
                     className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
                       isSelected ? "bg-emerald-300" : "bg-emerald-500"
                     }`}
                     title={tr("booking.request.dotTitle", {
-                      n: String(avail),
-                      nH: sessionHoursParen(locale, avail),
+                      n: String(free),
+                      nH: sessionHoursParen(locale, free),
                     })}
                   />
                 )}
-                {bookingLive && bookable && avail === 0 && (
+                {bookingLive && bookable && free === 0 && total > 0 && (
                   <span className="mt-0.5 text-[9px] text-stone-400 dark:text-stone-500">
                     {t("booking.request.fullLabel")}
+                  </span>
+                )}
+                {bookingLive && bookable && total === 0 && (
+                  <span className="mt-0.5 text-[9px] text-stone-400 dark:text-stone-500">
+                    {t("booking.request.noInventoryLabel")}
+                  </span>
+                )}
+                {notYetOpen && (
+                  <span className="mt-0.5 text-[9px] font-medium text-amber-700/90 dark:text-amber-400/90">
+                    {t("booking.request.notYetOpenLabel")}
                   </span>
                 )}
               </button>
@@ -962,10 +1032,16 @@ export function BookingRequestPanel(props: {
         <p className="mt-3 text-xs text-stone-500 dark:text-stone-500">
           {bookingLive ? (
             <>
-              {tr("booking.request.hintPickDayLive", {
-                windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
-                lastDay: lastBookableKey ?? t("booking.request.dash"),
-              })}
+              {bookingTestMode
+                ? tr("booking.request.hintPickDayTestMode", {
+                    range: campaignRange,
+                    windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                    lastDay: lastBookableKey ?? t("booking.request.dash"),
+                  })
+                : tr("booking.request.hintPickDayLive", {
+                    windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                    lastDay: lastBookableKey ?? t("booking.request.dash"),
+                  })}
             </>
           ) : (
             <>
@@ -1019,6 +1095,30 @@ export function BookingRequestPanel(props: {
                     </li>
                   );
                 }
+                const full = s.remaining <= 0;
+                if (full) {
+                  return (
+                    <li key={s.id}>
+                      <div
+                        className="w-full cursor-not-allowed rounded-lg border-2 border-red-600/90 bg-red-50 px-3 py-3 text-left text-sm dark:border-red-500/85 dark:bg-red-950/40"
+                        aria-disabled
+                      >
+                        <span className="block font-medium text-stone-800 dark:text-stone-100">
+                          {formatSlotDateForLocale(s.startsAt, locale)}
+                        </span>
+                        <span className="mt-0.5 block text-sm font-medium text-stone-900 dark:text-stone-50">
+                          {formatSlotTimeRangeEn(s.startsAt, s.endsAt)}
+                        </span>
+                        <span className="mt-1 block text-xs text-stone-600 dark:text-stone-300">
+                          {displayVenueLabel(s.venueLabel, locale)}
+                        </span>
+                        <span className="mt-2 block text-xs font-semibold text-red-800 dark:text-red-200">
+                          {t("booking.timeline.statusFull")}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                }
                 return (
                   <li key={s.id}>
                     <button
@@ -1039,11 +1139,7 @@ export function BookingRequestPanel(props: {
                         {formatSlotTimeRangeEn(s.startsAt, s.endsAt)}
                       </span>
                       <span className={`mt-1 block text-xs ${on ? "text-stone-200" : "text-stone-500 dark:text-stone-500"}`}>
-                        {displayVenueLabel(s.venueLabel, locale)} ·{" "}
-                        {tr("booking.request.remainingSlots", {
-                          n: String(s.remaining),
-                          nH: sessionHoursParen(locale, s.remaining),
-                        })}
+                        {displayVenueLabel(s.venueLabel, locale)}
                       </span>
                     </button>
                   </li>
@@ -1272,33 +1368,51 @@ export function BookingRequestPanel(props: {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-stone-200 dark:border-stone-700 pt-6">
-        <button
-          type="button"
-          disabled={
-            selected.size === 0 ||
-            submitting ||
-            !bookingLive ||
-            cameraSubmitBlocking ||
-            (limits?.cooldown?.active === true) ||
-            (limits != null &&
-              selected.size > 0 &&
-              (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling))
-          }
-          onClick={() => void submit()}
-          className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white disabled:opacity-40"
-        >
-          {submitting
-            ? t("booking.request.submitting")
-            : tr("booking.request.submitWithCount", {
-                n: String(selected.size),
-                nH: sessionHoursParen(locale, selected.size),
-              })}
-        </button>
-        <Link href={`${bookingPathPrefix}/history`} className="text-sm text-stone-700 dark:text-stone-300 underline">
-          {t("booking.request.linkHistory")}
-        </Link>
+      <div className="space-y-2 border-t border-stone-200 dark:border-stone-700 pt-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={submitDisabled}
+            onClick={() => void submit()}
+            className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white disabled:opacity-40"
+          >
+            {submitting
+              ? t("booking.request.submitting")
+              : tr("booking.request.submitWithCount", {
+                  n: String(selected.size),
+                  nH: sessionHoursParen(locale, selected.size),
+                })}
+          </button>
+          <Link href={`${bookingPathPrefix}/history`} className="text-sm text-stone-700 dark:text-stone-300 underline">
+            {t("booking.request.linkHistory")}
+          </Link>
+        </div>
+        {!submitDisabledNoSelection && submitDisabled && (
+          <p className="text-xs text-amber-800 dark:text-amber-200/90">
+            {cameraSubmitBlocking
+              ? t("booking.request.submitDisabledCamera")
+              : submitDisabledCooldown
+                ? t("booking.request.submitDisabledCooldown")
+                : limits?.provisional.wouldExceedDaily
+                  ? t("booking.request.submitDisabledDaily")
+                  : limits?.provisional.wouldExceedRolling
+                    ? t("booking.request.submitDisabledRolling")
+                    : null}
+          </p>
+        )}
       </div>
+
+      <RegistrationErrorModal
+        open={dailyCapModalOpen}
+        title={t("booking.request.dailyCapModalTitle")}
+        message={
+          limits?.quotaTier === "teaching" || limits?.tier === "teaching"
+            ? t("booking.request.dailyCapModalBodyTeaching")
+            : t("booking.request.dailyCapModalBodyIndividual")
+        }
+        okLabel={t("booking.request.dailyCapModalOk")}
+        onDismiss={() => setDailyCapModalOpen(false)}
+      />
 
       <p className="text-xs text-stone-500 dark:text-stone-500">{t("booking.request.footnote")}</p>
 

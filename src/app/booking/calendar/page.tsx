@@ -17,7 +17,7 @@ export default async function BookingCalendarOverviewPage() {
   }
 
   const locale = await serverLocaleFromCookies();
-  const title = serverT(locale, "booking.calendarPage.title");
+  const title = serverT(locale, "booking.calendarPage.titleStudioRoom");
   const intro = serverT(locale, "booking.calendarPage.intro");
 
   return (

@@ -13,13 +13,19 @@ function formatHourNumber(hours: number): string {
   return hours.toFixed(1).replace(/\.0$/, "");
 }
 
-/** e.g. "2.5 小時" or "2.5 hours" (singular "hour" only when exactly 1). */
+/** e.g. "2 小時 30 分鐘" (zh-HK) or "2.5 hours" (en; singular "hour" only when exactly 1). */
 export function sessionHoursInnerLabel(locale: Locale, sessions: number): string {
+  if (locale === "zh-HK") {
+    const totalMin = Math.round(sessions * HOURS_PER_SESSION * 60);
+    const wholeH = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (totalMin === 0) return "0 分鐘";
+    if (m === 0) return `${wholeH} 小時`;
+    if (wholeH === 0) return `${m} 分鐘`;
+    return `${wholeH} 小時 ${m} 分鐘`;
+  }
   const h = hoursFromSessionCount(sessions);
   const num = formatHourNumber(h);
-  if (locale === "zh-HK") {
-    return `${num} 小時`;
-  }
   const unit = h === 1 ? "hour" : "hours";
   return `${num} ${unit}`;
 }

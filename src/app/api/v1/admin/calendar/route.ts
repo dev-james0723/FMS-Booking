@@ -1,5 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireAdminSession } from "@/lib/auth/require-admin";
+import { effectiveCapacityTotalForSlot } from "@/lib/booking/booking-rules";
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { prisma } from "@/lib/prisma";
 
@@ -47,20 +48,24 @@ export async function GET(req: Request) {
   });
 
   return jsonOk({
-    slots: slots.map((s) => ({
-      id: s.id,
-      startsAt: s.startsAt.toISOString(),
-      endsAt: s.endsAt.toISOString(),
-      capacityTotal: s.capacityTotal,
-      isOpen: s.isOpen,
-      venueLabel: s.venueLabel,
-      used: s.allocations.length,
-      remaining: Math.max(0, s.capacityTotal - s.allocations.length),
-      bookings: s.allocations.map((a) => ({
-        requestId: a.bookingRequestId,
-        requestStatus: a.request.status,
-        userEmail: a.request.user.email,
-      })),
-    })),
+    slots: slots.map((s) => {
+      const cap = effectiveCapacityTotalForSlot(s);
+      const used = s.allocations.length;
+      return {
+        id: s.id,
+        startsAt: s.startsAt.toISOString(),
+        endsAt: s.endsAt.toISOString(),
+        capacityTotal: cap,
+        isOpen: s.isOpen,
+        venueLabel: s.venueLabel,
+        used,
+        remaining: Math.max(0, cap - used),
+        bookings: s.allocations.map((a) => ({
+          requestId: a.bookingRequestId,
+          requestStatus: a.request.status,
+          userEmail: a.request.user.email,
+        })),
+      };
+    }),
   });
 }

@@ -21,7 +21,7 @@ export default async function OpenSpaceBookingCalendarPage() {
   }
 
   const locale = await serverLocaleFromCookies();
-  const title = serverT(locale, "booking.calendarPage.title");
+  const title = serverT(locale, "booking.calendarPage.titleOpenSpace");
   const intro = serverT(locale, "booking.calendarPage.intro");
 
   return (

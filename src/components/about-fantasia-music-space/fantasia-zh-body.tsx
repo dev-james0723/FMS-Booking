@@ -15,10 +15,10 @@ export function FantasiaZhBody({
     <main className="mx-auto max-w-3xl px-5 sm:px-4 pb-28 pt-8 sm:pt-10">
       <div className="flex flex-col items-center">
         <Image
-          src={withBasePath("/branding/fantasia-music-space.webp")}
+          src={withBasePath("/branding/fantasia-music-space.png")}
           alt="幻樂空間 Fantasia Music Space"
-          width={1024}
-          height={1024}
+          width={2481}
+          height={2481}
           className="h-auto w-[min(100%,220px)] max-w-full object-contain"
           priority
         />
