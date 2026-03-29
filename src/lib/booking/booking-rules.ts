@@ -6,7 +6,10 @@ import {
   ROLLING_WINDOW_CALENDAR_DAYS,
 } from "@/lib/booking/booking-constants";
 import { hkCalendarDaysBetween, shiftHkDateKey } from "@/lib/booking/hk-dates";
-import type { BookingNumericSettings } from "@/lib/booking/settings";
+import {
+  quotaLimitsForTier,
+  type BookingNumericSettings,
+} from "@/lib/booking/booking-numeric-settings";
 import { prisma } from "@/lib/prisma";
 
 export function isSlotDateWithinRollingWindow(
@@ -26,16 +29,7 @@ export function getQuotaNumericLimits(
   quotaTier: QuotaTier,
   nums: BookingNumericSettings
 ): { dailyMax: number; rollingMax: number } {
-  if (quotaTier === "teaching") {
-    return {
-      dailyMax: nums.teachingMaxPerDay,
-      rollingMax: nums.teachingMaxRolling3d,
-    };
-  }
-  return {
-    dailyMax: nums.personalMaxPerDay,
-    rollingMax: nums.personalMaxRolling3d,
-  };
+  return quotaLimitsForTier(quotaTier, nums);
 }
 
 export function resolveBookingIdentityTypeOrThrow(

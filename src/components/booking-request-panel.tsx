@@ -37,6 +37,12 @@ import {
 } from "@/components/booking-quota-icons";
 import { BookingRulesVisual } from "@/components/booking-rules-visual";
 import { useSiteMe } from "@/lib/auth/use-site-me";
+import {
+  CAMERA_RENTAL_HERO_PATH,
+  CAMERA_RENTAL_QR_PATH,
+  CAMERA_RENTAL_STRIPE_CHECKOUT_URL,
+  CAMERA_USAGE_GUIDE_DRIVE_URL,
+} from "@/lib/booking/camera-rental";
 
 type SlotRow = {
   id: string;
@@ -188,6 +194,17 @@ export function BookingRequestPanel(props: {
   const [bookingIdentityChoice, setBookingIdentityChoice] = useState<
     "individual" | "teaching_or_with_students"
   >("individual");
+
+  type CamPref = null | "no" | "yes";
+  type CamPay = null | "paid_before" | "pay_after" | "need_choice";
+  const [camPref, setCamPref] = useState<CamPref>(null);
+  const [camPay, setCamPay] = useState<CamPay>(null);
+  const [camModalOpen, setCamModalOpen] = useState(false);
+  const [camModalPaidPick, setCamModalPaidPick] = useState<boolean | null>(null);
+
+  const cameraSubmitBlocking =
+    camPref === null ||
+    (camPref === "yes" && camPay !== "paid_before" && camPay !== "pay_after");
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -408,14 +425,54 @@ export function BookingRequestPanel(props: {
     setSelected((prev) => new Set(prev).add(id));
   }
 
+  function cancelCamModal() {
+    setCamModalOpen(false);
+    setCamModalPaidPick(null);
+    if (camPref === "yes" && camPay === null) {
+      setCamPref(null);
+    }
+  }
+
+  function confirmCamModal() {
+    if (camModalPaidPick === null) return;
+    if (camModalPaidPick) {
+      setCamPay("paid_before");
+    } else {
+      setCamPay("need_choice");
+    }
+    setCamModalOpen(false);
+    setCamModalPaidPick(null);
+  }
+
   async function submit() {
     setSubmitting(true);
     setError(null);
     setDone(null);
+    if (camPref === null) {
+      setError(t("booking.request.cameraSubmitPickRentalHint"));
+      setSubmitting(false);
+      return;
+    }
+    if (camPref === "yes" && camPay !== "paid_before" && camPay !== "pay_after") {
+      setError(t("booking.request.cameraSubmitCompletePaymentFlowHint"));
+      setSubmitting(false);
+      return;
+    }
     const payload: {
       slotIds: string[];
       bookingIdentityType?: "individual" | "teaching_or_with_students";
-    } = { slotIds: [...selected] };
+      cameraRentalOptIn: boolean;
+      cameraRentalPaymentChoice: "paid_before_booking" | "pay_after_booking" | null;
+    } = {
+      slotIds: [...selected],
+      cameraRentalOptIn: camPref === "yes",
+      cameraRentalPaymentChoice:
+        camPref === "yes"
+          ? camPay === "paid_before"
+            ? "paid_before_booking"
+            : "pay_after_booking"
+          : null,
+    };
     if (dualEligible) {
       payload.bookingIdentityType = bookingIdentityChoice;
     }
@@ -432,6 +489,8 @@ export function BookingRequestPanel(props: {
     }
     setDone(data.bookingRequestId ?? "OK");
     setSelected(new Set());
+    setCamPref(null);
+    setCamPay(null);
     await loadMonthSlots();
     setSubmitting(false);
   }
@@ -1004,6 +1063,183 @@ export function BookingRequestPanel(props: {
         )}
       </div>
 
+      <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface p-4 shadow-sm space-y-4">
+        <h2 className="text-base font-medium text-stone-900 dark:text-stone-50">
+          {t("booking.request.cameraSectionTitle")}
+        </h2>
+        <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+          {t("booking.request.cameraQuestion")}
+        </p>
+        <div className="overflow-hidden rounded-lg border border-stone-200 bg-white dark:border-stone-600 dark:bg-stone-950">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static marketing asset */}
+          <img
+            src={withBasePath(CAMERA_RENTAL_HERO_PATH)}
+            alt={t("booking.request.cameraHeroAlt")}
+            className="mx-auto block max-h-64 w-full object-contain"
+          />
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-8">
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+            <input
+              type="checkbox"
+              checked={camPref === "no"}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setCamPref("no");
+                  setCamPay(null);
+                  setCamModalOpen(false);
+                } else {
+                  setCamPref(null);
+                }
+              }}
+              className="h-4 w-4 shrink-0 rounded border-stone-400"
+            />
+            <span>{t("booking.request.cameraNoNeed")}</span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+            <input
+              type="checkbox"
+              checked={camPref === "yes"}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setCamPref("yes");
+                  setCamPay(null);
+                  setCamModalPaidPick(null);
+                  setCamModalOpen(true);
+                } else {
+                  setCamPref(null);
+                  setCamPay(null);
+                }
+              }}
+              className="h-4 w-4 shrink-0 rounded border-stone-400"
+            />
+            <span>{t("booking.request.cameraNeed")}</span>
+          </label>
+        </div>
+
+        {camPref === "yes" && camPay === "paid_before" ? (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() =>
+                window.open(CAMERA_USAGE_GUIDE_DRIVE_URL, "_blank", "noopener,noreferrer")
+              }
+              className="rounded-lg border border-emerald-800/40 bg-emerald-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950"
+            >
+              {t("booking.request.cameraOpenGuideButton")}
+            </button>
+          </div>
+        ) : null}
+
+        {camPref === "yes" && camPay === "need_choice" ? (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setCamModalPaidPick(null);
+                setCamModalOpen(true);
+              }}
+              className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+            >
+              {t("booking.request.cameraPayFirstButton")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCamPay("pay_after")}
+              className="rounded-lg border border-blue-900/30 bg-blue-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-900"
+            >
+              {t("booking.request.cameraPayAfterButton")}
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {camModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={cancelCamModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-pay-modal-title"
+            className="max-h-[min(90vh,640px)] w-full max-w-lg overflow-y-auto rounded-xl border border-stone-200 bg-white p-5 shadow-xl dark:border-stone-600 dark:bg-stone-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              id="camera-pay-modal-title"
+              className="text-base font-semibold text-stone-900 dark:text-stone-50"
+            >
+              {t("booking.request.cameraPayModalTitle")}
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+              {t("booking.request.cameraPayInstruction")}
+            </p>
+            <a
+              href={CAMERA_RENTAL_STRIPE_CHECKOUT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex text-sm font-medium text-blue-700 underline underline-offset-2 dark:text-blue-400"
+            >
+              {t("booking.request.cameraPayLinkLabel")}
+            </a>
+            <div className="mt-4 flex justify-center rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-600">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={withBasePath(CAMERA_RENTAL_QR_PATH)}
+                alt={t("booking.request.cameraQrAlt")}
+                width={200}
+                height={200}
+                className="h-48 w-48 object-contain"
+              />
+            </div>
+            <p className="mt-5 text-sm font-medium text-stone-900 dark:text-stone-100">
+              {t("booking.request.cameraPaidPrompt")}
+            </p>
+            <div className="mt-2 space-y-2">
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+                <input
+                  type="radio"
+                  name="cameraPaidPick"
+                  checked={camModalPaidPick === true}
+                  onChange={() => setCamModalPaidPick(true)}
+                  className="h-4 w-4 shrink-0"
+                />
+                <span>{t("booking.request.cameraPaidYes")}</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+                <input
+                  type="radio"
+                  name="cameraPaidPick"
+                  checked={camModalPaidPick === false}
+                  onChange={() => setCamModalPaidPick(false)}
+                  className="h-4 w-4 shrink-0"
+                />
+                <span>{t("booking.request.cameraPaidNo")}</span>
+              </label>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelCamModal}
+                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-800 dark:border-stone-600 dark:text-stone-200"
+              >
+                {t("booking.request.cameraModalCancel")}
+              </button>
+              <button
+                type="button"
+                disabled={camModalPaidPick === null}
+                onClick={confirmCamModal}
+                className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900"
+              >
+                {t("booking.request.cameraModalConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {bookingLive && dualEligible && (
         <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3 text-sm">
           <p className="font-medium text-stone-900 dark:text-stone-50">
@@ -1043,6 +1279,7 @@ export function BookingRequestPanel(props: {
             selected.size === 0 ||
             submitting ||
             !bookingLive ||
+            cameraSubmitBlocking ||
             (limits?.cooldown?.active === true) ||
             (limits != null &&
               selected.size > 0 &&

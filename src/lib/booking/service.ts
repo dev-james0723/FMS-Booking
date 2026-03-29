@@ -3,6 +3,7 @@ import {
   type BookingSlot,
   type BookingIdentityType,
   type BookingVenueKind,
+  type CameraRentalPaymentChoice,
   type User,
   Prisma,
 } from "@prisma/client";
@@ -87,8 +88,21 @@ export async function validateAndCreateBookingRequest(params: {
   slotIds: string[];
   bonusRewardId?: string | null;
   bookingIdentityType?: BookingIdentityType | null;
+  cameraRentalOptIn?: boolean;
+  cameraRentalPaymentChoice?: CameraRentalPaymentChoice | null;
 }): Promise<{ requestId: string }> {
   const { userId, userCategoryCode, slotIds } = params;
+  const cameraOptIn = params.cameraRentalOptIn === true;
+  const cameraChoice = params.cameraRentalPaymentChoice ?? null;
+  if (cameraOptIn && !cameraChoice) {
+    throw new BookingRuleError(
+      "CAMERA_RENTAL_INCOMPLETE",
+      "已選擇租用攝錄機，請完成付款方式確認後再提交。"
+    );
+  }
+  if (!cameraOptIn && cameraChoice) {
+    throw new BookingRuleError("VALIDATION_ERROR", "相機租用資料不一致");
+  }
   const uniqueSlotIds = [...new Set(slotIds)];
 
   if (uniqueSlotIds.length === 0) {
@@ -259,6 +273,8 @@ export async function validateAndCreateBookingRequest(params: {
           userCategoryAtRequest: u.category?.code ?? categoryCode,
           usesBonusSlot: usesBonus,
           bonusRewardId: bonusId,
+          cameraRentalOptIn: cameraOptIn,
+          cameraRentalPaymentChoice: cameraOptIn ? cameraChoice : null,
         },
       });
 

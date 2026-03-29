@@ -1,3 +1,9 @@
+import type { CameraRentalPaymentChoice } from "@prisma/client";
+import {
+  CAMERA_RENTAL_STRIPE_CHECKOUT_URL,
+  CAMERA_USAGE_GUIDE_DRIVE_URL,
+  cameraRentalQrAbsUrl,
+} from "@/lib/booking/camera-rental";
 import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 import type { Locale } from "@/lib/i18n/types";
 import { withBasePath } from "@/lib/base-path";
@@ -38,12 +44,97 @@ function linkButton(href: string, label: string, ghost = false): string {
   return `<a href="${escapeHtml(href)}" style="${st}">${escapeHtml(label)}</a>`;
 }
 
+function cameraBlocksForBookingMail(
+  locale: Locale,
+  optIn: boolean,
+  choice: CameraRentalPaymentChoice | null,
+): { text: string; html: string } {
+  if (!optIn || !choice) return { text: "", html: "" };
+
+  const stripe = CAMERA_RENTAL_STRIPE_CHECKOUT_URL;
+  const guide = CAMERA_USAGE_GUIDE_DRIVE_URL;
+  const qrUrl = cameraRentalQrAbsUrl();
+
+  if (locale === "en") {
+    if (choice === "paid_before_booking") {
+      return {
+        text: [
+          "",
+          "Sony 4K camcorder rental (HK$99)",
+          "You indicated payment is complete. How to use the camcorder:",
+          guide,
+        ].join("\n"),
+        html: `<div style="margin:20px 0;padding:14px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;font-size:14px;line-height:1.65;color:#14532d;">
+  <p style="margin:0 0 8px;font-weight:700;">Sony 4K camcorder rental (HK$99)</p>
+  <p style="margin:0 0 10px;">You indicated payment is complete. Please open this Google Drive folder for how to use the camcorder:</p>
+  <p style="margin:0;">${linkButton(guide, "Camera usage guide (Google Drive)")}</p>
+</div>`,
+      };
+    }
+    return {
+      text: [
+        "",
+        "Sony 4K camcorder rental (HK$99)",
+        "You chose to pay after submitting this request. Please pay HK$99 before your session:",
+        stripe,
+        "",
+        "Because you selected camcorder rental, please complete payment before your session time.",
+      ].join("\n"),
+      html: `<div style="margin:20px 0;padding:14px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-size:14px;line-height:1.65;color:#422006;">
+  <p style="margin:0 0 8px;font-weight:700;">Sony 4K camcorder rental (HK$99)</p>
+  <p style="margin:0 0 10px;">You chose to pay after booking. Please pay <strong>HK$99</strong> before your session using the link below (or scan the QR code).</p>
+  <p style="margin:0 0 12px;">${linkButton(stripe, "Pay HK$99 (Stripe)")}</p>
+  <p style="margin:0 0 8px;font-size:13px;">Payment QR code:</p>
+  <p style="margin:0 0 12px;"><img src="${escapeHtml(qrUrl)}" width="200" height="200" alt="Stripe payment QR" style="display:block;border:1px solid #e7e5e4;border-radius:8px;background:#fff;" /></p>
+  <p style="margin:0;font-size:13px;font-weight:600;">Because you selected camcorder rental, please complete payment before your session.</p>
+</div>`,
+    };
+  }
+
+  if (choice === "paid_before_booking") {
+    return {
+      text: [
+        "",
+        "Sony 4K 攝錄機租用（港幣 $99）",
+        "您已表示完成付款。請參考以下 Google Drive 資料夾了解如何使用攝錄機：",
+        guide,
+      ].join("\n"),
+      html: `<div style="margin:20px 0;padding:14px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;font-size:14px;line-height:1.65;color:#14532d;">
+  <p style="margin:0 0 8px;font-weight:700;">Sony 4K 攝錄機租用（港幣 $99）</p>
+  <p style="margin:0 0 10px;">您已表示完成付款。請開啟以下 Google Drive 資料夾查閱如何使用攝錄機：</p>
+  <p style="margin:0;">${linkButton(guide, "按此查閲如何使用攝錄機（Google Drive）")}</p>
+</div>`,
+    };
+  }
+
+  return {
+    text: [
+      "",
+      "Sony 4K 攝錄機租用（港幣 $99）",
+      "您選擇了預約時段後付款。請於預約時段前盡快支付港幣 $99：",
+      stripe,
+      "",
+      "因為你選擇了攝錄機租用服務，請及時在預約時段前完成付款。",
+    ].join("\n"),
+    html: `<div style="margin:20px 0;padding:14px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-size:14px;line-height:1.65;color:#422006;">
+  <p style="margin:0 0 8px;font-weight:700;">Sony 4K 攝錄機租用（港幣 $99）</p>
+  <p style="margin:0 0 10px;">您選擇了預約時段後付款。請使用以下連結（或掃描 QR Code）於預約時段前支付 <strong>港幣 $99</strong>：</p>
+  <p style="margin:0 0 12px;">${linkButton(stripe, "按此付款（Stripe）")}</p>
+  <p style="margin:0 0 8px;font-size:13px;">付款連結 QR Code：</p>
+  <p style="margin:0 0 12px;"><img src="${escapeHtml(qrUrl)}" width="200" height="200" alt="Stripe 付款 QR Code" style="display:block;border:1px solid #e7e5e4;border-radius:8px;background:#fff;" /></p>
+  <p style="margin:0;font-size:13px;font-weight:600;">因為你選擇了攝錄機租用服務，請及時在預約時段前完成付款。</p>
+</div>`,
+  };
+}
+
 export function buildBookingSubmittedMail(
   locale: Locale,
   params: {
     greetingName: string;
     requestId: string;
     slotCount: number;
+    cameraRentalOptIn: boolean;
+    cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
   },
 ): { subject: string; text: string; html: string } {
   const safeName = escapeHtml(params.greetingName);
@@ -68,6 +159,12 @@ export function buildBookingSubmittedMail(
 
   const logoDf = absAppUrl("/branding/d-festival-young-pianist.png");
   const logoFms = absAppUrl("/branding/fantasia-music-space.webp");
+
+  const cameraMail = cameraBlocksForBookingMail(
+    locale,
+    params.cameraRentalOptIn,
+    params.cameraRentalPaymentChoice,
+  );
 
   if (locale === "en") {
     const subject = "Booking received | D Festival × Fantasia Music Space";
@@ -103,6 +200,7 @@ export function buildBookingSubmittedMail(
       "",
       rulesBlock,
       driveBlock,
+      cameraMail.text,
       "",
       "Quick links:",
       `• View my booking history: ${urls.history}`,
@@ -173,6 +271,7 @@ export function buildBookingSubmittedMail(
       <p style="margin:0 0 20px;">${linkButton(urls.history, "View my booking history")}</p>
       ${rulesHtml}
       ${driveHtml}
+      ${cameraMail.html}
       <p style="margin:24px 0 8px;font-weight:600;font-size:14px;color:#44403c;">Site links</p>
       <div style="margin:0 0 20px;">${navLabels.map(([u, l]) => linkButton(u, l, true)).join("")}</div>
       <p style="margin:20px 0 8px;font-weight:600;font-size:14px;color:#44403c;">Contact us</p>
@@ -222,6 +321,7 @@ export function buildBookingSubmittedMail(
     "",
     rulesBlock,
     driveBlock,
+    cameraMail.text,
     "",
     "本網站連結：",
     `• 查看我的預約紀錄：${urls.history}`,
@@ -292,6 +392,7 @@ export function buildBookingSubmittedMail(
       <p style="margin:0 0 20px;">${linkButton(urls.history, "查看我的預約紀錄")}</p>
       ${rulesHtml}
       ${driveHtml}
+      ${cameraMail.html}
       <p style="margin:24px 0 8px;font-weight:600;font-size:14px;color:#44403c;">本網站連結</p>
       <div style="margin:0 0 20px;">${navLabels.map(([u, l]) => linkButton(u, l, true)).join("")}</div>
       <p style="margin:20px 0 8px;font-weight:600;font-size:14px;color:#44403c;">聯絡我們</p>

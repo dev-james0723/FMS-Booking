@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { withBasePath } from "@/lib/base-path";
 
 export type SiteMeUser = {
@@ -22,17 +29,34 @@ export function bookingNavEntryLabel(
     : t("nav.bookPianoStudioSlots");
 }
 
+const SiteMeServerUserContext = createContext<SiteMeUser | null | undefined>(undefined);
+
+export function SiteMeProvider({
+  initialUser,
+  children,
+}: {
+  initialUser: SiteMeUser | null;
+  children: ReactNode;
+}) {
+  return createElement(
+    SiteMeServerUserContext.Provider,
+    { value: initialUser },
+    children,
+  );
+}
+
 /**
  * Current session for public chrome (header, footer, home CTA).
- * Before the client `/api/v1/me` request finishes, `user` is always `null` so SSR and
- * the first client render match (avoids hydration mismatches on auth-dependent UI).
+ * Uses the server-verified session snapshot until `/api/v1/me` returns so logged-in users
+ * never briefly see the logged-out login buttons after redirect.
  */
 export function useSiteMe(): {
   user: SiteMeUser | null;
   bookingHref: string;
 } {
-  const [user, setUser] = useState<SiteMeUser | null>(null);
-  const [meReady, setMeReady] = useState(false);
+  const serverUser = useContext(SiteMeServerUserContext);
+  const [clientUser, setClientUser] = useState<SiteMeUser | null>(null);
+  const [fetchDone, setFetchDone] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,17 +68,17 @@ export function useSiteMe(): {
           const data = await res.json().catch(() => ({}));
           const u = data?.user as { email?: string; bookingVenueKind?: string } | undefined;
           if (u?.email) {
-            setUser({ email: u.email, bookingVenueKind: u.bookingVenueKind });
+            setClientUser({ email: u.email, bookingVenueKind: u.bookingVenueKind });
           } else {
-            setUser(null);
+            setClientUser(null);
           }
         } else {
-          setUser(null);
+          setClientUser(null);
         }
       } catch {
-        if (!cancelled) setUser(null);
+        if (!cancelled) setClientUser(null);
       } finally {
-        if (!cancelled) setMeReady(true);
+        if (!cancelled) setFetchDone(true);
       }
     })();
     return () => {
@@ -62,8 +86,12 @@ export function useSiteMe(): {
     };
   }, []);
 
-  const effectiveUser = meReady ? user : null;
-  const bookingHref = effectiveUser ? bookingHrefForUser(effectiveUser) : "/booking";
+  const user = fetchDone
+    ? (clientUser ?? null)
+    : serverUser !== undefined
+      ? serverUser
+      : null;
+  const bookingHref = user ? bookingHrefForUser(user) : "/booking";
 
-  return { user: effectiveUser, bookingHref };
+  return { user, bookingHref };
 }

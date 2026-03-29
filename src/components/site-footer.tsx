@@ -129,13 +129,13 @@ export function SiteFooter() {
           </button>
         </div>
       </div>
-      <div className="border-t border-stone-200 py-6 text-center text-xs text-stone-500 dark:border-stone-800 dark:text-stone-400">
+      <div className="mx-auto max-w-5xl border-t border-stone-200 px-5 py-6 text-center text-xs text-stone-500 sm:px-4 dark:border-stone-800 dark:text-stone-400">
         <p>{tr("footer.line", { year })}</p>
-        <div className="mt-5 flex flex-col items-center gap-3">
-          <p className="text-[11px] font-medium tracking-wide text-[#9a7b3c] dark:text-[#cbb882]">
+        <div className="mt-5 flex w-full flex-col items-center gap-3">
+          <p className="w-full text-[11px] font-medium tracking-wide text-[#9a7b3c] dark:text-[#cbb882]">
             {t("footer.designCredit")}
           </p>
-          <p className="mx-auto max-w-md text-[11px] leading-relaxed text-stone-600 dark:text-stone-400">
+          <p className="w-full text-[11px] leading-relaxed text-stone-600 dark:text-stone-400">
             {t("footer.designInquiryTagline")}
           </p>
           <p className="text-[11px]">

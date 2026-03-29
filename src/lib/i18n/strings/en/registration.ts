@@ -36,10 +36,24 @@ export const regEn = {
   submitFail: "Submission failed",
   errorModalTitle: "Cannot continue",
   errorModalOk: "OK",
+    googleContinue: "Continue with Google",
+  googlePendingHint:
+    "Google prefill is not enabled on this server yet. Set NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID and GOOGLE_AUTH_CLIENT_SECRET (see .env.example), configure the OAuth redirect URI in Google Cloud, then restart the app.",
+  googleHint:
+    "You still need SMS verification, biometric setup, and the rest of the form before you can submit registration.",
   sectionBasic: "Basic information",
   sectionUserType: "User category & registration profile",
-  regProfileHint:
-    "This records your background and eligibility. Booking limits (30 minutes = 0.5 hour per session) use one quota tier per account; dual eligibility does not double your quota. Individual / teacher-referred: up to 5 sessions per day (2.5 hours) and 7 in any rolling 3 calendar days (3.5 hours). Teaching-only or dual practice+teaching (teaching tier): up to 8 per day (4 hours) and 16 in any rolling 3 days (8 hours).",
+  registrationProfileKindLabel: "User category",
+  regProfilePlaceholder: "Please select…",
+  regProfileRequired: "Please choose a user category.",
+  regProfileQuotaHint:
+    "Choose a category to see its booking slot limits (per day and across any three consecutive calendar days).",
+  quotaPreviewTitle: "Booking slot limits for this category",
+  quotaDailyLine: "Per day: up to {blocks} slots (about {hours} in total)",
+  quotaRollingLine:
+    "Across any {days} consecutive calendar days: up to {blocks} slots (about {hours} in total)",
+  categoryUseReminder:
+    "Please use free sessions in line with the user category you selected, and make sure what you do on site matches that category. If organisers see during your booking that your activity clearly does not match it (for example you chose “Teaching / with students” but mainly practise on your own), they may cancel that booking and may turn down future booking requests from you.",
   regProfilePersonal: "Individual user",
   regProfileTeaching: "Teaching / with students",
   regProfileTeacherReferred: "Student referred by a teacher",
@@ -52,7 +66,10 @@ export const regEn = {
   sectionConsent: "Consent",
   nameZh: "Chinese name (required)",
   nameEn: "English name",
-  email: "Email (required; used to sign in)",
+  email: "Email (for sign-in — type it in or use Google below)",
+  emailRequiredSubmit: "Please enter your email, or use Google sign-in below to prefill it.",
+  emailInvalid: "Please enter a valid email address.",
+  privacyDisclosureTrigger: "About privacy & security",
   privacyTitle: "Privacy & security",
   privacyP1:
     "The contact phone and biometric data you provide here (e.g. Face ID, fingerprint) are treated as personal data, kept strictly confidential, and used only for identity verification, preventing duplicate sign-ups, and account security, in line with the privacy policy you accept. We will not use them for unrelated marketing or disclose them arbitrarily to third parties.",
@@ -73,7 +90,7 @@ export const regEn = {
   bioHint:
     "Before registering you must complete Face ID, Touch ID, or fingerprint on this device (where available) to bind a passkey. You can then sign in the same way, or continue using email and password.",
   bioEmailFirst:
-    'Enter a valid email in "Email (sign-in)" above first, then tap "Bind Face ID / fingerprint". The passkey will be tied to that email.',
+    'Enter a valid email above first (or use Google to prefill), then tap "Bind Face ID / fingerprint". The passkey will be tied to that email.',
   processing: "Processing…",
   passkeyRebind: "Re-bind Face ID / fingerprint",
   passkeyBind: "Bind Face ID / fingerprint",

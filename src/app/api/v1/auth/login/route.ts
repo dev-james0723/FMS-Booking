@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const email = parsed.data.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { credentials: true },
+    include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
   });
 
   if (!user?.credentials) {
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
     accountStatus: user.accountStatus,
     mustChangePassword: user.credentials.mustChangePassword,
     hasCompletedRegistration: user.hasCompletedRegistration,
+    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
   });
 
   const res = jsonOk({

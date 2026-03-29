@@ -19,7 +19,8 @@ export type BookingGateErrorCode =
   | "BOOKING_IDENTITY_REQUIRED"
   | "BOOKING_IDENTITY_INELIGIBLE"
   | "BOOKING_VENUE_MISMATCH"
-  | "BOOKING_VENUE_MIXED";
+  | "BOOKING_VENUE_MIXED"
+  | "CAMERA_RENTAL_INCOMPLETE";
 
 export class BookingRuleError extends Error {
   constructor(

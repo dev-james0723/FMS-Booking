@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.sub },
-    include: { credentials: true },
+    include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
   });
 
   const token = await signUserSession({
@@ -64,6 +64,7 @@ export async function POST(req: Request) {
     accountStatus: user.accountStatus,
     mustChangePassword: false,
     hasCompletedRegistration: user.hasCompletedRegistration,
+    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
   });
   const res = jsonOk({ ok: true });
   return attachUserSessionCookie(res, token);

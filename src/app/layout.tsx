@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
+import { getSessionFromCookies } from "@/lib/auth/session";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
 import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 
@@ -25,6 +26,16 @@ export default async function RootLayout({
   const initialLocale = localeFromCookieValue(jar.get(FMS_LOCALE_STORAGE_KEY)?.value);
   const htmlLang = initialLocale === "en" ? "en" : "zh-HK";
 
+  const session = await getSessionFromCookies();
+  const initialSiteMeUser =
+    session != null
+      ? {
+          email: session.email,
+          bookingVenueKind:
+            session.bookingVenueKind === "open_space" ? "open_space" : "studio_room",
+        }
+      : null;
+
   return (
     <html
       lang={htmlLang}
@@ -38,7 +49,9 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
           suppressHydrationWarning
         />
-        <SiteChrome initialLocale={initialLocale}>{children}</SiteChrome>
+        <SiteChrome initialLocale={initialLocale} initialSiteMeUser={initialSiteMeUser}>
+          {children}
+        </SiteChrome>
       </body>
     </html>
   );

@@ -70,9 +70,18 @@ export async function syncBookingRequestToGoogleCalendar(
     return `${i + 1}. ${aStr} – ${bStr}`;
   });
 
+  const cameraLine = !booking.cameraRentalOptIn
+    ? "Sony 4K 攝錄機租用：否"
+    : booking.cameraRentalPaymentChoice === "paid_before_booking"
+      ? "Sony 4K 攝錄機租用：是（先付款）"
+      : booking.cameraRentalPaymentChoice === "pay_after_booking"
+        ? "Sony 4K 攝錄機租用：是（預約後付款）"
+        : "Sony 4K 攝錄機租用：是";
+
   const description = [
     `預約編號：${booking.id}`,
     `狀態：${booking.status}`,
+    cameraLine,
     `姓名：${p?.nameZh ?? "—"}`,
     `Email：${booking.user.email}`,
     `電話：${p?.phone ?? "—"}`,

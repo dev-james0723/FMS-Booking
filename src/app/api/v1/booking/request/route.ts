@@ -3,7 +3,7 @@ import { syncBookingRequestToGoogleCalendar } from "@/lib/calendar/google-bookin
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { BookingRuleError, validateAndCreateBookingRequest } from "@/lib/booking/service";
-import type { BookingIdentityType } from "@prisma/client";
+import type { BookingIdentityType, CameraRentalPaymentChoice } from "@prisma/client";
 import { sendBookingSubmitted } from "@/lib/email/booking";
 import { sendBookingAdminNotification } from "@/lib/email/booking-admin-notify";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
@@ -11,11 +11,35 @@ import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
-const bodySchema = z.object({
-  slotIds: z.array(z.string().uuid()).min(1),
-  bonusRewardId: z.string().uuid().optional().nullable(),
-  bookingIdentityType: z.enum(["individual", "teaching_or_with_students"]).optional().nullable(),
-});
+const bodySchema = z
+  .object({
+    slotIds: z.array(z.string().uuid()).min(1),
+    bonusRewardId: z.string().uuid().optional().nullable(),
+    bookingIdentityType: z.enum(["individual", "teaching_or_with_students"]).optional().nullable(),
+    cameraRentalOptIn: z.boolean().optional(),
+    cameraRentalPaymentChoice: z
+      .enum(["paid_before_booking", "pay_after_booking"])
+      .optional()
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const optIn = data.cameraRentalOptIn === true;
+    const ch = data.cameraRentalPaymentChoice ?? null;
+    if (optIn && !ch) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "cameraRentalPaymentChoice required when cameraRentalOptIn",
+        path: ["cameraRentalPaymentChoice"],
+      });
+    }
+    if (!optIn && ch) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "cameraRentalPaymentChoice must be null when not opting in",
+        path: ["cameraRentalPaymentChoice"],
+      });
+    }
+  });
 
 export async function POST(req: Request) {
   const auth = await requireUserSession();
@@ -50,6 +74,11 @@ export async function POST(req: Request) {
       slotIds: parsed.data.slotIds,
       bonusRewardId: parsed.data.bonusRewardId,
       bookingIdentityType: parsed.data.bookingIdentityType as BookingIdentityType | null | undefined,
+      cameraRentalOptIn: parsed.data.cameraRentalOptIn === true,
+      cameraRentalPaymentChoice: parsed.data.cameraRentalPaymentChoice as
+        | CameraRentalPaymentChoice
+        | null
+        | undefined,
     });
 
     const full = await prisma.bookingRequest.findUnique({
@@ -75,6 +104,8 @@ export async function POST(req: Request) {
         requestId: full.id,
         slotCount: full.allocations.length,
         locale,
+        cameraRentalOptIn: full.cameraRentalOptIn,
+        cameraRentalPaymentChoice: full.cameraRentalPaymentChoice,
       });
     }
 
@@ -115,6 +146,7 @@ export async function POST(req: Request) {
         "BOOKING_IDENTITY_INELIGIBLE",
         "BOOKING_VENUE_MISMATCH",
         "BOOKING_VENUE_MIXED",
+        "CAMERA_RENTAL_INCOMPLETE",
       ]);
       const status = forbidden.has(e.code)
         ? 403

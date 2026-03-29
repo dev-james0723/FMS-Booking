@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     timeout: 120_000,
     attestationType: "none",
     authenticatorSelection: {
-      residentKey: "preferred",
+      residentKey: "required",
       userVerification: "required",
     },
   });

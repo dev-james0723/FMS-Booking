@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
-import type { AccountStatus } from "@prisma/client";
+import type { AccountStatus, BookingVenueKind } from "@prisma/client";
 import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
 
 const COOKIE = "fms_user_session";
@@ -12,6 +12,8 @@ export type SessionPayload = {
   accountStatus: AccountStatus;
   mustChangePassword: boolean;
   hasCompletedRegistration: boolean;
+  /** Booking nav target; legacy tokens omit → verify yields undefined, UI defaults to studio. */
+  bookingVenueKind?: BookingVenueKind;
   iat?: number;
   exp?: number;
 };
@@ -33,6 +35,9 @@ export async function verifyUserSession(token: string): Promise<SessionPayload |
     const accountStatus = payload.accountStatus as AccountStatus;
     const mustChangePassword = Boolean(payload.mustChangePassword);
     const hasCompletedRegistration = Boolean(payload.hasCompletedRegistration);
+    const rawVenue = payload.bookingVenueKind;
+    const bookingVenueKind: BookingVenueKind | undefined =
+      rawVenue === "open_space" || rawVenue === "studio_room" ? rawVenue : undefined;
     if (!sub || !email) return null;
     return {
       sub,
@@ -40,6 +45,7 @@ export async function verifyUserSession(token: string): Promise<SessionPayload |
       accountStatus,
       mustChangePassword,
       hasCompletedRegistration,
+      bookingVenueKind,
     };
   } catch {
     return null;

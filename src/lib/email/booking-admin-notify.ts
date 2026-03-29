@@ -56,12 +56,21 @@ export async function sendBookingAdminNotification(
       ? "場地系統：開放空間（大型樂器）"
       : "場地系統：琴室（房間內）";
 
+  const cameraLine = !booking.cameraRentalOptIn
+    ? "Sony 4K 攝錄機租用：否"
+    : booking.cameraRentalPaymentChoice === "paid_before_booking"
+      ? "Sony 4K 攝錄機租用：是（已表示先完成付款）"
+      : booking.cameraRentalPaymentChoice === "pay_after_booking"
+        ? "Sony 4K 攝錄機租用：是（預約後付款）"
+        : "Sony 4K 攝錄機租用：是（付款方式未記錄）";
+
   const lines = [
     `有新的預約提交。`,
     ``,
     `預約編號：${booking.id}`,
     `預約狀態：${booking.status}`,
     venueLine,
+    cameraLine,
     `使用者類別（提交當刻）：${categoryZh}`,
     `今次預約身份：${bookingIdentityTypeLabelZh(booking.bookingIdentityType)}`,
     ``,

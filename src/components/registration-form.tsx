@@ -2,14 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 import { withBasePath } from "@/lib/base-path";
+import { googleAuthStartUrl } from "@/lib/auth/google-auth-start-url";
 import { PENDING_REFERRAL_SESSION_KEY } from "@/lib/referral/constants";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
 } from "@/lib/booking/campaign-constants";
+import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import {
+  parseBookingNumericSettings,
+  quotaLimitsForTier,
+} from "@/lib/booking/booking-numeric-settings";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
@@ -21,7 +27,10 @@ import {
   instrumentLabel,
 } from "@/lib/instruments/orchestra-instruments";
 import { registrationInstrumentImageMap } from "@/lib/instruments/instrument-reference-images";
-import type { RegistrationProfileKind } from "@/lib/registration/profile-kind";
+import {
+  deriveRegistrationProfile,
+  type RegistrationProfileKind,
+} from "@/lib/registration/profile-kind";
 
 const IDENTITY_VALUES = [
   "student",
@@ -59,6 +68,10 @@ const interestPlainClass = "font-medium text-stone-800 dark:text-stone-200";
 const consentLinkClass =
   "font-medium text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-500 dark:text-blue-400 dark:decoration-blue-400/80 dark:hover:text-blue-300";
 
+const googleAuthEnabled =
+  typeof process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID === "string" &&
+  process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID.length > 0;
+
 function RedRequiredStarLead({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-start gap-0">
@@ -86,6 +99,86 @@ function formatHkPreferredDate(iso: string, locale: Locale): string {
     day: "numeric",
     weekday: "short",
   });
+}
+
+function formatQuotaHoursApprox(blocks: number, slotMinutes: number, locale: Locale): string {
+  const totalMin = blocks * slotMinutes;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (locale === "en") {
+    if (totalMin === 0) return "0 min";
+    if (m === 0) return `${h} hour${h === 1 ? "" : "s"}`;
+    if (h === 0) return `${m} min`;
+    return `${h} h ${m} min`;
+  }
+  if (totalMin === 0) return "0 分鐘";
+  if (m === 0) return `${h} 小時`;
+  if (h === 0) return `${m} 分鐘`;
+  return `${h} 小時 ${m} 分鐘`;
+}
+
+function QuotaBlockStrip({ count, className }: { count: number; className: string }) {
+  if (count <= 0) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1" aria-hidden>
+      {Array.from({ length: count }, (_, i) => (
+        <span
+          key={i}
+          className={`inline-block size-3.5 shrink-0 rounded-sm sm:size-4 ${className}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+type BookingNums = ReturnType<typeof parseBookingNumericSettings>;
+
+function RegistrationProfileQuotaPanel(props: {
+  kind: RegistrationProfileKind;
+  bookingNums: BookingNums;
+  slotDurationMinutes: number;
+  locale: Locale;
+  t: (path: string) => string;
+  tr: (path: string, vars: Record<string, string>) => string;
+}) {
+  const { quotaTier } = deriveRegistrationProfile(props.kind);
+  const { dailyMax, rollingMax } = quotaLimitsForTier(quotaTier, props.bookingNums);
+  const dHours = formatQuotaHoursApprox(dailyMax, props.slotDurationMinutes, props.locale);
+  const rHours = formatQuotaHoursApprox(rollingMax, props.slotDurationMinutes, props.locale);
+  return (
+    <div className="space-y-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50/90 p-4 dark:bg-stone-900/50">
+      <p className="text-sm font-medium text-stone-800 dark:text-stone-200">
+        {props.t("reg.quotaPreviewTitle")}
+      </p>
+      <div className="space-y-4">
+        <div>
+          <p className="text-sm text-stone-700 dark:text-stone-300">
+            {props.tr("reg.quotaDailyLine", {
+              blocks: String(dailyMax),
+              hours: dHours,
+            })}
+          </p>
+          <QuotaBlockStrip
+            count={dailyMax}
+            className="bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm dark:from-amber-500 dark:to-amber-600"
+          />
+        </div>
+        <div>
+          <p className="text-sm text-stone-700 dark:text-stone-300">
+            {props.tr("reg.quotaRollingLine", {
+              days: String(ROLLING_WINDOW_CALENDAR_DAYS),
+              blocks: String(rollingMax),
+              hours: rHours,
+            })}
+          </p>
+          <QuotaBlockStrip
+            count={rollingMax}
+            className="bg-gradient-to-br from-sky-400 to-blue-600 shadow-sm dark:from-sky-500 dark:to-blue-600"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function formatRegistrationApiError(
@@ -176,6 +269,7 @@ function RegistrationPreferredDateMonth(props: {
 
 export function RegistrationForm() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const registerForOpenSpace = searchParams.get("for") === "open-space";
   const { t, tr, locale } = useTranslation();
   const dfestivalInfoUrl =
@@ -209,12 +303,16 @@ export function RegistrationForm() {
   const [webauthnSupported, setWebauthnSupported] = useState(false);
   const [age, setAge] = useState(18);
   const [registrationProfileKind, setRegistrationProfileKind] =
-    useState<RegistrationProfileKind>("personal_user");
+    useState<RegistrationProfileKind | null>(null);
+  const [publicBookingSettings, setPublicBookingSettings] = useState<Record<string, unknown>>(
+    () => ({})
+  );
   const [teacherName, setTeacherName] = useState("");
   const [teacherContact, setTeacherContact] = useState("");
   const [instrumentField, setInstrumentField] = useState("");
   const [instrumentMode, setInstrumentMode] = useState<"none" | "piano" | "other">("none");
   const [otherInstrumentOpen, setOtherInstrumentOpen] = useState(false);
+  const [privacyNoticeOpen, setPrivacyNoticeOpen] = useState(false);
   const [otherInstrumentId, setOtherInstrumentId] = useState<string | null>(null);
   const [instrumentImages, setInstrumentImages] = useState<Record<string, string>>(() =>
     registrationInstrumentImageMap()
@@ -248,6 +346,44 @@ export function RegistrationForm() {
       /* ignore */
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch(withBasePath("/api/v1/public/settings"));
+      const data = (await res.json().catch(() => ({}))) as {
+        settings?: Record<string, unknown>;
+      };
+      if (!cancelled) setPublicBookingSettings(data.settings ?? {});
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (searchParams.get("google_prefill") !== "1") return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(withBasePath("/api/v1/auth/google/register-prefill"), {
+        credentials: "include",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        prefill?: { email?: string; nameEn?: string | null };
+      };
+      if (cancelled) return;
+      const prefill = data.prefill;
+      if (prefill?.email) setEmail(prefill.email);
+      if (prefill?.nameEn) setNameEn(prefill.nameEn);
+      const p = new URLSearchParams(searchParams.toString());
+      p.delete("google_prefill");
+      const q = p.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, router, pathname]);
 
   const identityOptions = useMemo(
     () =>
@@ -288,6 +424,15 @@ export function RegistrationForm() {
     ],
     [t],
   );
+
+  const bookingNums = useMemo(
+    () => parseBookingNumericSettings(publicBookingSettings),
+    [publicBookingSettings],
+  );
+  const slotDurationMinutes = useMemo(() => {
+    const v = publicBookingSettings.slot_duration_minutes;
+    return typeof v === "number" && Number.isFinite(v) ? v : 30;
+  }, [publicBookingSettings]);
 
   const interestCheckValues = [
     interestDfestival,
@@ -559,6 +704,15 @@ export function RegistrationForm() {
       setError(t("reg.errAge"));
       return;
     }
+    const emailTrim = email.trim();
+    if (!emailTrim) {
+      setError(t("reg.emailRequiredSubmit"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+      setError(t("reg.emailInvalid"));
+      return;
+    }
     if (!phoneVerificationToken || !phoneVerified) {
       setError(t("reg.phoneSmsPasskey"));
       return;
@@ -569,6 +723,10 @@ export function RegistrationForm() {
     }
     if (!passkeyPreregToken) {
       setError(t("reg.errPasskeyBeforeSubmit"));
+      return;
+    }
+    if (!registrationProfileKind) {
+      setError(t("reg.regProfileRequired"));
       return;
     }
     if (registrationProfileKind === "teacher_referred_student") {
@@ -602,11 +760,11 @@ export function RegistrationForm() {
     const body = {
       nameZh: nameZh.trim(),
       nameEn: nameEn.trim() || null,
-      email: email.trim(),
+      email: emailTrim,
       phone: phone.trim(),
       phoneVerificationToken,
       age,
-      registrationProfileKind,
+      registrationProfileKind: registrationProfileKind!,
       teacherName: teacherName.trim() || null,
       teacherContact: teacherContact.trim() || null,
       instrumentField: instrumentField.trim(),
@@ -831,37 +989,58 @@ export function RegistrationForm() {
 
       <section className="space-y-4">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionUserType")}</h2>
-        <p className="text-sm text-stone-600 dark:text-stone-400">{t("reg.regProfileHint")}</p>
-        <div className="space-y-2" role="radiogroup" aria-label={t("reg.sectionUserType")}>
-          {(
-            [
-              ["personal_user", "reg.regProfilePersonal"],
-              ["teaching_user", "reg.regProfileTeaching"],
-              ["teacher_referred_student", "reg.regProfileTeacherReferred"],
-              ["dual_practice_and_teaching", "reg.regProfileDual"],
-            ] as const
-          ).map(([value, labelKey]) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-start gap-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-3 py-2.5 text-sm text-stone-800 dark:text-stone-200"
-            >
-              <input
-                type="radio"
-                name="registrationProfileKind"
-                className="mt-1"
-                checked={registrationProfileKind === value}
-                onChange={() => {
-                  setRegistrationProfileKind(value);
-                  if (value !== "teacher_referred_student") {
-                    setTeacherName("");
-                    setTeacherContact("");
-                  }
-                }}
-              />
-              <span>{t(labelKey)}</span>
-            </label>
-          ))}
-        </div>
+        <label className="block text-sm">
+          <span className="text-stone-700 dark:text-stone-300">
+            <RedRequiredStarLead>{t("reg.registrationProfileKindLabel")}</RedRequiredStarLead>
+          </span>
+          <select
+            required
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
+            aria-label={t("reg.registrationProfileKindLabel")}
+            value={registrationProfileKind ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) {
+                setRegistrationProfileKind(null);
+                setTeacherName("");
+                setTeacherContact("");
+                return;
+              }
+              const next = v as RegistrationProfileKind;
+              setRegistrationProfileKind(next);
+              if (next !== "teacher_referred_student") {
+                setTeacherName("");
+                setTeacherContact("");
+              }
+            }}
+          >
+            <option value="">{t("reg.regProfilePlaceholder")}</option>
+            {(
+              [
+                ["personal_user", "reg.regProfilePersonal"],
+                ["teaching_user", "reg.regProfileTeaching"],
+                ["teacher_referred_student", "reg.regProfileTeacherReferred"],
+                ["dual_practice_and_teaching", "reg.regProfileDual"],
+              ] as const
+            ).map(([value, labelKey]) => (
+              <option key={value} value={value}>
+                {t(labelKey)}
+              </option>
+            ))}
+          </select>
+        </label>
+        {registrationProfileKind ? (
+          <RegistrationProfileQuotaPanel
+            kind={registrationProfileKind}
+            bookingNums={bookingNums}
+            slotDurationMinutes={slotDurationMinutes}
+            locale={locale}
+            t={t}
+            tr={tr}
+          />
+        ) : (
+          <p className="text-sm text-stone-500 dark:text-stone-400">{t("reg.regProfileQuotaHint")}</p>
+        )}
         {registrationProfileKind === "teacher_referred_student" && (
           <>
             <label className="block text-sm">
@@ -884,6 +1063,9 @@ export function RegistrationForm() {
             </label>
           </>
         )}
+        <aside className="rounded-lg border border-amber-200/90 bg-amber-50/90 px-3 py-2.5 text-sm leading-relaxed text-amber-950 dark:border-amber-900/55 dark:bg-amber-950/35 dark:text-amber-100">
+          {t("reg.categoryUseReminder")}
+        </aside>
         <p className="text-sm text-stone-700 dark:text-stone-300">{t("reg.identityHeading")}</p>
         <div className="flex flex-wrap gap-3">
           {identityOptions.map((o) => (
@@ -933,8 +1115,8 @@ export function RegistrationForm() {
         <label className="block text-sm">
           <span className="text-stone-700 dark:text-stone-300">{t("reg.email")}</span>
           <input
-            required
             type="email"
+            autoComplete="email"
             className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={email}
             onChange={(e) => {
@@ -943,11 +1125,84 @@ export function RegistrationForm() {
             }}
           />
         </label>
+        <div className="space-y-2 py-2">
+          {googleAuthEnabled ? (
+            <>
+              <a
+                href={googleAuthStartUrl(
+                  "register",
+                  `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
+                )}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white py-2.5 text-sm font-medium text-stone-800 shadow-sm hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
+              >
+                <svg className="size-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+                {t("reg.googleContinue")}
+              </a>
+              <p className="text-center text-xs text-stone-600 dark:text-stone-400">{t("reg.googleHint")}</p>
+            </>
+          ) : (
+            <p className="text-center text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+              {t("reg.googlePendingHint")}
+            </p>
+          )}
+        </div>
         <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 px-5 sm:px-4 py-4">
-          <div className="mb-4 rounded-lg border border-emerald-100 bg-emerald-50/90 px-3 py-3 text-xs text-emerald-950">
-            <p className="font-medium text-emerald-900">{t("reg.privacyTitle")}</p>
-            <p className="mt-2 leading-relaxed text-emerald-900/90">{t("reg.privacyP1")}</p>
-            <p className="mt-2 leading-relaxed text-emerald-900/90">{t("reg.privacyP2")}</p>
+          <div className="mb-4">
+            <button
+              type="button"
+              id="reg-privacy-disclosure-trigger"
+              aria-expanded={privacyNoticeOpen}
+              aria-controls="reg-privacy-disclosure-panel"
+              onClick={() => setPrivacyNoticeOpen((o) => !o)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/90 px-3 py-2.5 text-left text-xs font-medium text-emerald-900 shadow-sm hover:bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/55"
+            >
+              <span>{t("reg.privacyDisclosureTrigger")}</span>
+              <svg
+                className={`size-4 shrink-0 text-emerald-800 transition-transform dark:text-emerald-200 ${privacyNoticeOpen ? "rotate-180" : ""}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            {privacyNoticeOpen ? (
+              <div
+                id="reg-privacy-disclosure-panel"
+                role="region"
+                aria-labelledby="reg-privacy-disclosure-trigger"
+                className="mt-2 rounded-lg border border-emerald-100 bg-emerald-50/90 px-3 py-3 text-xs text-emerald-950 dark:border-emerald-900/35 dark:bg-emerald-950/30 dark:text-emerald-50"
+              >
+                <p className="font-medium text-emerald-900 dark:text-emerald-100">{t("reg.privacyTitle")}</p>
+                <p className="mt-2 leading-relaxed text-emerald-900/90 dark:text-emerald-100/90">
+                  {t("reg.privacyP1")}
+                </p>
+                <p className="mt-2 leading-relaxed text-emerald-900/90 dark:text-emerald-100/90">
+                  {t("reg.privacyP2")}
+                </p>
+              </div>
+            ) : null}
           </div>
           <label className="block text-sm">
             <span className="text-stone-700 dark:text-stone-300">{t("reg.phoneLabel")}</span>

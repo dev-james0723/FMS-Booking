@@ -35,10 +35,23 @@ export const regZhHK = {
   submitFail: "提交失敗",
   errorModalTitle: "無法繼續",
   errorModalOk: "知道了",
+    googleContinue: "使用 Google 帳戶預填電郵",
+  googlePendingHint:
+    "此站尚未啟用 Google 預填電郵。請於環境變數設定 NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID 與 GOOGLE_AUTH_CLIENT_SECRET（見 .env.example），並在 Google Cloud 設定 OAuth 重新導向 URI，然後重新啟動網站。",
+  googleHint:
+    "仍須完成電話短訊驗證、生物認證及餘下資料，方可提交登記。",
   sectionBasic: "基本資料",
   sectionUserType: "使用者類別與登記分類",
-  regProfileHint:
-    "此分類用於紀錄背景及預約資格。預約時的節數上限（每節 30 分鐘＝0.5 小時）以帳戶「配額級別」統一計算，雙重資格不會分開兩套配額。個人／老師推薦之學生為每日最多 5 節（2.5 小時）、連續 3 曆日最多 7 節（3.5 小時）；教學或同時有教學及練習需求（教學配額級別）為每日最多 8 節（4 小時）、連續 3 曆日最多 16 節（8 小時）。",
+  registrationProfileKindLabel: "使用者類別",
+  regProfilePlaceholder: "請選擇…",
+  regProfileRequired: "請選擇使用者類別。",
+  regProfileQuotaHint:
+    "請先選擇使用者類別，以查看相應的預約時段配額（單日及連續三日內之上限）。",
+  quotaPreviewTitle: "此類別的預約時段配額",
+  quotaDailyLine: "單日最多可預約 {blocks} 個時段（約 {hours}）",
+  quotaRollingLine: "連續 {days} 個曆日內最多可預約 {blocks} 個時段（約 {hours}）",
+  categoryUseReminder:
+    "請依你所選的使用者類別使用免費時段，並確保現場活動與該類別相符。若主辦方於預約時段內發現實際用途與所選類別明顯不符（例如已選「教學／帶學生」類別，卻以個人練習為主），主辦方可取消該次預約，並得視乎情況拒絕該使用者日後之預約申請。",
   regProfilePersonal: "個人使用者",
   regProfileTeaching: "教學／帶學生使用者",
   regProfileTeacherReferred: "老師推薦之學生",
@@ -51,7 +64,10 @@ export const regZhHK = {
   sectionConsent: "同意事項",
   nameZh: "中文姓名（必填）",
   nameEn: "英文姓名",
-  email: "Email（必填，作為登入帳號）",
+  email: "Email（作為登入帳號；可手動填寫或使用下方 Google）",
+  emailRequiredSubmit: "請填寫電郵，或使用下方 Google 帳戶預填。",
+  emailInvalid: "請輸入有效的電郵地址。",
+  privacyDisclosureTrigger: "關於私隱與安全",
   privacyTitle: "私隱與安全",
   privacyP1:
     "於此部分所提供之聯絡電話及生物認證資料（例如 Face ID、指紋等），我們將視為個人資料並嚴格保密，僅供身份驗證、防止重複註冊及維護帳戶安全之用，並依您已同意之私隱政策處理；不會用於與本服務無關之推廣，亦不會任意向第三方披露。",
@@ -72,7 +88,7 @@ export const regZhHK = {
   bioHint:
     "登記前必須於本裝置完成 Face ID、Touch ID 或指紋等驗證（視乎裝置），以綁定通行密鑰；完成後亦可用同一方式登入，並仍可使用電郵及密碼登入。",
   bioEmailFirst:
-    "請先在上方「Email（作為登入帳號）」填寫有效電郵，然後再按「綁定 Face ID／指紋」。通行密鑰會與該電郵綁定。",
+    "請先在上方填寫有效電郵（或使用 Google 預填），然後再按「綁定 Face ID／指紋」。通行密鑰會與該電郵綁定。",
   processing: "處理中…",
   passkeyRebind: "重新綁定 Face ID／指紋",
   passkeyBind: "綁定 Face ID／指紋",

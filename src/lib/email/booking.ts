@@ -1,4 +1,4 @@
-import { EmailLogStatus } from "@prisma/client";
+import { EmailLogStatus, type CameraRentalPaymentChoice } from "@prisma/client";
 import { Resend } from "resend";
 import type { Locale } from "@/lib/i18n/types";
 import { buildBookingSubmittedMail } from "@/lib/email/booking-submitted-mail";
@@ -11,11 +11,15 @@ export async function sendBookingSubmitted(params: {
   requestId: string;
   slotCount: number;
   locale: Locale;
+  cameraRentalOptIn: boolean;
+  cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
 }): Promise<void> {
   const { subject, text, html } = buildBookingSubmittedMail(params.locale, {
     greetingName: params.greetingName,
     requestId: params.requestId,
     slotCount: params.slotCount,
+    cameraRentalOptIn: params.cameraRentalOptIn,
+    cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
   });
 
   if (process.env.NODE_ENV === "development") {
@@ -36,6 +40,8 @@ export async function sendBookingSubmitted(params: {
         requestId: params.requestId,
         slotCount: params.slotCount,
         locale: params.locale,
+        cameraRentalOptIn: params.cameraRentalOptIn,
+        cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
         channel: "none",
       },
       status: EmailLogStatus.failed,
@@ -66,6 +72,8 @@ export async function sendBookingSubmitted(params: {
           requestId: params.requestId,
           slotCount: params.slotCount,
           locale: params.locale,
+          cameraRentalOptIn: params.cameraRentalOptIn,
+          cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
           channel: "resend",
         },
         status: EmailLogStatus.failed,
@@ -83,6 +91,8 @@ export async function sendBookingSubmitted(params: {
         requestId: params.requestId,
         slotCount: params.slotCount,
         locale: params.locale,
+        cameraRentalOptIn: params.cameraRentalOptIn,
+        cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
         channel: "resend",
       },
       status: EmailLogStatus.sent,
@@ -99,6 +109,8 @@ export async function sendBookingSubmitted(params: {
         requestId: params.requestId,
         slotCount: params.slotCount,
         locale: params.locale,
+        cameraRentalOptIn: params.cameraRentalOptIn,
+        cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
         channel: "resend",
       },
       status: EmailLogStatus.failed,

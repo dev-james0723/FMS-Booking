@@ -169,10 +169,10 @@ export const coreEn = {
     signingIn: "Signing in…",
     signIn: "Sign in",
     or: "or",
-    passkey: "Face ID / fingerprint sign-in",
+    passkey: "Log in with passkey",
     passkeyVerifying: "Verifying…",
     passkeyFootnote:
-      "You must have registered a passkey; enter your email first, then tap this button.",
+      "Face ID, Touch ID, or your device passkey—bound to your account when you registered (same email as Google sign-in if you used that). You do not need to type your email first. If your passkey does not show up, enter your email below and try again.",
     noAccount: "No account yet?",
     goRegister: "Go to registration",
     loading: "Loading…",
@@ -184,5 +184,17 @@ export const coreEn = {
     errPasskeyFail: "Passkey sign-in failed",
     errNetwork: "Network error. Please try again later.",
     errLoginFail: "Sign-in failed",
+    googlePendingHint:
+      "Google sign-in is not enabled on this server yet. Set NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID and GOOGLE_AUTH_CLIENT_SECRET (see .env.example), add the OAuth redirect URI in Google Cloud, then restart the app.",
+    googleContinue: "Continue with Google",
+    googleNotConfigured: "Google sign-in is not available on this site yet.",
+    googleDenied: "Google sign-in was cancelled.",
+    googleBad: "Google sign-in could not be completed. Please try again.",
+    googleState: "Sign-in session expired. Please try Google sign-in again.",
+    googleToken: "Could not verify your Google account. Please try again.",
+    googleProfile: "Your Google account did not return a verified email.",
+    googleNoAccount:
+      "This Google account’s email is not registered yet. Please complete user registration first.",
+    googleDisabled: "This account is not active. Contact support if you need help.",
   },
 } as const;

@@ -139,6 +139,12 @@ enum BookingVenueKind {
   open_space
 }
 
+/// Sony 4K handycam rental: how the user indicated they will satisfy the HK$99 fee.
+enum CameraRentalPaymentChoice {
+  paid_before_booking
+  pay_after_booking
+}
+
 enum AdminRole {
   admin
   super_admin
@@ -352,12 +358,13 @@ model PasskeyPreregChallenge {
 
 model PasskeyLoginChallenge {
   id           String   @id @default(uuid())
-  userId       String   @map("user_id")
+  /// Null when the client uses discoverable credentials (no email typed first).
+  userId       String?  @map("user_id")
   challengeB64 String   @map("challenge_b64")
   expiresAt    DateTime @map("expires_at")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
   @@map("passkey_login_challenges")
@@ -441,6 +448,9 @@ model BookingRequest {
   adminNote            String?              @map("admin_note")
   usesBonusSlot        Boolean              @default(false) @map("uses_bonus_slot")
   bonusRewardId        String?              @map("bonus_reward_id")
+  /// Optional HK$99 Sony 4K camcorder add-on (studio + open-space booking flows).
+  cameraRentalOptIn           Boolean                   @default(false) @map("camera_rental_opt_in")
+  cameraRentalPaymentChoice CameraRentalPaymentChoice? @map("camera_rental_payment_choice")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
