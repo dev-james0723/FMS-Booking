@@ -18,7 +18,7 @@ export const coreZhHK = {
     contact: "聯絡資訊",
     infoMenu: "聯絡資訊",
     faq: "常見問題（FAQ）",
-    directions: "點樣去幻樂空間",
+    directions: "如何前往幻樂空間",
     privacyPolicy: "私隱條例",
     termsAndConditions: "條款與細則",
     switchToEnglish: "English",

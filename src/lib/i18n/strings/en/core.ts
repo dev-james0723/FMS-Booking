@@ -18,7 +18,7 @@ export const coreEn = {
     contact: "Contact",
     infoMenu: "Contact",
     faq: "FAQ",
-    directions: "How to get here",
+    directions: "How to get to Fantasia Music Space",
     privacyPolicy: "Privacy policy",
     termsAndConditions: "Terms & conditions",
     switchToEnglish: "English",
