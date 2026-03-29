@@ -1,8 +1,12 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountDbUnavailable } from "@/components/account-db-unavailable";
 import { AccountPageView } from "@/components/account-page-view";
 import { getSessionFromCookies } from "@/lib/auth/session";
-import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
+import { accountSharedQuotaVenuesNote } from "@/lib/i18n/account-page-heading";
+import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
+import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
+import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import { loadUserExistingDayCounts } from "@/lib/booking/day-counts";
 import { maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
 import { getQuotaNumericLimits } from "@/lib/booking/booking-rules";
@@ -18,7 +22,7 @@ import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 import { isUnreachableDbError } from "@/lib/settings-fallback";
 import { hkDateKey } from "@/lib/time";
 import { isGoogleCalendarUserOAuthConfigured } from "@/lib/calendar/google-user-calendar";
-import type { Prisma } from "@prisma/client";
+import type { BookingRequestStatus, Prisma } from "@prisma/client";
 
 export const metadata = {
   title: "我的帳戶｜D Festival × 幻樂空間",
@@ -112,6 +116,37 @@ type AccountPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function mapBookingsToPayload(
+  rows: {
+    id: string;
+    status: BookingRequestStatus;
+    requestedAt: Date;
+    allocations: {
+      slot: { startsAt: Date; endsAt: Date; venueLabel: string | null };
+    }[];
+  }[]
+) {
+  return rows.map((b) => {
+    const slots = b.allocations.map((a) => ({
+      startsAt: a.slot.startsAt,
+      endsAt: a.slot.endsAt,
+      venueLabel: a.slot.venueLabel,
+    }));
+    const merged = mergeConsecutiveSlots(slots);
+    return {
+      id: b.id,
+      status: b.status,
+      requestedAtIso: b.requestedAt.toISOString(),
+      merged: merged.map((m) => ({
+        startIso: m.start.toISOString(),
+        endIso: m.end.toISOString(),
+        sessionCount: m.sessionCount,
+        venueLabel: m.venueLabel,
+      })),
+    };
+  });
+}
+
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const session = await getSessionFromCookies();
   if (!session) redirect("/login?next=/account");
@@ -132,8 +167,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     const settings = await getPublicSettings();
     const now = await getEffectiveNow();
     const nums = parseBookingNumericSettings(settings as Record<string, unknown>);
-    const bookingOpensAt = parseBookingOpensAt(settings["booking_opens_at"]);
-    const bookingOpen = bookingOpensAt ? now.getTime() >= bookingOpensAt.getTime() : false;
+    const bookingOpen = isBookingPortalLiveFromSettings(settings as Record<string, unknown>, now);
     const canBook =
       bookingOpen &&
       user.hasCompletedRegistration &&
@@ -150,17 +184,38 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     const bookingBasePath =
       user.profile.bookingVenueKind === "open_space" ? "/booking/open-space" : "/booking";
 
-    const bookings = await prisma.bookingRequest.findMany({
-      where: { userId: user.id, venueKind: user.profile.bookingVenueKind },
-      orderBy: { requestedAt: "desc" },
-      take: 40,
-      include: {
-        allocations: {
-          include: { slot: true },
-          orderBy: { slot: { startsAt: "asc" } },
-        },
+    const bookingInclude = {
+      allocations: {
+        include: { slot: true },
+        orderBy: { slot: { startsAt: "asc" as const } },
       },
-    });
+    } as const;
+
+    const [studioRows, openSpaceRows] =
+      user.profile.bookingVenueKind === "studio_room"
+        ? await Promise.all([
+            prisma.bookingRequest.findMany({
+              where: { userId: user.id, venueKind: "studio_room" },
+              orderBy: { requestedAt: "desc" },
+              take: 40,
+              include: bookingInclude,
+            }),
+            prisma.bookingRequest.findMany({
+              where: { userId: user.id, venueKind: "open_space" },
+              orderBy: { requestedAt: "desc" },
+              take: 40,
+              include: bookingInclude,
+            }),
+          ])
+        : [
+            [],
+            await prisma.bookingRequest.findMany({
+              where: { userId: user.id, venueKind: "open_space" },
+              orderBy: { requestedAt: "desc" },
+              take: 40,
+              include: bookingInclude,
+            }),
+          ];
 
     const referrerNameZh = await resolveReferrerDisplayForUser(
       prisma,
@@ -177,25 +232,15 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       }
     }
 
-    const bookingsPayload = bookings.map((b) => {
-      const slots = b.allocations.map((a) => ({
-        startsAt: a.slot.startsAt,
-        endsAt: a.slot.endsAt,
-        venueLabel: a.slot.venueLabel,
-      }));
-      const merged = mergeConsecutiveSlots(slots);
-      return {
-        id: b.id,
-        status: b.status,
-        requestedAtIso: b.requestedAt.toISOString(),
-        merged: merged.map((m) => ({
-          startIso: m.start.toISOString(),
-          endIso: m.end.toISOString(),
-          sessionCount: m.sessionCount,
-          venueLabel: m.venueLabel,
-        })),
-      };
-    });
+    const studioBookingsPayload = mapBookingsToPayload(studioRows);
+    const openSpaceBookingsPayload = mapBookingsToPayload(openSpaceRows);
+
+    const jar = await cookies();
+    const pageLocale = localeFromCookieValue(jar.get(FMS_LOCALE_STORAGE_KEY)?.value);
+    const sharedQuotaVenuesNote =
+      user.profile.bookingVenueKind === "studio_room"
+        ? accountSharedQuotaVenuesNote(pageLocale)
+        : null;
 
     return (
       <AccountPageView
@@ -217,7 +262,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         todayRemaining={todayRemaining}
         rollingUsed={rollingUsed}
         rollingStory={rollingStory}
-        bookings={bookingsPayload}
+        studioBookings={studioBookingsPayload}
+        openSpaceBookings={openSpaceBookingsPayload}
         canBook={canBook}
         bookingBasePath={bookingBasePath}
         googleCalendarOAuthReady={isGoogleCalendarUserOAuthConfigured()}
@@ -228,6 +274,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         ambassadorReferralInitial={
           user.profile.wantsAmbassador === true ? ambassadorReferralInitial : undefined
         }
+        sharedQuotaVenuesNote={sharedQuotaVenuesNote}
+        accountCopyLocale={pageLocale}
       />
     );
   } catch (e) {

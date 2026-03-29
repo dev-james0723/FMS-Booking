@@ -8,6 +8,7 @@ const links = [
   { href: "/admin/users", label: "登記用戶" },
   { href: "/admin/bookings", label: "預約" },
   { href: "/admin/calendar", label: "日曆／時段" },
+  { href: "/admin/control", label: "控制" },
 ];
 
 export function AdminNav() {

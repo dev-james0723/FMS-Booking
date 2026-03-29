@@ -1,6 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
-import { parseBookingVenueQuery } from "@/lib/booking/venue-kind";
+import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     where: { id: auth.userId },
     include: { profile: true },
   });
-  if (!user?.profile || user.profile.bookingVenueKind !== venueKind) {
+  if (!user?.profile || !userMayAccessBookingVenue(user.profile.bookingVenueKind, venueKind)) {
     return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
   }
 

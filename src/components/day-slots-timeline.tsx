@@ -17,6 +17,8 @@ export type TimelineSlotInput = {
   capacityTotal: number;
   isOpen: boolean;
   venueLabel?: string | null;
+  /** Piano-room calendar holds: grey block, not “full” red. */
+  studioHoldNotApplicable?: boolean;
   /** Admin timeline: booker emails to show inside each slot cell. */
   bookerEmails?: string[];
 };
@@ -89,11 +91,15 @@ export function DaySlotsTimeline({
           let bg: string;
           let border: string;
           let text: string;
-          if (!s.isOpen) {
-            bg = "bg-slate-400/85";
-            border = "border-slate-500";
+          const hold = Boolean(s.studioHoldNotApplicable);
+          const unavailable = !s.isOpen || s.remaining <= 0;
+          if (hold) {
+            bg = isAdmin
+              ? "bg-stone-600/88"
+              : "bg-stone-500/88 dark:bg-stone-600/90";
+            border = isAdmin ? "border-stone-500" : "border-stone-600 dark:border-stone-500";
             text = "text-white";
-          } else if (s.remaining <= 0) {
+          } else if (unavailable) {
             bg = "bg-red-500/90";
             border = "border-red-700";
             text = "text-white";
@@ -102,11 +108,13 @@ export function DaySlotsTimeline({
             border = "border-emerald-700";
             text = "text-white";
           }
-          const statusLabel = !s.isOpen
-            ? t("booking.timeline.statusClosed")
-            : s.remaining <= 0
-              ? t("booking.timeline.statusFull")
-              : t("booking.timeline.statusOpen");
+          const statusLabel = hold
+            ? t("booking.timeline.studioHoldCaption")
+            : !s.isOpen
+              ? t("booking.timeline.statusClosed")
+              : s.remaining <= 0
+                ? t("booking.timeline.statusFull")
+                : t("booking.timeline.statusOpen");
           const used = Math.max(0, s.capacityTotal - s.remaining);
           const emails = s.bookerEmails?.filter((e) => e.trim() !== "") ?? [];
           const titleExtra =
@@ -123,7 +131,19 @@ export function DaySlotsTimeline({
                 isAdmin ? ` · 名額 ${used}/${s.capacityTotal}` : ""
               }${titleExtra}`}
             >
-              <div className="shrink-0 text-center font-semibold tabular-nums">{fullRange}</div>
+              {hold ? (
+                <div className="flex w-full min-w-0 flex-row items-center justify-between gap-x-1.5 gap-y-0 font-semibold">
+                  <span className="shrink-0 tabular-nums">{fullRange}</span>
+                  <span
+                    className="min-w-0 shrink text-right text-[9px] font-medium leading-tight opacity-95 [overflow-wrap:anywhere] sm:text-[10px]"
+                    title={t("booking.timeline.studioHoldCaption")}
+                  >
+                    （{t("booking.timeline.studioHoldCaption")}）
+                  </span>
+                </div>
+              ) : (
+                <div className="shrink-0 text-center font-semibold tabular-nums">{fullRange}</div>
+              )}
               {isAdmin && (
                 <div className="shrink-0 text-center text-[10px] font-medium tabular-nums opacity-95 sm:text-[11px]">
                   名額 {used}/{s.capacityTotal}
@@ -153,7 +173,8 @@ export function DaySlotsTimeline({
 
 export function summarizeDaySlotsText(
   dateKey: string,
-  slots: TimelineSlotInput[]
+  slots: TimelineSlotInput[],
+  options?: { studioHoldCaption?: string }
 ): { bookedLines: string[]; availableLines: string[]; closedLines: string[] } {
   const daySlots = slots
     .filter((s) => hkDateKeyFromIso(s.startsAt) === dateKey)
@@ -163,11 +184,14 @@ export function summarizeDaySlotsText(
   const bookedLines: string[] = [];
   const availableLines: string[] = [];
   const closedLines: string[] = [];
+  const cap = options?.studioHoldCaption;
 
   for (const s of daySlots) {
     const range = formatHkRange(new Date(s.startsAt), new Date(s.endsAt));
     if (!s.isOpen) {
-      closedLines.push(range);
+      closedLines.push(
+        s.studioHoldNotApplicable && cap ? `${range} — ${cap}` : range
+      );
     } else if (s.remaining <= 0) {
       bookedLines.push(range);
     } else {

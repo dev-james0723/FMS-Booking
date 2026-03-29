@@ -1,9 +1,9 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
-import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
+import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { listSlotsForCalendarView } from "@/lib/booking/service";
-import { parseBookingVenueQuery } from "@/lib/booking/venue-kind";
+import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
 import { getAllSettings, getEffectiveNow } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
 
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   if (!user?.hasCompletedRegistration || user.accountStatus !== "active") {
     return jsonError("FORBIDDEN", "無法查閱時段", 403);
   }
-  if (!user.profile || user.profile.bookingVenueKind !== venueKind) {
+  if (!user.profile || !userMayAccessBookingVenue(user.profile.bookingVenueKind, venueKind)) {
     return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
   }
 
@@ -45,8 +45,7 @@ export async function GET(req: Request) {
 
   const settings = await getAllSettings();
   const now = await getEffectiveNow();
-  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
-  const bookingLive = bookingOpens ? now.getTime() >= bookingOpens.getTime() : false;
+  const bookingLive = isBookingPortalLiveFromSettings(settings, now);
 
   const rows = bookingLive
     ? await listSlotsForCalendarView({ from: start, to: end, venueKind })

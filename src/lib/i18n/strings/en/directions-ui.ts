@@ -6,6 +6,8 @@ export const directionsEn = {
   pageLead:
     "Fantasia Music Space is in Tsuen Wan town centre near Sha Tsui Road, Tsuen Wan MTR and The Mills. Below is a structured overview of common public transport; check operators and on-street signage for live stop patterns.",
   addressLabel: "Address",
+  tocHeading: "On this page",
+  tocNavAria: "In-page navigation: jump to transport sections",
   addressFull:
     "Room 17, 9/F, Technology Centre, Nos. 29-35 Sha Tsui Road, Tsuen Wan, New Territories, Hong Kong",
   copyAddress: "Copy address",
@@ -34,6 +36,12 @@ export const directionsEn = {
   quickDriveBody:
     "Via Tuen Mun Road, Tai Lam Tunnel or Tsing Yi into Tsuen Wan; on-street bays and mall parking nearby (The Mills car park is relatively close).",
   quickDrivePills: "Tuen Mun Road,Tai Lam Tunnel",
+  quickMtrImageAlt: "MTR train at Kowloon Tong (illustrative)",
+  quickBusImageAlt: "KMB double-decker in service (illustrative)",
+  quickMinibusImageAlt: "Hong Kong green public light bus by the roadside (illustrative)",
+  quickDriveImageAlt: "Traffic near the Tai Lam Tunnel entrance (illustrative)",
+  transportPhotoCredit: "Photo: {author} / {license}",
+  transportPhotoFilePage: "Wikimedia Commons file page",
   busSectionTitle: "Bus routes & nearest stops",
   busStopPrimaryTitle: "Tsuen King Circuit Flyover (one of the closest stops)",
   busStopPrimaryNote:
@@ -74,14 +82,26 @@ export const directionsEn = {
   minibusSectionTitle: "Green minibuses (overview)",
   minibusSectionLead:
     "Many GMB routes exist; below are common examples for Tsuen Wan town centre, Sha Tsui Road or cross-district links. Verify whether your origin is served using official TD / operator data.",
-  minibusRoutesBody: `• Tsuen Wan local & nearby: e.g. 80 (Chuen Lung — Tsuen Wan); 96-series and 95 / 95K (Tsing Yi, Sham Tseng, Tsing Lung Tau — often interchange at Tsuen Wan Station); 301, 302 (Tsuen King area / Tsuen Wan West direction).
-• Tsuen Wan — Sha Tin: 481A, 481B (daytime); 402S, 482 (overnight) pass Tsuen Wan Market Street / Sha Tsui Road area.
-• Red public light buses: some Hong Kong Island / Kowloon — NWNT routes pass Tsuen Wan or nearby roads; fares and headways vary — confirm on site.
-
-Hong Kong Island has no direct GMB to Sha Tsui Road; use MTR to Tsuen Wan then connect as above.`,
+  minibusCardRoutesLabel: "Routes / series",
+  minibusCardLocalTitle: "Tsuen Wan local & nearby",
+  minibusCardLocalRoutes: "80,96 series,95,95K,301,302",
+  minibusCardLocalBody:
+    "e.g. 80 (Chuen Lung — Tsuen Wan); 96-series and 95 / 95K for Tsing Yi, Sham Tseng, Tsing Lung Tau — often interchange at Tsuen Wan Station; 301, 302 cover Tsuen King / Tsuen Wan West direction.",
+  minibusCardShatinTitle: "Tsuen Wan — Sha Tin",
+  minibusCardShatinRoutes: "481A,481B,402S,482",
+  minibusCardShatinContextLabel: "Timing / corridor",
+  minibusCardShatinPills: "Daytime,Overnight,Market St / Sha Tsui Rd",
+  minibusCardShatinBody:
+    "481A and 481B run in daytime; 402S and 482 are overnight routes. Many pass Tsuen Wan Market Street and the Sha Tsui Road area.",
+  minibusCardPlbTitle: "Red public light buses",
+  minibusCardPlbHintLabel: "Before you board",
+  minibusCardPlbPills: "Non-franchised,Confirm on site",
+  minibusCardPlbBody:
+    "Some Hong Kong Island / Kowloon — NWNT red minibus routes pass Tsuen Wan or nearby roads; headways and fares vary on the day and differ from franchised buses / GMB — check before boarding.",
+  minibusIslandCalloutTitle: "From Hong Kong Island",
+  minibusIslandCalloutBody:
+    "There is no direct GMB to Sha Tsui Road, Tsuen Wan from Hong Kong Island; take the MTR to Tsuen Wan Station, then connect as above.",
   regionsTitle: "From major areas (overview & district photos)",
-  regionsPhotoCreditPrefix: "Photo:",
-  regionsPhotoCreditLinkLabel: "Wikimedia Commons file page",
   regionTuenMunLabel: "NT · Tuen Mun",
   regionTuenMunPills: "Tuen Ma Line,Tsuen Wan West,Bus / GMB",
   regionTuenMunDetail:

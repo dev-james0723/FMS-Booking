@@ -16,6 +16,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:clear-customers": "tsx scripts/clear-customer-data.ts",
+    "db:apply-apr-holds": "tsx scripts/apply-apr-5-6-slot-holds.ts",
     "verify:twilio": "tsx scripts/verify-twilio-credentials.ts"
   },
   "prisma": {

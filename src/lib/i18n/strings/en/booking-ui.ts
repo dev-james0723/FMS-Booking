@@ -10,17 +10,34 @@ export const bookingEn = {
   },
   portal: {
     title: "Booking",
-    intro:
-      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single quota tier per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
+    introBeforeQuotaLink:
+      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single ",
+    introQuotaLinkLabel: "quota tier",
+    introAfterQuotaLink:
+      " per account; after each successful submission you must wait 3 hours before submitting again. The organiser still reviews every request.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
     linkHome: "Home",
+    linkOpenSpace: "Book Open Space instead (no extra registration)",
+    openSpaceCalloutTitle: "Another way to find a time",
+    openSpacePoolStudioLabel: "Studio room",
+    openSpacePoolStudioSub: "Book on this page · soundproof room",
+    openSpacePoolOpenLabel: "Open Space",
+    openSpacePoolOpenSub: "Separate slot pool",
+    openSpacePoolDivider: "Other pool",
+    openSpacePoolCaption: "Two independent pools—Open Space may offer more slots.",
+    openSpaceFlowStep1: "Studio slots don’t work, or your instrument isn’t piano?",
+    openSpaceFlowStep2: "Open Space uses a different pool of bookable times.",
+    openSpaceFlowStep3: "Use the button below with the same account (no extra sign-up).",
+    openSpaceQuotaPrefix: "Session limits are still shared with studio bookings; see",
+    openSpaceQuotaLinkLabel: "My Account",
+    openSpaceQuotaSuffix: "for quota details.",
   },
   openSpacePortal: {
     title: "Fantasia Music Space — Open Space sessions",
     intro:
-      "This booking pool is separate from the soundproof studio room slots. Quota rules and account limits work the same way as the main booking system. Please read the venue notes below before choosing times.",
+      "These slots are from the Open Space inventory, separate from the soundproof studio room pool. If you registered via the studio-room channel, Open Space and studio bookings share the same session caps (daily and rolling 3-day)—there is no second quota. If you registered via the large-instrument / Open Space channel, you may only book here. Please read the venue notes below before choosing times.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
@@ -107,10 +124,16 @@ export const bookingEn = {
     ruleCardSlotSummary: "Each slot is 30 minutes (one pick = one session).",
     ruleCardIndividualTitle: "Individual quota tier",
     ruleCardIndividualSummary:
-      "Personal practice / general individual users, or teacher-referred students — up to 5 sessions per day (2.5 hours); up to 7 in any 3 consecutive calendar days (3.5 hours).",
+      "Personal practice / general individual users — up to 5 sessions per day (2.5 hours); up to 7 in any 3 consecutive calendar days (3.5 hours).",
+    ruleCardTeacherReferredTitle: "Teacher-referred student quota tier",
+    ruleCardTeacherReferredSummary:
+      "Accounts registered as teacher-referred (teacher details on sign-up) use the same session caps as the individual tier — up to 5 per day (2.5 hours); up to 7 in any 3 consecutive calendar days (3.5 hours).",
     ruleCardTeachingTitle: "Teaching quota tier",
     ruleCardTeachingSummary:
-      "Teaching, with students, or both teaching and practice on the account — up to 8 per day (4 hours); up to 16 in any 3 consecutive calendar days (8 hours).",
+      "Teaching or with-students only (account is teaching-eligible but not individual-eligible) — up to 8 per day (4 hours); up to 16 in any 3 consecutive calendar days (8 hours).",
+    ruleCardDualQuotaTitle: "Dual-eligibility quota tier",
+    ruleCardDualQuotaSummary:
+      "If your account has both individual practice and teaching/with-students eligibility, the quota tier is the teaching tier — up to 8 per day (4 hours); up to 16 in any 3 consecutive calendar days (8 hours). Sessions are not counted in two separate pools by identity.",
     ruleCardCooldownTitle: "Submission cooldown",
     ruleCardCooldownSummary: "After each successful submission, wait 3 hours before submitting again.",
     ruleCardIdentityTitle: "Dual eligibility",
@@ -135,7 +158,10 @@ export const bookingEn = {
     submitted:
       "Request submitted (reference: {id}). You will be notified by email after review.",
     viewHistory: "View history",
-    linkCalendarOverview: "Calendar overview (timeline)",
+    linkCalendarOverviewStudioRoom:
+      "Current piano studio booking status — calendar overview (timeline)",
+    linkCalendarOverviewOpenSpace:
+      "Current large-instrument / Open Space booking status — calendar overview (timeline)",
     limitsTitle: "Session usage (Hong Kong dates; 30 min = 0.5 hr each)",
     limitsToday:
       "Today ({todayKey}): {committed} sessions{committedH} used, {remaining} sessions{remainingH} left (daily cap {dailyMax} sessions{dailyMaxH}). Quota tier: {tier}.",
@@ -211,7 +237,9 @@ export const bookingEn = {
     monthMay: "May 2026 (end of campaign)",
     leaveOverview: "Leave calendar overview",
     legend:
-      "Green: still has bookable slots · Red: all open slots full · Grey: no slots or outside free experience dates",
+      "Green: still has bookable slots · Red: no bookable slots left (full or closed) · Grey: no slots or outside free experience dates",
+    legendStudioHold:
+      "(Piano room calendar only) Grey blocks on the timeline are not available for booking (open space is unaffected).",
     selectedDate: "Selected date: {date} (Hong Kong time)",
     timelineRange: "Timeline: {start}:00 – {end}:00 (Hong Kong time)",
     textListTitle: "Slots today",
@@ -225,6 +253,7 @@ export const bookingEn = {
     statusClosed: "Closed",
     statusFull: "Full / taken",
     statusOpen: "Open",
+    studioHoldCaption: "This time slot is not available for booking",
     bookedThis: "This slot is taken",
     canBookRemaining: "Available · {remaining}/{capacity} left",
   },

@@ -45,6 +45,23 @@ export function addDaysToDateKey(fromKey: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
+/** Every HK calendar date that overlaps `[startIso, endIso]` (wall dates from instants in Asia/Hong_Kong). */
+export function hkDateKeysTouchingInterval(startIso: string, endIso: string): string[] {
+  const k1 = isoInstantToHkDateKey(startIso);
+  const k2 = isoInstantToHkDateKey(endIso);
+  const a = k1 <= k2 ? k1 : k2;
+  const b = k1 <= k2 ? k2 : k1;
+  const keys: string[] = [];
+  let k = a;
+  for (;;) {
+    keys.push(k);
+    if (k === b) break;
+    k = addDaysToDateKey(k, 1);
+    if (keys.length > 400) break;
+  }
+  return keys;
+}
+
 export function dateKeysDaysApart(fromKey: string, toKey: string): number {
   const [fy, fm, fd] = fromKey.split("-").map(Number);
   const [ty, tm, td] = toKey.split("-").map(Number);

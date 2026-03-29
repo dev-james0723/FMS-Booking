@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ComponentType } from "react";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { withBasePath } from "@/lib/base-path";
 
@@ -28,21 +28,77 @@ function googleWalkingDirectionsUrl(origin: string, destination: string) {
   return `https://www.google.com/maps/dir/?${p.toString()}`;
 }
 
-function IconMtr({ className }: { className?: string }) {
+function wikimediaCommonsFileUrl(fileTitle: string) {
+  return `https://commons.wikimedia.org/wiki/File:${fileTitle}`;
+}
+
+const QUICK_TRANSPORT_ENTRIES = [
+  {
+    title: "directions.quickMtrTitle",
+    body: "directions.quickMtrBody",
+    pills: "directions.quickMtrPills",
+    image: "/images/directions-transport/mtr.jpg",
+    altKey: "directions.quickMtrImageAlt",
+    commonsFile: "MTR_R-Train_in_Kowloon_Tong_Station_(EAL).jpg",
+    author: "Hoben7599",
+    license: "CC BY 4.0",
+  },
+  {
+    title: "directions.quickBusTitle",
+    body: "directions.quickBusBody",
+    pills: "directions.quickBusPills",
+    image: "/images/directions-transport/bus.jpg",
+    altKey: "directions.quickBusImageAlt",
+    commonsFile: "KMB_Route_960_in_Hong_Kong_with_roof_visible_dllu.jpg",
+    author: "Dllu",
+    license: "CC BY-SA 4.0",
+  },
+  {
+    title: "directions.quickMinibusTitle",
+    body: "directions.quickMinibusBody",
+    pills: "directions.quickMinibusPills",
+    image: "/images/directions-transport/green-minibus.jpg",
+    altKey: "directions.quickMinibusImageAlt",
+    commonsFile: "Hong_Kong_Island_Green_Minibus_Route_25_at_Lai_Tak_Tsuen_Road_(Hong_Kong).jpg",
+    author: "Mk2010",
+    license: "CC BY-SA 4.0",
+  },
+  {
+    title: "directions.quickDriveTitle",
+    body: "directions.quickDriveBody",
+    pills: "directions.quickDrivePills",
+    image: "/images/directions-transport/driving.jpg",
+    altKey: "directions.quickDriveImageAlt",
+    commonsFile: "Tai_Lam_Tunnel_Entrance_2019.jpg",
+    author: "Wpcpey",
+    license: "CC BY-SA 4.0",
+  },
+] as const;
+
+function TransportImageCredit({
+  author,
+  license,
+  commonsFile,
+  className,
+}: {
+  author: string;
+  license: string;
+  commonsFile: string;
+  className?: string;
+}) {
+  const { t, tr } = useTranslation();
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      aria-hidden
-    >
-      <rect x="4" y="14" width="16" height="6" rx="1.5" />
-      <path d="M7 14V9a5 5 0 0 1 10 0v5" />
-      <circle cx="9" cy="18" r="0.75" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="18" r="0.75" fill="currentColor" stroke="none" />
-    </svg>
+    <p className={className ?? "mt-1.5 text-[10px] leading-snug text-stone-500 dark:text-stone-400"}>
+      <span>{tr("directions.transportPhotoCredit", { author, license })}</span>{" "}
+      <Link
+        href={wikimediaCommonsFileUrl(commonsFile)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200"
+      >
+        {t("directions.transportPhotoFilePage")}
+      </Link>
+    </p>
   );
 }
 
@@ -64,41 +120,6 @@ function IconBus({ className }: { className?: string }) {
   );
 }
 
-function IconMinibus({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      aria-hidden
-    >
-      <rect x="3" y="6" width="18" height="11" rx="2" />
-      <path d="M6 17h12" />
-      <circle cx="8" cy="17.5" r="1" />
-      <circle cx="16" cy="17.5" r="1" />
-    </svg>
-  );
-}
-
-function IconCar({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      aria-hidden
-    >
-      <path d="M5 17h14l-1-5H6l-1 5zM7 12l1-4h8l1 4" />
-      <circle cx="8.5" cy="17" r="1.25" />
-      <circle cx="15.5" cy="17" r="1.25" />
-    </svg>
-  );
-}
-
 function PillRow({ text, pillClassName = pillClass }: { text: string; pillClassName?: string }) {
   const pills = text.split(",").map((s) => s.trim()).filter(Boolean);
   return (
@@ -115,13 +136,326 @@ function PillRow({ text, pillClassName = pillClass }: { text: string; pillClassN
 const stopPillClass =
   "rounded-full border border-violet-200/90 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-900 dark:border-violet-500/35 dark:bg-violet-950/45 dark:text-violet-100";
 
+const minibusRoutePillEmerald =
+  "rounded-full border border-emerald-200/90 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-900 dark:border-emerald-500/35 dark:bg-emerald-950/50 dark:text-emerald-100";
+
+const minibusRoutePillSky =
+  "rounded-full border border-sky-200/90 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-950 dark:border-sky-500/35 dark:bg-sky-950/50 dark:text-sky-100";
+
+const minibusRoutePillAmber =
+  "rounded-full border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-950 dark:border-amber-500/35 dark:bg-amber-950/45 dark:text-amber-100";
+
+function IconMinibusNeighbourhood({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path
+        d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.25" />
+    </svg>
+  );
+}
+
+function IconMinibusCrossTown({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path d="M5 12h14" strokeLinecap="round" />
+      <path d="M9 8 5 12l4 4M15 8l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconMinibusAttention({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path d="M12 6v5M12 17h.01" strokeLinecap="round" />
+      <path d="M4.5 18.5 12 5l7.5 13.5H4.5z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconMtrConnection({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="4" y="14" width="16" height="6" rx="1.5" />
+      <path d="M7 14V9a5 5 0 0 1 10 0v5" />
+      <circle cx="9" cy="18" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="18" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconTocAddressPin({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <path
+        d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="11" r="2" />
+    </svg>
+  );
+}
+
+function IconTocMapPanel({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M8 9h8M8 13h5M8 17h8" strokeLinecap="round" />
+      <circle cx="15" cy="8" r="1.25" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconTocQuickHub({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 5v2M12 17v2M5 12h2M17 12h2M7.3 7.3l1.4 1.4M15.3 15.3l1.4 1.4M7.3 16.7l1.4-1.4M15.3 8.7l1.4-1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTocMinibusGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="3" y="7" width="18" height="9" rx="2" />
+      <path d="M6 16v2M18 16v2" strokeLinecap="round" />
+      <circle cx="8" cy="17.5" r="1.15" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="17.5" r="1.15" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconTocDistrictGrid({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" />
+    </svg>
+  );
+}
+
+function IconTocShuttleLoop({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="2" y="10" width="13" height="7" rx="1.5" />
+      <path d="M15 12h3l2 2.5V17h-2" />
+      <path d="M19 6a4 4 0 0 1-4 4" strokeLinecap="round" />
+      <path d="M17 4l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTocInfo({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 8h.01" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+type TocIconComponent = ComponentType<{ className?: string }>;
+
+const DIRECTIONS_ONPAGE_TOC: readonly {
+  hash: string;
+  titleKey: string;
+  Icon: TocIconComponent;
+  iconWrapClass: string;
+  tileClass: string;
+}[] = [
+  {
+    hash: "directions-onpage-address",
+    titleKey: "directions.addressLabel",
+    Icon: IconTocAddressPin,
+    iconWrapClass:
+      "bg-violet-100 text-violet-800 dark:bg-violet-950/55 dark:text-violet-200",
+    tileClass:
+      "border-violet-200/80 bg-gradient-to-br from-violet-50/90 to-white hover:border-violet-300 dark:border-violet-500/25 dark:from-violet-950/35 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-map-heading",
+    titleKey: "directions.mapTitle",
+    Icon: IconTocMapPanel,
+    iconWrapClass: "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100",
+    tileClass:
+      "border-sky-200/80 bg-gradient-to-br from-sky-50/80 to-white hover:border-sky-300 dark:border-sky-500/25 dark:from-sky-950/30 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-quick-heading",
+    titleKey: "directions.quickTitle",
+    Icon: IconTocQuickHub,
+    iconWrapClass:
+      "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100",
+    tileClass:
+      "border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 to-white hover:border-emerald-300 dark:border-emerald-500/25 dark:from-emerald-950/30 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-bus-heading",
+    titleKey: "directions.busSectionTitle",
+    Icon: IconBus,
+    iconWrapClass: "bg-amber-100 text-amber-950 dark:bg-amber-950/45 dark:text-amber-100",
+    tileClass:
+      "border-amber-200/80 bg-gradient-to-br from-amber-50/70 to-white hover:border-amber-300 dark:border-amber-500/25 dark:from-amber-950/25 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-gmb-heading",
+    titleKey: "directions.minibusSectionTitle",
+    Icon: IconTocMinibusGlyph,
+    iconWrapClass:
+      "bg-lime-100 text-lime-900 dark:bg-lime-950/40 dark:text-lime-100",
+    tileClass:
+      "border-lime-200/80 bg-gradient-to-br from-lime-50/70 to-white hover:border-lime-300 dark:border-lime-500/20 dark:from-lime-950/25 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-regions-heading",
+    titleKey: "directions.regionsTitle",
+    Icon: IconTocDistrictGrid,
+    iconWrapClass:
+      "bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-950/45 dark:text-fuchsia-100",
+    tileClass:
+      "border-fuchsia-200/80 bg-gradient-to-br from-fuchsia-50/70 to-white hover:border-fuchsia-300 dark:border-fuchsia-500/25 dark:from-fuchsia-950/25 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-mills-heading",
+    titleKey: "directions.millsTitle",
+    Icon: IconTocShuttleLoop,
+    iconWrapClass:
+      "bg-orange-100 text-orange-900 dark:bg-orange-950/45 dark:text-orange-100",
+    tileClass:
+      "border-orange-200/80 bg-gradient-to-br from-orange-50/70 to-white hover:border-orange-300 dark:border-orange-500/25 dark:from-orange-950/25 dark:to-stone-900/30",
+  },
+  {
+    hash: "directions-footnote-heading",
+    titleKey: "directions.footnoteTitle",
+    Icon: IconTocInfo,
+    iconWrapClass: "bg-stone-200 text-stone-800 dark:bg-stone-700 dark:text-stone-100",
+    tileClass:
+      "border-stone-200 bg-gradient-to-br from-stone-50/90 to-white hover:border-stone-300 dark:border-stone-600 dark:from-stone-800/50 dark:to-stone-900/30",
+  },
+];
+
+function DirectionsOnPageToc() {
+  const { t } = useTranslation();
+  return (
+    <nav
+      className="mt-6 rounded-2xl border border-stone-200/90 bg-white/90 p-4 shadow-sm backdrop-blur-sm dark:border-stone-600 dark:bg-stone-900/50"
+      aria-label={t("directions.tocNavAria")}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+        {t("directions.tocHeading")}
+      </p>
+      <ul className="mt-3 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-4">
+        {DIRECTIONS_ONPAGE_TOC.map(({ hash, titleKey, Icon, iconWrapClass, tileClass }) => (
+          <li key={hash}>
+            <a
+              href={`#${hash}`}
+              className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center transition hover:shadow-md dark:hover:shadow-none ${tileClass}`}
+            >
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ${iconWrapClass}`}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-stone-800 dark:text-stone-100">
+                {t(titleKey)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 const BUS_EXAMPLE_ROW_COUNT = 7;
 
 const REGION_IDS = ["TuenMun", "YuenLong", "TinShuiWai", "WongTaiSin", "HkIsland", "Shatin"] as const;
 
 type RegionId = (typeof REGION_IDS)[number];
 
-/** Local copies of Wikimedia Commons photos (see each `commonsPage` for licence). */
 /** Small horizontal arrow to the left of the Fantasia logo on district photos. */
 function ArrowTowardFantasiaLogo({ className }: { className?: string }) {
   return (
@@ -144,57 +478,23 @@ function ArrowTowardFantasiaLogo({ className }: { className?: string }) {
   );
 }
 
-const REGION_DISTRICT_PHOTOS: Record<
-  RegionId,
-  { image: string; commonsPage: string; attribution: string }
-> = {
-  TuenMun: {
-    image: "/images/directions-regions/tuen-mun.jpg",
-    commonsPage: "https://commons.wikimedia.org/wiki/File:Tuen_Mun_Dusk_View_2013.jpg",
-    attribution: "Eddie Yip — CC BY-SA 3.0",
-  },
-  YuenLong: {
-    image: "/images/directions-regions/yuen-long.jpg",
-    commonsPage:
-      "https://commons.wikimedia.org/wiki/File:HK_Yuen_Long_Town_Centre_%E5%85%83%E6%9C%97%E5%B8%82%E4%B8%AD%E5%BF%83_Sunday_02.jpg",
-    attribution: "Bladezcafo — CC BY-SA 3.0",
-  },
-  TinShuiWai: {
-    image: "/images/directions-regions/tin-shui-wai.jpg",
-    commonsPage: "https://commons.wikimedia.org/wiki/File:Tin_Shui_Wai_Nullah.jpg",
-    attribution: "Baycrest — CC BY-SA 2.5",
-  },
-  WongTaiSin: {
-    image: "/images/directions-regions/wong-tai-sin.jpg",
-    commonsPage:
-      "https://commons.wikimedia.org/wiki/File:2024-12-28_View_of_Wong_Tai_Sin_District_from_Fei_Ngo_Shan_Road.jpg",
-    attribution: "Alexkom000 — CC BY 4.0",
-  },
-  HkIsland: {
-    image: "/images/directions-regions/hong-kong-island.jpg",
-    commonsPage: "https://commons.wikimedia.org/wiki/File:Victoria_Harbour_skyscrapers.jpg",
-    attribution: "Wilfredor — CC0 1.0",
-  },
-  Shatin: {
-    image: "/images/directions-regions/sha-tin.jpg",
-    commonsPage:
-      "https://commons.wikimedia.org/wiki/File:Sha_Tin_Hoi_and_Ma_On_Shan_from_Mong_Man_Wai_Building,_CUHK.jpg",
-    attribution: "Jonashtand — CC BY-SA 4.0",
-  },
+const REGION_DISTRICT_PHOTOS: Record<RegionId, { image: string }> = {
+  TuenMun: { image: "/images/directions-regions/tuen-mun.jpg" },
+  YuenLong: { image: "/images/directions-regions/yuen-long.jpg" },
+  TinShuiWai: { image: "/images/directions-regions/tin-shui-wai.jpg" },
+  WongTaiSin: { image: "/images/directions-regions/wong-tai-sin.jpg" },
+  HkIsland: { image: "/images/directions-regions/hong-kong-island.jpg" },
+  Shatin: { image: "/images/directions-regions/sha-tin.jpg" },
 };
 
 function RegionRouteFigure({
   regionId,
   caption,
   imageAlt,
-  creditPrefix,
-  creditLinkLabel,
 }: {
   regionId: RegionId;
   caption: string;
   imageAlt: string;
-  creditPrefix: string;
-  creditLinkLabel: string;
 }) {
   const photo = REGION_DISTRICT_PHOTOS[regionId];
 
@@ -223,20 +523,8 @@ function RegionRouteFigure({
           />
         </div>
       </div>
-      <figcaption className="space-y-1 border-t border-stone-200/90 bg-stone-50/90 px-2.5 py-2 text-[10px] leading-snug text-stone-600 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-400">
+      <figcaption className="border-t border-stone-200/90 bg-stone-50/90 px-2.5 py-2 text-[10px] leading-snug text-stone-600 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-400">
         <span className="block font-medium text-stone-800 dark:text-stone-200">{caption}</span>
-        <span className="block">
-          {creditPrefix}{" "}
-          <Link
-            href={photo.commonsPage}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200"
-          >
-            {creditLinkLabel}
-          </Link>
-          <span className="text-stone-500 dark:text-stone-500"> — {photo.attribution}</span>
-        </span>
       </figcaption>
     </figure>
   );
@@ -255,7 +543,7 @@ function FantasiaVenueMap() {
   const externalHref = googleMapsSearchUrl(VENUE_MAPS_SEARCH_QUERY);
 
   return (
-    <section className={cardClass} aria-labelledby="directions-map-heading">
+    <section className={`${cardClass} scroll-mt-24`} aria-labelledby="directions-map-heading">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 id="directions-map-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
@@ -322,7 +610,7 @@ function BusStopsSection() {
   const walkSecondary = googleWalkingDirectionsUrl(origins.secondary, dest);
 
   return (
-    <section className={cardClass} aria-labelledby="directions-bus-heading">
+    <section className={`${cardClass} scroll-mt-24`} aria-labelledby="directions-bus-heading">
       <h2 id="directions-bus-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
         {t("directions.busSectionTitle")}
       </h2>
@@ -402,14 +690,96 @@ function BusStopsSection() {
 function MinibusSection() {
   const { t } = useTranslation();
   return (
-    <section className={cardClass} aria-labelledby="directions-gmb-heading">
+    <section className={`${cardClass} scroll-mt-24`} aria-labelledby="directions-gmb-heading">
       <h2 id="directions-gmb-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
         {t("directions.minibusSectionTitle")}
       </h2>
       <p className="text-xs leading-relaxed text-stone-600 dark:text-stone-400">{t("directions.minibusSectionLead")}</p>
-      <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-        {t("directions.minibusRoutesBody")}
-      </p>
+
+      <ul
+        className="mt-4 grid list-none gap-3 p-0 sm:grid-cols-2"
+        aria-label={t("directions.minibusSectionTitle")}
+      >
+        <li className="flex gap-3 rounded-xl border border-stone-200 border-l-4 border-l-emerald-500 bg-gradient-to-br from-white to-emerald-50/35 p-3.5 shadow-sm dark:border-stone-600 dark:border-l-emerald-500 dark:from-stone-900/50 dark:to-emerald-950/20">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950/55 dark:text-emerald-200">
+            <IconMinibusNeighbourhood className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+              {t("directions.minibusCardLocalTitle")}
+            </h3>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("directions.minibusCardRoutesLabel")}
+            </p>
+            <div className="mt-1">
+              <PillRow text={t("directions.minibusCardLocalRoutes")} pillClassName={minibusRoutePillEmerald} />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+              {t("directions.minibusCardLocalBody")}
+            </p>
+          </div>
+        </li>
+
+        <li className="flex gap-3 rounded-xl border border-stone-200 border-l-4 border-l-sky-500 bg-gradient-to-br from-white to-sky-50/40 p-3.5 shadow-sm dark:border-stone-600 dark:border-l-sky-500 dark:from-stone-900/50 dark:to-sky-950/25">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-900 dark:bg-sky-950/55 dark:text-sky-100">
+            <IconMinibusCrossTown className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+              {t("directions.minibusCardShatinTitle")}
+            </h3>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("directions.minibusCardRoutesLabel")}
+            </p>
+            <div className="mt-1">
+              <PillRow text={t("directions.minibusCardShatinRoutes")} pillClassName={minibusRoutePillSky} />
+            </div>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("directions.minibusCardShatinContextLabel")}
+            </p>
+            <div className="mt-1">
+              <PillRow text={t("directions.minibusCardShatinPills")} pillClassName={minibusRoutePillSky} />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+              {t("directions.minibusCardShatinBody")}
+            </p>
+          </div>
+        </li>
+
+        <li className="flex gap-3 rounded-xl border border-stone-200 border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/35 p-3.5 shadow-sm sm:col-span-2 dark:border-stone-600 dark:border-l-amber-500 dark:from-stone-900/50 dark:to-amber-950/20">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100">
+            <IconMinibusAttention className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+              {t("directions.minibusCardPlbTitle")}
+            </h3>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("directions.minibusCardPlbHintLabel")}
+            </p>
+            <div className="mt-1">
+              <PillRow text={t("directions.minibusCardPlbPills")} pillClassName={minibusRoutePillAmber} />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+              {t("directions.minibusCardPlbBody")}
+            </p>
+          </div>
+        </li>
+      </ul>
+
+      <div className="mt-3 flex gap-3 rounded-xl border border-violet-200/90 border-l-4 border-l-violet-500 bg-gradient-to-br from-violet-50/70 to-white p-3.5 dark:border-violet-500/35 dark:border-l-violet-400 dark:from-violet-950/30 dark:to-stone-900/40">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-800 dark:bg-violet-950/55 dark:text-violet-200">
+          <IconMtrConnection className="h-6 w-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+            {t("directions.minibusIslandCalloutTitle")}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+            {t("directions.minibusIslandCalloutBody")}
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
@@ -430,22 +800,6 @@ export function DirectionsPageView() {
     }
   }, [address]);
 
-  const quick = useMemo(
-    () =>
-      [
-        { icon: IconMtr, title: t("directions.quickMtrTitle"), body: t("directions.quickMtrBody"), pills: t("directions.quickMtrPills") },
-        { icon: IconBus, title: t("directions.quickBusTitle"), body: t("directions.quickBusBody"), pills: t("directions.quickBusPills") },
-        {
-          icon: IconMinibus,
-          title: t("directions.quickMinibusTitle"),
-          body: t("directions.quickMinibusBody"),
-          pills: t("directions.quickMinibusPills"),
-        },
-        { icon: IconCar, title: t("directions.quickDriveTitle"), body: t("directions.quickDriveBody"), pills: t("directions.quickDrivePills") },
-      ] as const,
-    [t],
-  );
-
   return (
     <main className="mx-auto max-w-5xl px-5 sm:px-4 py-12">
       <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-50">{t("directions.pageTitle")}</h1>
@@ -453,45 +807,59 @@ export function DirectionsPageView() {
         {t("directions.pageLead")}
       </p>
 
-      <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-violet-200/80 bg-violet-50/60 p-4 dark:border-violet-500/30 dark:bg-violet-950/25 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-800 dark:text-violet-200">
-            {t("directions.addressLabel")}
-          </p>
-          <p className="mt-1 text-sm font-medium text-stone-900 dark:text-stone-100">{address}</p>
+      <section
+        id="directions-onpage-address"
+        className="mt-8 scroll-mt-24"
+        aria-label={t("directions.addressLabel")}
+      >
+        <div className="flex flex-col gap-3 rounded-2xl border border-violet-200/80 bg-violet-50/60 p-4 dark:border-violet-500/30 dark:bg-violet-950/25 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-800 dark:text-violet-200">
+              {t("directions.addressLabel")}
+            </p>
+            <p className="mt-1 text-sm font-medium text-stone-900 dark:text-stone-100">{address}</p>
+          </div>
+          <button
+            type="button"
+            onClick={copyAddress}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-violet-400 bg-white px-4 text-sm font-medium text-violet-900 transition hover:bg-violet-50 dark:border-violet-500 dark:bg-violet-900/40 dark:text-violet-100 dark:hover:bg-violet-900/70"
+          >
+            {copied ? t("directions.copied") : t("directions.copyAddress")}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={copyAddress}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-violet-400 bg-white px-4 text-sm font-medium text-violet-900 transition hover:bg-violet-50 dark:border-violet-500 dark:bg-violet-900/40 dark:text-violet-100 dark:hover:bg-violet-900/70"
-        >
-          {copied ? t("directions.copied") : t("directions.copyAddress")}
-        </button>
-      </div>
+      </section>
+
+      <DirectionsOnPageToc />
 
       <div className="mt-10 space-y-10">
         <FantasiaVenueMap />
 
-        <section aria-labelledby="directions-quick-heading">
+        <section className="scroll-mt-24" aria-labelledby="directions-quick-heading">
           <h2 id="directions-quick-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
             {t("directions.quickTitle")}
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {quick.map(({ icon: Icon, title, body, pills }) => (
-              <div key={title} className={cardClass}>
-                <div className="flex items-start gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-200">
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-stone-900 dark:text-stone-50">{title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">{body}</p>
-                    <div className="mt-2">
-                      <PillRow text={pills} />
-                    </div>
-                  </div>
+            {QUICK_TRANSPORT_ENTRIES.map((entry) => (
+              <article
+                key={entry.title}
+                className="flex flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900/40"
+              >
+                <div className="relative aspect-[16/10] w-full shrink-0">
+                  <Image
+                    src={withBasePath(entry.image)}
+                    alt={t(entry.altKey)}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
+                  />
                 </div>
-              </div>
+                <div className="flex flex-col gap-2 p-4">
+                  <h3 className="font-medium text-stone-900 dark:text-stone-50">{t(entry.title)}</h3>
+                  <p className="text-xs leading-relaxed text-stone-600 dark:text-stone-400">{t(entry.body)}</p>
+                  <PillRow text={t(entry.pills)} />
+                  <TransportImageCredit author={entry.author} license={entry.license} commonsFile={entry.commonsFile} />
+                </div>
+              </article>
             ))}
           </div>
         </section>
@@ -500,7 +868,7 @@ export function DirectionsPageView() {
 
         <MinibusSection />
 
-        <section aria-labelledby="directions-regions-heading">
+        <section className="scroll-mt-24" aria-labelledby="directions-regions-heading">
           <h2 id="directions-regions-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
             {t("directions.regionsTitle")}
           </h2>
@@ -521,15 +889,13 @@ export function DirectionsPageView() {
                   regionId={id}
                   caption={t(`directions.region${id}FigureCaption`)}
                   imageAlt={t(`directions.region${id}PhotoAlt`)}
-                  creditPrefix={t("directions.regionsPhotoCreditPrefix")}
-                  creditLinkLabel={t("directions.regionsPhotoCreditLinkLabel")}
                 />
               </div>
             ))}
           </div>
         </section>
 
-        <section className={cardClass} aria-labelledby="directions-mills-heading">
+        <section className={`${cardClass} scroll-mt-24`} aria-labelledby="directions-mills-heading">
           <h2 id="directions-mills-heading" className="font-serif text-xl text-stone-900 dark:text-stone-50">
             {t("directions.millsTitle")}
           </h2>
@@ -576,7 +942,7 @@ export function DirectionsPageView() {
         </section>
 
         <section
-          className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 dark:border-stone-700 dark:bg-stone-900/50"
+          className="scroll-mt-24 rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 dark:border-stone-700 dark:bg-stone-900/50"
           aria-labelledby="directions-footnote-heading"
         >
           <h2 id="directions-footnote-heading" className="text-xs font-semibold uppercase tracking-wider text-stone-500">

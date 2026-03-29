@@ -1,5 +1,6 @@
 import { HomePageMain } from "@/components/home-page-main";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
+import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import {
   getAllSettings,
   getEffectiveNowFromSettings,
@@ -19,7 +20,7 @@ export default async function HomePage() {
   /** UTC ISO so the countdown matches SSR and all browsers (see parseInstantSetting). */
   const bookingOpensAt = bookingOpensDate?.toISOString() ?? null;
   const now = getEffectiveNowFromSettings(all);
-  const bookingLive = bookingOpensDate ? now.getTime() >= bookingOpensDate.getTime() : false;
+  const bookingLive = isBookingPortalLiveFromSettings(all, now);
   const bookingOpensAtLabel =
     bookingOpensDate != null
       ? formatInstantForBookingOpensZhHk(bookingOpensDate)

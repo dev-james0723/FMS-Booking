@@ -67,6 +67,7 @@ export function HomePageMain({
           bookingOpensAtIso={bookingOpensAtIso}
           bookingOpensAtLabel={bookingOpensAtLabel}
           initialNowMs={initialNowMs}
+          portalOpen={bookingLive}
         />
       </div>
 

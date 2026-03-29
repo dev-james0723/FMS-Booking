@@ -9,6 +9,8 @@ type Props = {
   bookingOpensAtLabel?: string | null;
   /** Server snapshot of "now" so first paint matches SSR; client syncs in useEffect. */
   initialNowMs: number;
+  /** When true (e.g. official open or booking test mode), show the "live" state even if ISO is still in the future. */
+  portalOpen?: boolean;
 };
 
 function pad(n: number) {
@@ -19,6 +21,7 @@ export function BookingCountdown({
   bookingOpensAtIso,
   bookingOpensAtLabel,
   initialNowMs,
+  portalOpen = false,
 }: Props) {
   const { t } = useTranslation();
   const [now, setNow] = useState(() => initialNowMs);
@@ -42,7 +45,7 @@ export function BookingCountdown({
   const target = new Date(bookingOpensAtIso).getTime();
   const diff = target - now;
 
-  if (diff <= 0) {
+  if (portalOpen || diff <= 0) {
     return (
       <p className="rounded-lg bg-emerald-50 px-5 sm:px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100">
         {t("countdown.live")}

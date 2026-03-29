@@ -48,7 +48,7 @@ type BookingReq = {
 };
 
 /** 橫向捲動時僅凍結「中文名」欄；寬度需與 sticky left 一致。 */
-const STICKY_NAME_COL = "10rem" as const;
+const STICKY_NAME_COL = "11rem" as const;
 
 type UserRow = {
   id: string;
@@ -201,25 +201,26 @@ export function AdminUsersPanel() {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="overflow-x-auto rounded-lg border border-slate-700">
-        <table className="w-full min-w-[1100px] text-left text-sm">
+        {/* w-max：表格寬度跟欄位最小寬度走，避免 w-full 把窄欄擠到逐字換行；外層 overflow-x-auto 負責橫向捲動 */}
+        <table className="w-max max-w-none text-left text-sm">
           <thead className="border-b border-slate-700 bg-slate-950 text-slate-400">
             <tr>
               <th
                 style={{ width: STICKY_NAME_COL, minWidth: STICKY_NAME_COL, left: 0 }}
-                className="sticky z-30 box-border border-r border-slate-600 bg-slate-950 px-3 py-2 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)]"
+                className="sticky z-30 box-border border-r border-slate-600 bg-slate-950 px-4 py-3 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)] whitespace-nowrap"
               >
                 中文名
               </th>
-              <th className="min-w-[8.5rem] px-3 py-2">電話</th>
-              <th className="min-w-[7.5rem] px-3 py-2">類別</th>
-              <th className="min-w-[11rem] px-3 py-2">配額／資格</th>
-              <th className="px-3 py-2">英文名</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">樂器／領域</th>
-              <th className="min-w-[10rem] px-3 py-2">預約系統／分類</th>
-              <th className="px-3 py-2">登記日期</th>
-              <th className="min-w-[240px] px-3 py-2">預約紀錄</th>
-              <th className="px-3 py-2">聯動</th>
+              <th className="min-w-[9rem] whitespace-nowrap px-4 py-3">電話</th>
+              <th className="min-w-[8.5rem] whitespace-nowrap px-4 py-3">類別</th>
+              <th className="min-w-[14rem] whitespace-nowrap px-4 py-3">配額／資格</th>
+              <th className="min-w-[10rem] whitespace-nowrap px-4 py-3">英文名</th>
+              <th className="min-w-[16rem] whitespace-nowrap px-4 py-3">Email</th>
+              <th className="min-w-[12rem] whitespace-nowrap px-4 py-3">樂器／領域</th>
+              <th className="min-w-[12rem] whitespace-nowrap px-4 py-3">預約系統／分類</th>
+              <th className="min-w-[9rem] whitespace-nowrap px-4 py-3">登記日期</th>
+              <th className="min-w-[280px] whitespace-nowrap px-4 py-3">預約紀錄</th>
+              <th className="min-w-[7.5rem] whitespace-nowrap px-4 py-3">聯動</th>
             </tr>
           </thead>
           <tbody>
@@ -237,7 +238,7 @@ export function AdminUsersPanel() {
                 >
                   <td
                     style={{ width: STICKY_NAME_COL, minWidth: STICKY_NAME_COL, left: 0 }}
-                    className={`sticky z-20 box-border border-r border-slate-600 px-3 py-3 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)] ${stickyBg} text-slate-200`}
+                    className={`sticky z-20 box-border border-r border-slate-600 px-4 py-3.5 align-top shadow-[6px_0_14px_-4px_rgba(0,0,0,0.55)] ${stickyBg} text-slate-200`}
                   >
                     <div className="break-words">{p?.nameZh ?? "—"}</div>
                     <details className="mt-2 text-[11px] text-slate-500">
@@ -299,13 +300,13 @@ export function AdminUsersPanel() {
                       </div>
                     </details>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 align-top text-slate-300">
+                  <td className="min-w-[9rem] whitespace-nowrap px-4 py-3.5 align-top text-slate-300">
                     {p?.phone ?? "—"}
                   </td>
-                  <td className="max-w-[7.5rem] px-3 py-3 align-top text-xs text-slate-400">
-                    <span className="line-clamp-4 break-words">{u.category?.nameZh ?? "—"}</span>
+                  <td className="min-w-[8.5rem] max-w-[16rem] px-4 py-3.5 align-top text-xs text-slate-400">
+                    <span className="break-words">{u.category?.nameZh ?? "—"}</span>
                   </td>
-                  <td className="max-w-[13rem] px-3 py-3 align-top text-[11px] leading-snug text-slate-300">
+                  <td className="min-w-[14rem] max-w-[18rem] px-4 py-3.5 align-top text-[11px] leading-snug text-slate-300">
                     <p className="font-medium text-slate-200">{quotaTierLabelZh(u.quotaTier)}</p>
                     <p className="mt-1 text-slate-500">
                       今日 {sessionCountWithHoursPack("zh-HK", u.bookingUsage.todayCommitted)}／
@@ -326,27 +327,29 @@ export function AdminUsersPanel() {
                       最近成功提交：{u.lastBookingAt ? fmt(u.lastBookingAt) : "—"}
                     </p>
                   </td>
-                  <td className="px-3 py-3 align-top text-slate-300">{p?.nameEn ?? "—"}</td>
-                  <td className="px-3 py-3 align-top">
+                  <td className="min-w-[10rem] px-4 py-3.5 align-top text-slate-300">
+                    <span className="break-words">{p?.nameEn ?? "—"}</span>
+                  </td>
+                  <td className="min-w-[16rem] px-4 py-3.5 align-top">
                     <span className="break-all text-slate-200">{u.email}</span>
                   </td>
                   <td
-                    className="max-w-[140px] px-3 py-3 align-top text-xs text-slate-300"
+                    className="min-w-[12rem] max-w-[20rem] px-4 py-3.5 align-top text-xs text-slate-300"
                     title={p?.instrumentField}
                   >
                     {p?.instrumentField ? (
-                      <span className="line-clamp-3">{p.instrumentField}</span>
+                      <span className="break-words">{p.instrumentField}</span>
                     ) : (
                       "—"
                     )}
                   </td>
-                  <td className="max-w-[12rem] px-3 py-3 align-top text-xs leading-snug text-slate-200">
-                    {p?.instrumentCategoryZh ?? "—"}
+                  <td className="min-w-[12rem] max-w-[18rem] px-4 py-3.5 align-top text-xs leading-snug text-slate-200">
+                    <span className="break-words">{p?.instrumentCategoryZh ?? "—"}</span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 align-top text-xs text-slate-400">
+                  <td className="min-w-[9rem] whitespace-nowrap px-4 py-3.5 align-top text-xs text-slate-400">
                     {fmtDate(u.createdAt)}
                   </td>
-                  <td className="px-3 py-3 align-top text-xs text-slate-300">
+                  <td className="min-w-[280px] px-4 py-3.5 align-top text-xs text-slate-300">
                     {u.bookingRequests.length === 0 ? (
                       <span className="text-slate-500">尚未提交預約</span>
                     ) : (
@@ -384,7 +387,7 @@ export function AdminUsersPanel() {
                       </details>
                     )}
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className="min-w-[7.5rem] px-4 py-3.5 align-top">
                     <div className="flex flex-col gap-1.5">
                       <Link
                         href={`/admin/bookings?userId=${encodeURIComponent(u.id)}&venue=${encodeURIComponent(p?.bookingVenueKind ?? "studio_room")}`}

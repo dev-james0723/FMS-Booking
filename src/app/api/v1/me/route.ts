@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
-import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
+import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import { getEffectiveNow, getPublicSettings } from "@/lib/settings";
 
 export async function GET() {
@@ -26,8 +26,7 @@ export async function GET() {
 
   const settings = await getPublicSettings();
   const now = await getEffectiveNow();
-  const bookingOpensAt = parseBookingOpensAt(settings["booking_opens_at"]);
-  const bookingOpen = bookingOpensAt ? now.getTime() >= bookingOpensAt.getTime() : false;
+  const bookingOpen = isBookingPortalLiveFromSettings(settings as Record<string, unknown>, now);
 
   const canAccessBookingPortal =
     user.hasCompletedRegistration &&

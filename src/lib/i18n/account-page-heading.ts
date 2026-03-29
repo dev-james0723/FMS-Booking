@@ -8,3 +8,8 @@ export function accountPageHeading(locale: Locale, bookingVenueKind: BookingVenu
   const a = locale === "en" ? accountEn : accountZhHK;
   return bookingVenueKind === "open_space" ? a.pageTitleOpenSpace : a.pageTitleStudio;
 }
+
+/** Studio-channel quota note; resolved on the server from cookie locale to avoid client-only i18n drift on SSR. */
+export function accountSharedQuotaVenuesNote(locale: Locale): string {
+  return (locale === "en" ? accountEn : accountZhHK).sharedQuotaVenuesNote;
+}

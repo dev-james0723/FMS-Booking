@@ -34,6 +34,8 @@ export const regEn = {
   errPasskeyBeforeSubmit:
     'Tap "Bind Face ID / fingerprint" and complete device verification first; biometrics are required to register.',
   submitFail: "Submission failed",
+  errorModalTitle: "Cannot continue",
+  errorModalOk: "OK",
   sectionBasic: "Basic information",
   sectionUserType: "User category & registration profile",
   regProfileHint:

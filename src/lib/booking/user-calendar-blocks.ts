@@ -77,3 +77,14 @@ export async function loadUserCalendarMergedBlocks(
   }
   return out;
 }
+
+/** Studio-channel accounts may have both venue kinds; sync all quota-counted bookings to Google Calendar. */
+export async function loadUserCalendarMergedBlocksForProfile(
+  userId: string,
+  profileVenueKind: BookingVenueKind
+): Promise<UserCalendarMergedBlock[]> {
+  const kinds: BookingVenueKind[] =
+    profileVenueKind === "studio_room" ? ["studio_room", "open_space"] : ["open_space"];
+  const parts = await Promise.all(kinds.map((k) => loadUserCalendarMergedBlocks(userId, k)));
+  return parts.flat().sort((a, b) => a.mergedStart.getTime() - b.mergedStart.getTime());
+}

@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { google } from "googleapis";
 import {
   bookingCalendarTitlePrefix,
-  loadUserCalendarMergedBlocks,
+  loadUserCalendarMergedBlocksForProfile,
   type UserCalendarMergedBlock,
 } from "@/lib/booking/user-calendar-blocks";
 import { prisma } from "@/lib/prisma";
@@ -131,8 +131,10 @@ export async function syncUserBookingsToGoogleCalendar(
     return { ok: false, code: "NOT_LINKED", message: "Google Calendar is not connected" };
   }
 
-  const venueKind = user.profile.bookingVenueKind;
-  const blocks = await loadUserCalendarMergedBlocks(userId, venueKind);
+  const blocks = await loadUserCalendarMergedBlocksForProfile(
+    userId,
+    user.profile.bookingVenueKind
+  );
 
   const oauth2 = createUserCalendarOAuth2Client(oauthRedirectUri);
   oauth2.setCredentials({ refresh_token: refresh });

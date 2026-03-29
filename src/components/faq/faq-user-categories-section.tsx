@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { sessionCountWithHoursPack, sessionHoursInnerLabel } from "@/lib/i18n/session-hours";
 import type { Locale as AppLocale } from "@/lib/i18n/types";
 
@@ -17,9 +18,10 @@ const copy = {
     quotaDay: "每日最多",
     quotaRolling: "連續 3 日最多",
     sessionUnit: "節",
-    tierPersonal: "個人配額",
-    tierTeaching: "教學配額",
-    sameAsPersonal: "同個人配額",
+    tierPersonal: "個人使用者配額",
+    tierTeaching: "教學使用者配額",
+    tierTeacherReferredStudent: "老師推薦之學生使用者配額",
+    tierDualPracticeTeaching: "個人及教學（雙重需求）使用者配額",
     dualNote: "雙重身份不疊加兩套配額，一律按教學上限計。",
     cats: [
       {
@@ -59,9 +61,10 @@ const copy = {
     quotaDay: "Max per day",
     quotaRolling: "Max in any 3 days",
     sessionUnit: "sessions",
-    tierPersonal: "Individual tier",
-    tierTeaching: "Teaching tier",
-    sameAsPersonal: "Same as individual",
+    tierPersonal: "Individual user quota",
+    tierTeaching: "Teaching user quota",
+    tierTeacherReferredStudent: "Teacher-referred student quota",
+    tierDualPracticeTeaching: "Practice & teaching (dual need) quota",
     dualNote: "Dual use does not double quotas; the teaching cap applies to all sessions.",
     cats: [
       {
@@ -150,6 +153,54 @@ const iconStyles: Record<string, string> = {
   both: "bg-sky-500/15 text-sky-800 dark:text-sky-200 ring-sky-500/25",
 };
 
+type QuotaTableLabelKey =
+  | "tierPersonal"
+  | "tierTeaching"
+  | "tierTeacherReferredStudent"
+  | "tierDualPracticeTeaching";
+
+const QUOTA_TABLE_ROWS: Array<{
+  labelKey: QuotaTableLabelKey;
+  dot: string;
+  cellBg: string;
+  numColor: string;
+  day: number;
+  rolling: number;
+}> = [
+  {
+    labelKey: "tierPersonal",
+    dot: "bg-teal-500",
+    cellBg: "bg-teal-500/5",
+    numColor: "text-teal-800 dark:text-teal-200",
+    day: 5,
+    rolling: 7,
+  },
+  {
+    labelKey: "tierTeaching",
+    dot: "bg-violet-500",
+    cellBg: "bg-violet-500/5",
+    numColor: "text-violet-800 dark:text-violet-200",
+    day: 8,
+    rolling: 16,
+  },
+  {
+    labelKey: "tierTeacherReferredStudent",
+    dot: "bg-amber-500",
+    cellBg: "bg-amber-500/5",
+    numColor: "text-amber-800 dark:text-amber-200",
+    day: 5,
+    rolling: 7,
+  },
+  {
+    labelKey: "tierDualPracticeTeaching",
+    dot: "bg-sky-500",
+    cellBg: "bg-sky-500/5",
+    numColor: "text-sky-800 dark:text-sky-200",
+    day: 8,
+    rolling: 16,
+  },
+];
+
 export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
   const t = copy[locale];
 
@@ -174,46 +225,38 @@ export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
           <div className="border-b border-l border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-700 dark:border-stone-700 dark:text-stone-200 sm:px-3 sm:text-sm">
             {t.quotaRolling}
           </div>
-          <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
-            <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-teal-500" aria-hidden />
-            <span className="font-medium text-stone-900 dark:text-stone-50">{t.tierPersonal}</span>
-          </div>
-          <div className="flex flex-col items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 text-center dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">
-              5<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
-            </span>
-            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
-              {sessionHoursNote(locale, 5)}
-            </span>
-          </div>
-          <div className="flex flex-col items-center justify-center border-l border-stone-200 bg-teal-500/5 px-2 py-3 text-center dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-teal-800 dark:text-teal-200">
-              7<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
-            </span>
-            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
-              {sessionHoursNote(locale, 7)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 border-t border-stone-200 px-3 py-3 sm:px-4 dark:border-stone-700">
-            <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-violet-500" aria-hidden />
-            <span className="font-medium text-stone-900 dark:text-stone-50">{t.tierTeaching}</span>
-          </div>
-          <div className="flex flex-col items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 text-center dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">
-              8<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
-            </span>
-            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
-              {sessionHoursNote(locale, 8)}
-            </span>
-          </div>
-          <div className="flex flex-col items-center justify-center border-l border-t border-stone-200 bg-violet-500/5 px-2 py-3 text-center dark:border-stone-700">
-            <span className="text-lg font-semibold tabular-nums text-violet-800 dark:text-violet-200">
-              16<span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
-            </span>
-            <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
-              {sessionHoursNote(locale, 16)}
-            </span>
-          </div>
+          {QUOTA_TABLE_ROWS.map((row, i) => (
+            <Fragment key={row.labelKey}>
+              <div
+                className={`flex items-center gap-2 px-3 py-3 sm:px-4 ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${row.dot}`} aria-hidden />
+                <span className="font-medium text-stone-900 dark:text-stone-50">{t[row.labelKey]}</span>
+              </div>
+              <div
+                className={`flex flex-col items-center justify-center border-l border-stone-200 px-2 py-3 text-center dark:border-stone-700 ${row.cellBg} ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`text-lg font-semibold tabular-nums ${row.numColor}`}>
+                  {row.day}
+                  <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+                </span>
+                <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+                  {sessionHoursNote(locale, row.day)}
+                </span>
+              </div>
+              <div
+                className={`flex flex-col items-center justify-center border-l border-stone-200 px-2 py-3 text-center dark:border-stone-700 ${row.cellBg} ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`text-lg font-semibold tabular-nums ${row.numColor}`}>
+                  {row.rolling}
+                  <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.sessionUnit}</span>
+                </span>
+                <span className="mt-0.5 text-[10px] leading-tight text-stone-500 dark:text-stone-400">
+                  {sessionHoursNote(locale, row.rolling)}
+                </span>
+              </div>
+            </Fragment>
+          ))}
         </div>
       </div>
 
@@ -228,9 +271,9 @@ export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
           } else if (cat.quota === "teaching") {
             quotaLabel = `${t.tierTeaching} · ${sessionCountWithHoursPack(appLoc, 8)}／${sessionCountWithHoursPack(appLoc, 16)}`;
           } else if (cat.quota === "samePersonal") {
-            quotaLabel = `${t.sameAsPersonal} · ${sessionCountWithHoursPack(appLoc, 5)}／${sessionCountWithHoursPack(appLoc, 7)}`;
+            quotaLabel = `${t.tierTeacherReferredStudent} · ${sessionCountWithHoursPack(appLoc, 5)}／${sessionCountWithHoursPack(appLoc, 7)}`;
           } else {
-            quotaLabel = `${t.tierTeaching} · ${sessionCountWithHoursPack(appLoc, 8)}／${sessionCountWithHoursPack(appLoc, 16)}`;
+            quotaLabel = `${t.tierDualPracticeTeaching} · ${sessionCountWithHoursPack(appLoc, 8)}／${sessionCountWithHoursPack(appLoc, 16)}`;
           }
           return (
             <li

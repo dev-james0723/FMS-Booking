@@ -39,6 +39,29 @@ export function BookingIconMentorStudent({ className }: { className?: string }) 
   );
 }
 
+/** Account with both individual and teaching eligibility: teaching numeric caps apply. */
+export function BookingIconDualQuotaTier({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="8" cy="8.25" r="2.35" />
+      <path d="M4.25 20.25v-.75c0-2.35 1.9-4.25 4.75-4.25s4.75 1.9 4.75 4.25v.75" />
+      <rect x="13.5" y="4.5" width="8" height="6.25" rx="0.65" />
+      <path d="M15.25 7h4.5M15.25 8.65h3.5" opacity={0.4} />
+      <path d="M17.5 10.75V20" />
+      <path d="M15 20h5" />
+    </svg>
+  );
+}
+
 /** Teaching / with-students (teaching quota tier): board + instructor. */
 export function BookingIconTeaching({ className }: { className?: string }) {
   return (

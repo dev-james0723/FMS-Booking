@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { InstrumentOtherModal } from "@/components/instrument-other-modal";
+import { RegistrationErrorModal } from "@/components/registration-error-modal";
 import {
   emojiForOrchestraInstrument,
   getOrchestraInstrument,
@@ -725,11 +726,13 @@ export function RegistrationForm() {
 
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-2xl space-y-10 pb-24">
-      {error && (
-        <div className="whitespace-pre-wrap rounded-lg border border-red-200 bg-red-50 px-5 sm:px-4 py-3 text-sm text-red-900">
-          {error}
-        </div>
-      )}
+      <RegistrationErrorModal
+        open={!!error}
+        message={error ?? ""}
+        title={t("reg.errorModalTitle")}
+        okLabel={t("reg.errorModalOk")}
+        onDismiss={() => setError(null)}
+      />
       {registerForOpenSpace && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-5 sm:px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/35 dark:text-amber-100">
           {t("reg.openSpaceRegistrationBanner")}

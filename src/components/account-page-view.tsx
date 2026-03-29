@@ -5,7 +5,11 @@ import Link from "next/link";
 import type { BookingRequestStatus, BookingVenueKind } from "@prisma/client";
 import { LogoutButton } from "@/components/logout-button";
 import { displayVenueLabel } from "@/lib/booking-slot-display";
-import { buildMonthGrid } from "@/lib/hk-calendar-client";
+import {
+  buildMonthGrid,
+  hkDateKeysTouchingInterval,
+  isoInstantToHkDateKey,
+} from "@/lib/hk-calendar-client";
 import { accountPageHeading } from "@/lib/i18n/account-page-heading";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import {
@@ -91,7 +95,8 @@ export type AccountPageViewProps = {
   todayRemaining: number;
   rollingUsed: number;
   rollingStory: RollingLimitStoryPayload | null;
-  bookings: BookingPayload[];
+  studioBookings: BookingPayload[];
+  openSpaceBookings: BookingPayload[];
   canBook: boolean;
   bookingBasePath: string;
   googleCalendarOAuthReady: boolean;
@@ -106,6 +111,10 @@ export type AccountPageViewProps = {
    * `null` means the server could not build it; the client will retry via API.
    */
   ambassadorReferralInitial?: AmbassadorReferralPayload | null;
+  /** Server-resolved (cookie locale); studio channel only, else null. */
+  sharedQuotaVenuesNote: string | null;
+  /** Locale used for `sharedQuotaVenuesNote` (cookie at request time). */
+  accountCopyLocale: Locale;
 };
 
 const EXAMPLE_DATE_ISOS = ["2026-04-05", "2026-04-06", "2026-04-07"] as const;
@@ -141,6 +150,76 @@ function formatExampleWindowSpan(
     return `${m1}月${d1}日至${d3}日`;
   }
   return `${y1}年${m1}月${d1}日至${y3}年${m3}月${d3}日`;
+}
+
+function RollingTripleStrip(props: {
+  caption: string;
+  dayLabels: readonly [string, string, string];
+  counts: readonly [number, number, number];
+  locale: Locale;
+  rollingMax: number;
+  t: (path: string) => string;
+  tr: (path: string, vars: Record<string, string>) => string;
+}) {
+  const total = props.counts[0]! + props.counts[1]! + props.counts[2]!;
+  const over = total > props.rollingMax;
+  return (
+    <div className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900/50">
+      <p className="text-[11px] font-medium text-stone-600 dark:text-stone-400">{props.caption}</p>
+      <div className="mt-2 grid grid-cols-3 gap-1.5">
+        {props.dayLabels.map((day, i) => (
+          <div
+            key={day}
+            className="rounded-md border border-stone-200/90 bg-surface px-1.5 py-2 text-center dark:border-stone-600"
+          >
+            <div className="text-[10px] font-semibold leading-tight text-stone-800 dark:text-stone-100">
+              {day}
+            </div>
+            <div className="mt-1 text-[11px] tabular-nums text-stone-600 dark:text-stone-400">
+              {sessionCountWithHoursPack(props.locale, props.counts[i]!)}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p
+        className={`mt-2 text-center text-[11px] font-medium tabular-nums ${
+          over ? "text-rose-600 dark:text-rose-400" : "text-stone-700 dark:text-stone-300"
+        }`}
+      >
+        {props.t("account.rollingExampleStripTotal")}：{" "}
+        {props.tr("account.rollingExampleStripVersusCap", {
+          totalPack: sessionCountWithHoursPack(props.locale, total),
+          maxPack: sessionCountWithHoursPack(props.locale, props.rollingMax),
+        })}
+      </p>
+    </div>
+  );
+}
+
+function RollingSlideWindowsVisual(props: { t: (path: string) => string }) {
+  return (
+    <div className="mt-2 rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900/50">
+      <p className="text-[11px] font-medium text-stone-600 dark:text-stone-400">
+        {props.t("account.rollingSlideWindowsCaption")}
+      </p>
+      <div
+        className="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-[10px] font-semibold tracking-tight text-stone-800 dark:text-stone-100"
+        aria-hidden
+      >
+        <span className="rounded-md border border-stone-300 bg-surface px-2 py-1 dark:border-stone-600">
+          {props.t("account.rollingSlideWindow1")}
+        </span>
+        <span className="text-stone-400">→</span>
+        <span className="rounded-md border border-stone-300 bg-surface px-2 py-1 dark:border-stone-600">
+          {props.t("account.rollingSlideWindow2")}
+        </span>
+        <span className="text-stone-400">→</span>
+        <span className="rounded-md border border-stone-300 bg-surface px-2 py-1 dark:border-stone-600">
+          {props.t("account.rollingSlideWindow3")}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function QuotaSessionMeter({
@@ -221,10 +300,10 @@ function normalizePrefsDateKey(iso: string): string | null {
   return `${y}-${String(mo).padStart(2, "0")}-${String(da).padStart(2, "0")}`;
 }
 
-function uniqueYearMonthsFromPrefsIsos(isos: string[]): { year: number; month1: number }[] {
+function uniqueYearMonthsFromDateKeys(dateKeys: string[]): { year: number; month1: number }[] {
   const seen = new Set<string>();
-  for (const iso of isos) {
-    const key = normalizePrefsDateKey(iso);
+  for (const raw of dateKeys) {
+    const key = normalizePrefsDateKey(raw);
     if (!key) continue;
     seen.add(key.slice(0, 7));
   }
@@ -236,7 +315,55 @@ function uniqueYearMonthsFromPrefsIsos(isos: string[]): { year: number; month1: 
     });
 }
 
-function AccountPrefsReadonlyMonth(props: {
+function uniqueYearMonthsFromPrefsIsos(isos: string[]): { year: number; month1: number }[] {
+  const keys = isos.map(normalizePrefsDateKey).filter((k): k is string => k != null);
+  return uniqueYearMonthsFromDateKeys(keys);
+}
+
+function bookedDateKeysFromMerged(merged: MergedSlotPayload[]): Set<string> {
+  const set = new Set<string>();
+  for (const m of merged) {
+    for (const k of hkDateKeysTouchingInterval(m.startIso, m.endIso)) {
+      set.add(k);
+    }
+  }
+  return set;
+}
+
+function formatMergedBlockHkRange(startIso: string, endIso: string, locale: Locale): string {
+  const loc = locale === "en" ? "en-HK" : "zh-HK";
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const sk = isoInstantToHkDateKey(startIso);
+  const ek = isoInstantToHkDateKey(endIso);
+  const startOpts: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Hong_Kong",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  const endTime: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Hong_Kong",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  const endFull: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Hong_Kong",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  if (sk === ek) {
+    return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endTime)}`;
+  }
+  return `${start.toLocaleString(loc, startOpts)} — ${end.toLocaleString(loc, endFull)}`;
+}
+
+function AccountCalendarMonthReadonly(props: {
   year: number;
   month1: number;
   selected: Set<string>;
@@ -357,12 +484,153 @@ function statusLabel(status: BookingRequestStatus, t: (p: string) => string): st
   return label === path ? status : label;
 }
 
+function AccountBookingList(props: {
+  bookings: BookingPayload[];
+  locale: Locale;
+  emptyLabelKey: string;
+  dash: string;
+  listSep: string;
+  t: (path: string) => string;
+  tr: (path: string, vars: Record<string, string>) => string;
+}) {
+  const loc = props.locale === "en" ? "en-HK" : "zh-HK";
+  const calWeekdays = [
+    props.t("reg.weekday.sun"),
+    props.t("reg.weekday.mon"),
+    props.t("reg.weekday.tue"),
+    props.t("reg.weekday.wed"),
+    props.t("reg.weekday.thu"),
+    props.t("reg.weekday.fri"),
+    props.t("reg.weekday.sat"),
+  ];
+  if (props.bookings.length === 0) {
+    const msg = props.t(props.emptyLabelKey);
+    const fallback = props.t("account.emptyBookings");
+    return (
+      <li className="text-sm text-stone-500 dark:text-stone-500">
+        {msg === props.emptyLabelKey ? fallback : msg}
+      </li>
+    );
+  }
+  return (
+    <>
+      {props.bookings.map((b) => {
+        const stLabel = statusLabel(b.status, props.t);
+        const bookedSet = bookedDateKeysFromMerged(b.merged);
+        const bookedMonths = uniqueYearMonthsFromDateKeys([...bookedSet]);
+        const bookedDatesText =
+          bookedSet.size === 0
+            ? props.dash
+            : [...bookedSet]
+                .sort()
+                .map((iso) => {
+                  const [y, mo, da] = iso.split("-").map((x) => parseInt(x, 10));
+                  if (!y || !mo || !da) return iso;
+                  return new Date(y, mo - 1, da).toLocaleDateString(loc, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    weekday: "short",
+                  });
+                })
+                .join(props.listSep);
+        const slotsAria = b.merged
+          .map((m) =>
+            `${formatMergedBlockHkRange(m.startIso, m.endIso, props.locale)} ${props.tr("account.sessionsVenue", {
+              sessions: String(m.sessionCount),
+              venue: displayVenueLabel(m.venueLabel, props.locale),
+              sessionsH: sessionHoursParen(props.locale, m.sessionCount),
+            })}`.trim()
+          )
+          .join(props.locale === "en" ? "; " : "；");
+
+        return (
+          <li
+            key={b.id}
+            className="rounded-xl border border-stone-100 dark:border-stone-800 bg-stone-50 p-4 dark:bg-stone-900/80"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+                {props.tr("account.statusLine", { status: stLabel })}
+              </span>
+              <span className="text-xs text-stone-500 dark:text-stone-500">
+                {props.tr("account.requestedAtLine", {
+                  time: new Date(b.requestedAtIso).toLocaleString(loc, { timeZone: "Asia/Hong_Kong" }),
+                })}
+              </span>
+            </div>
+            <dl className="mt-4 space-y-4 text-sm">
+              <div className="border-b border-stone-100 pb-4 dark:border-stone-800">
+                <dt className="text-stone-500 dark:text-stone-500">{props.t("account.dtBookedDates")}</dt>
+                <dd className="mt-3 text-stone-800 dark:text-stone-200">
+                  {bookedSet.size === 0 ? (
+                    <p>{props.dash}</p>
+                  ) : (
+                    <div
+                      className="flex flex-wrap gap-3"
+                      role="group"
+                      aria-label={bookedDatesText}
+                    >
+                      {bookedMonths.map(({ year, month1 }) => (
+                        <AccountCalendarMonthReadonly
+                          key={`${b.id}-${year}-${month1}`}
+                          year={year}
+                          month1={month1}
+                          selected={bookedSet}
+                          weekdays={calWeekdays}
+                          monthTitle={new Date(year, month1 - 1, 1).toLocaleDateString(loc, {
+                            year: "numeric",
+                            month: "long",
+                          })}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-stone-500 dark:text-stone-500">{props.t("account.dtBookedTimes")}</dt>
+                <dd className="mt-3 text-stone-800 dark:text-stone-200">
+                  {b.merged.length === 0 ? (
+                    <p>{props.dash}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2" role="group" aria-label={slotsAria}>
+                      {b.merged.map((m, idx) => (
+                        <span
+                          key={`${b.id}-slot-${idx}`}
+                          className="inline-flex max-w-full flex-col gap-0.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-left text-xs font-medium text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-200"
+                        >
+                          <span className="break-words">
+                            {formatMergedBlockHkRange(m.startIso, m.endIso, props.locale)}
+                          </span>
+                          <span className="text-[11px] font-normal text-violet-800/90 dark:text-violet-300/90">
+                            {props.tr("account.sessionsVenue", {
+                              sessions: String(m.sessionCount),
+                              venue: displayVenueLabel(m.venueLabel, props.locale),
+                              sessionsH: sessionHoursParen(props.locale, m.sessionCount),
+                            })}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </li>
+        );
+      })}
+    </>
+  );
+}
+
 export function AccountPageView(props: AccountPageViewProps) {
   const { t, tr, locale } = useTranslation();
   const dash = t("account.dash");
   const listSep = locale === "en" ? ", " : "、";
 
   const exampleDays = EXAMPLE_DATE_ISOS.map((iso) => formatExampleDayLabel(iso, locale));
+  const exampleDayLabels = [exampleDays[0]!, exampleDays[1]!, exampleDays[2]!] as const;
   const exampleWindowSpan = formatExampleWindowSpan(EXAMPLE_DATE_ISOS, locale);
 
   const identityLines =
@@ -410,6 +678,7 @@ export function AccountPageView(props: AccountPageViewProps) {
 
   const accountPageTitle = accountPageHeading(locale, props.bookingVenueKind);
   const instrumentDisplay = props.instrumentField.trim() ? props.instrumentField.trim() : dash;
+  const isStudioChannel = props.bookingVenueKind === "studio_room";
 
   return (
     <main className="mx-auto max-w-3xl space-y-10 px-5 sm:px-4 py-12">
@@ -455,6 +724,13 @@ export function AccountPageView(props: AccountPageViewProps) {
             rollingMaxH: sessionHoursParen(locale, props.rollingMax),
           })}
         </p>
+        {isStudioChannel && props.sharedQuotaVenuesNote ? (
+          <p className="mt-2 text-sm font-medium leading-relaxed text-violet-900 dark:text-violet-200">
+            {locale === props.accountCopyLocale
+              ? props.sharedQuotaVenuesNote
+              : t("account.sharedQuotaVenuesNote")}
+          </p>
+        ) : null}
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <QuotaSessionMeter
             title={t("account.meterTodayTitle")}
@@ -508,8 +784,18 @@ export function AccountPageView(props: AccountPageViewProps) {
           <summary className="cursor-pointer select-none list-none font-medium text-blue-800 underline decoration-blue-800/40 underline-offset-2 hover:text-blue-900 [&::-webkit-details-marker]:hidden dark:text-blue-300 dark:decoration-blue-300/40 dark:hover:text-blue-200">
             {t("account.rollingDetailsSummary")}
           </summary>
-          <div className="mt-3 space-y-2 border-l-2 border-stone-200 pl-3 dark:border-stone-600">
-            <p>{t("account.rollingFootnote")}</p>
+          <div className="mt-3 space-y-3 border-l-2 border-stone-200 pl-3 dark:border-stone-600">
+            <div className="rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-3 dark:border-stone-600 dark:bg-stone-900/40">
+              <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">
+                {t("account.rollingExplainTitle")}
+              </p>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-[11px] leading-relaxed text-stone-600 dark:text-stone-400">
+                <li>{t("account.rollingExplainStep1")}</li>
+                <li>{t("account.rollingExplainStep2")}</li>
+                <li>{t("account.rollingExplainStep3")}</li>
+                <li>{t("account.rollingExplainStep4")}</li>
+              </ol>
+            </div>
             <p>
               <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.exampleTitle")}</span>{" "}
               {tr("account.exampleIntro", {
@@ -521,55 +807,110 @@ export function AccountPageView(props: AccountPageViewProps) {
               })}
             </p>
             {props.rollingStory ? (
-              <ul className="list-disc space-y-1.5 pl-4 text-stone-500 dark:text-stone-500">
-                <li>
-                  <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelCannot")}</span>{" "}
-                  {tr("account.storyFail", {
-                    name: t("account.exampleName"),
-                    d0: exampleDays[0]!,
-                    d1: exampleDays[1]!,
-                    d2: exampleDays[2]!,
-                    t0Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[0]!),
-                    t1Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[1]!),
-                    t2Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[2]!),
-                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
-                    extraDay: exampleDays[props.rollingStory.fail.extraIdx]!,
-                    nextExpr: joinSessionSumExpr(
-                      locale,
-                      props.rollingStory.fail.next,
-                      locale === "en" ? " + " : "＋"
-                    ),
-                    sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.fail.sumAfter),
-                    windowSpan: exampleWindowSpan,
-                  })}
+              <ul className="list-none space-y-3 pl-0 text-stone-500 dark:text-stone-500">
+                <li className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <RollingTripleStrip
+                      caption={t("account.rollingExampleFailBefore")}
+                      dayLabels={exampleDayLabels}
+                      counts={props.rollingStory.fail.tri}
+                      locale={locale}
+                      rollingMax={props.rollingMax}
+                      t={t}
+                      tr={tr}
+                    />
+                    <RollingTripleStrip
+                      caption={tr("account.rollingExampleFailAfter", {
+                        day: exampleDays[props.rollingStory.fail.extraIdx]!,
+                      })}
+                      dayLabels={exampleDayLabels}
+                      counts={props.rollingStory.fail.next}
+                      locale={locale}
+                      rollingMax={props.rollingMax}
+                      t={t}
+                      tr={tr}
+                    />
+                  </div>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-stone-400">
+                      {t("account.labelCannot")}
+                    </span>{" "}
+                    {tr("account.storyFail", {
+                      name: t("account.exampleName"),
+                      d0: exampleDays[0]!,
+                      d1: exampleDays[1]!,
+                      d2: exampleDays[2]!,
+                      t0Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[0]!),
+                      t1Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[1]!),
+                      t2Pack: sessionCountWithHoursPack(locale, props.rollingStory.fail.tri[2]!),
+                      rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                      extraDay: exampleDays[props.rollingStory.fail.extraIdx]!,
+                      nextExpr: joinSessionSumExpr(
+                        locale,
+                        props.rollingStory.fail.next,
+                        locale === "en" ? " + " : "＋"
+                      ),
+                      sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.fail.sumAfter),
+                      windowSpan: exampleWindowSpan,
+                    })}
+                  </p>
                 </li>
-                <li>
-                  <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelCan")}</span>{" "}
-                  {tr("account.storyPass", {
-                    d0: exampleDays[0]!,
-                    d1: exampleDays[1]!,
-                    d2: exampleDays[2]!,
-                    a0Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[0]!),
-                    a1Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[1]!),
-                    a2Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[2]!),
-                    preSumPack: sessionCountWithHoursPack(locale, props.rollingMax - 2),
-                    tri1Expr: joinSessionSumExpr(
-                      locale,
-                      props.rollingStory.pass.tri1,
-                      locale === "en" ? " + " : "＋"
-                    ),
-                    sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.sumAfter),
-                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
-                    thirdDayPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri1[2]!),
-                    dailyMaxPack: sessionCountWithHoursPack(locale, props.dailyMax),
-                    aOneH: sessionHoursParen(locale, 1),
-                  })}
+                <li className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <RollingTripleStrip
+                      caption={t("account.rollingExamplePassBefore")}
+                      dayLabels={exampleDayLabels}
+                      counts={props.rollingStory.pass.tri0}
+                      locale={locale}
+                      rollingMax={props.rollingMax}
+                      t={t}
+                      tr={tr}
+                    />
+                    <RollingTripleStrip
+                      caption={tr("account.rollingExamplePassAfter", {
+                        day: exampleDays[2]!,
+                      })}
+                      dayLabels={exampleDayLabels}
+                      counts={props.rollingStory.pass.tri1}
+                      locale={locale}
+                      rollingMax={props.rollingMax}
+                      t={t}
+                      tr={tr}
+                    />
+                  </div>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelCan")}</span>{" "}
+                    {tr("account.storyPass", {
+                      d0: exampleDays[0]!,
+                      d1: exampleDays[1]!,
+                      d2: exampleDays[2]!,
+                      a0Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[0]!),
+                      a1Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[1]!),
+                      a2Pack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri0[2]!),
+                      preSumPack: sessionCountWithHoursPack(locale, props.rollingMax - 2),
+                      tri1Expr: joinSessionSumExpr(
+                        locale,
+                        props.rollingStory.pass.tri1,
+                        locale === "en" ? " + " : "＋"
+                      ),
+                      sumAfterPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.sumAfter),
+                      rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                      thirdDayPack: sessionCountWithHoursPack(locale, props.rollingStory.pass.tri1[2]!),
+                      dailyMaxPack: sessionCountWithHoursPack(locale, props.dailyMax),
+                      aOneH: sessionHoursParen(locale, 1),
+                    })}
+                  </p>
                 </li>
-                <li>
-                  <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelSlide")}</span>{" "}
-                  {tr("account.storySlide", {
-                    rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
-                  })}
+                <li className="space-y-2">
+                  <RollingSlideWindowsVisual t={t} />
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-stone-400">
+                      {t("account.labelSlide")}
+                    </span>{" "}
+                    {tr("account.storySlide", {
+                      rollingMaxPack: sessionCountWithHoursPack(locale, props.rollingMax),
+                    })}
+                  </p>
                 </li>
               </ul>
             ) : (
@@ -587,9 +928,14 @@ export function AccountPageView(props: AccountPageViewProps) {
                     dailyMaxPack: sessionCountWithHoursPack(locale, props.dailyMax),
                   })}
                 </li>
-                <li>
-                  <span className="font-medium text-stone-600 dark:text-stone-400">{t("account.labelSlide")}</span>{" "}
-                  {t("account.genericSlide")}
+                <li className="space-y-2">
+                  <RollingSlideWindowsVisual t={t} />
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-stone-400">
+                      {t("account.labelSlide")}
+                    </span>{" "}
+                    {t("account.genericSlide")}
+                  </p>
                 </li>
               </ul>
             )}
@@ -638,7 +984,7 @@ export function AccountPageView(props: AccountPageViewProps) {
                   aria-label={preferredDatesText}
                 >
                   {prefsMonths.map(({ year, month1 }) => (
-                    <AccountPrefsReadonlyMonth
+                    <AccountCalendarMonthReadonly
                       key={`${year}-${month1}`}
                       year={year}
                       month1={month1}
@@ -703,80 +1049,96 @@ export function AccountPageView(props: AccountPageViewProps) {
         ) : null}
         <p className="mt-2 text-xs text-stone-500 dark:text-stone-500">{t("account.gcalSyncNote")}</p>
 
-        <ul className="mt-6 space-y-6">
-          {props.bookings.length === 0 && (
-            <li className="text-sm text-stone-500 dark:text-stone-500">{t("account.emptyBookings")}</li>
-          )}
-          {props.bookings.map((b) => {
-            const loc = locale === "en" ? "en-HK" : "zh-HK";
-            const stLabel = statusLabel(b.status, t);
-            return (
-              <li
-                key={b.id}
-                className="rounded-xl border border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/80 dark:bg-stone-900/80 p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-stone-900 dark:text-stone-50">
-                    {tr("account.statusLine", { status: stLabel })}
-                  </span>
-                  <span className="text-xs text-stone-500 dark:text-stone-500">
-                    {tr("account.requestedAtLine", {
-                      time: new Date(b.requestedAtIso).toLocaleString(loc, { timeZone: "Asia/Hong_Kong" }),
-                    })}
-                  </span>
-                </div>
-                <ul className="mt-3 space-y-3 text-sm">
-                  {b.merged.map((m, idx) => {
-                    const start = new Date(m.startIso);
-                    const end = new Date(m.endIso);
-                    const rangeStart = start.toLocaleString(loc, {
-                      timeZone: "Asia/Hong_Kong",
-                      weekday: "short",
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-                    const rangeEnd = end.toLocaleString(loc, {
-                      timeZone: "Asia/Hong_Kong",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-                    return (
-                      <li
-                        key={`${b.id}-${idx}`}
-                        className="rounded-lg border border-stone-100 bg-surface px-3 py-2 shadow-sm dark:border-stone-800"
-                      >
-                        <p className="font-medium text-stone-800 dark:text-stone-200">
-                          {rangeStart} — {rangeEnd}
-                          <span className="ml-2 text-stone-500 dark:text-stone-500">
-                            {tr("account.sessionsVenue", {
-                              sessions: String(m.sessionCount),
-                              venue: displayVenueLabel(m.venueLabel, locale),
-                              sessionsH: sessionHoursParen(locale, m.sessionCount),
-                            })}
-                          </span>
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
-            );
-          })}
-        </ul>
+        {isStudioChannel ? (
+          <div className="mt-6 space-y-8">
+            <div>
+              <h3 className="font-serif text-lg font-semibold text-stone-900 dark:text-stone-50">
+                {t("account.sectionBookingsStudio")}
+              </h3>
+              <ul className="mt-4 space-y-6">
+                <AccountBookingList
+                  bookings={props.studioBookings}
+                  locale={locale}
+                  emptyLabelKey="account.emptyBookingsStudio"
+                  dash={dash}
+                  listSep={listSep}
+                  t={t}
+                  tr={tr}
+                />
+              </ul>
+            </div>
+            <div className="rounded-xl border border-violet-200/90 bg-violet-50/80 p-5 dark:border-violet-800/50 dark:bg-violet-950/30">
+              <p className="text-sm leading-relaxed text-violet-950 dark:text-violet-100">
+                {t("account.openSpaceChannelIntro")}
+              </p>
+              {props.canBook ? (
+                <Link
+                  href="/booking/open-space"
+                  className="mt-4 inline-flex rounded-full bg-violet-800 px-6 py-2.5 text-sm font-medium text-white hover:bg-violet-900 dark:bg-violet-600 dark:hover:bg-violet-500"
+                >
+                  {t("account.goOpenSpaceBooking")}
+                </Link>
+              ) : null}
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-semibold text-stone-900 dark:text-stone-50">
+                {t("account.sectionBookingsOpenSpace")}
+              </h3>
+              <ul className="mt-4 space-y-6">
+                <AccountBookingList
+                  bookings={props.openSpaceBookings}
+                  locale={locale}
+                  emptyLabelKey="account.emptyBookingsOpenSpace"
+                  dash={dash}
+                  listSep={listSep}
+                  t={t}
+                  tr={tr}
+                />
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <ul className="mt-6 space-y-6">
+            <AccountBookingList
+              bookings={props.openSpaceBookings}
+              locale={locale}
+              emptyLabelKey="account.emptyBookings"
+              dash={dash}
+              listSep={listSep}
+              t={t}
+              tr={tr}
+            />
+          </ul>
+        )}
       </section>
 
       <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.shortcuts")}</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           {props.canBook ? (
-            <Link
-              href={props.bookingBasePath}
-              className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white hover:bg-stone-800"
-            >
-              {t("account.goBooking")}
-            </Link>
+            isStudioChannel ? (
+              <>
+                <Link
+                  href="/booking"
+                  className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white hover:bg-stone-800"
+                >
+                  {t("account.goBookingStudioRooms")}
+                </Link>
+                <Link
+                  href="/booking/open-space"
+                  className="rounded-full border border-violet-400 bg-violet-50 px-6 py-2.5 text-sm font-medium text-violet-950 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:bg-violet-900/60"
+                >
+                  {t("account.goOpenSpaceBooking")}
+                </Link>
+              </>
+            ) : (
+              <Link
+                href={props.bookingBasePath}
+                className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white hover:bg-stone-800"
+              >
+                {t("account.goBooking")}
+              </Link>
+            )
           ) : (
             <span className="rounded-full bg-stone-200 px-6 py-2.5 text-sm text-stone-500 dark:text-stone-500">
               {t("account.bookingLocked")}
@@ -788,12 +1150,26 @@ export function AccountPageView(props: AccountPageViewProps) {
           >
             {t("account.managePasskeys")}
           </Link>
-          <Link
-            href={`${props.bookingBasePath}/history`}
-            className="text-sm text-stone-700 dark:text-stone-300 underline"
-          >
-            {t("account.textHistory")}
-          </Link>
+          {isStudioChannel ? (
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <Link href="/booking/history" className="text-stone-700 dark:text-stone-300 underline">
+                {t("account.textHistoryStudio")}
+              </Link>
+              <Link
+                href="/booking/open-space/history"
+                className="text-stone-700 dark:text-stone-300 underline"
+              >
+                {t("account.textHistoryOpenSpace")}
+              </Link>
+            </span>
+          ) : (
+            <Link
+              href={`${props.bookingBasePath}/history`}
+              className="text-sm text-stone-700 dark:text-stone-300 underline"
+            >
+              {t("account.textHistory")}
+            </Link>
+          )}
         </div>
       </section>
 

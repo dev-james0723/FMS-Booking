@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { BookingRuleError } from "@/lib/booking/booking-errors";
 export { BookingRuleError };
 export type { BookingGateErrorCode } from "@/lib/booking/booking-errors";
-import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
+import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import {
   assertCooldownAllowsBooking,
   getQuotaNumericLimits,
@@ -26,6 +26,7 @@ import {
   parseCampaignDateKeys,
 } from "@/lib/booking/settings";
 import { COUNTED_REQUEST_STATUS } from "@/lib/booking/day-counts";
+import { userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
 
 function mergeDayCounts(
   base: Map<string, number>,
@@ -65,8 +66,7 @@ export async function assertBookingPortalAllowed(
 ) {
   const settings = await getAllSettings();
   const now = await getEffectiveNow();
-  const bookingOpens = parseBookingOpensAt(settings["booking_opens_at"]);
-  if (!bookingOpens || now.getTime() < bookingOpens.getTime()) {
+  if (!isBookingPortalLiveFromSettings(settings, now)) {
     throw new BookingRuleError("BOOKING_NOT_OPEN", "預約系統尚未開放");
   }
   if (!user.hasCompletedRegistration) {
@@ -147,10 +147,10 @@ export async function validateAndCreateBookingRequest(params: {
           throw new BookingRuleError("BOOKING_VENUE_MIXED", "所選時段必須屬於同一預約系統（琴房或開放空間）");
         }
       }
-      if (u.profile.bookingVenueKind !== venueFromSlots) {
+      if (!userMayAccessBookingVenue(u.profile.bookingVenueKind, venueFromSlots)) {
         throw new BookingRuleError(
           "BOOKING_VENUE_MISMATCH",
-          "此帳戶的登記類型與所選時段不符。大型樂器（開放空間）使用者請使用開放空間預約頁面；琴房使用者請使用琴室預約頁面。"
+          "此帳戶僅可預約開放空間時段；請使用大型樂器／開放空間預約頁面。琴室通道登記者可於琴室或開放空間預約（節數上限共用）。"
         );
       }
 

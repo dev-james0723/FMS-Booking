@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   BookingIconCalendarRolling,
   BookingIconCooldown,
+  BookingIconDualQuotaTier,
   BookingIconIdentityPick,
   BookingIconMentorStudent,
   BookingIconPerson,
@@ -279,17 +280,22 @@ export function BookingRulesVisual({ t, tr, windowDays }: { t: T; tr: Tr; window
 
         <RuleCard
           media={
-            <div className="flex shrink-0 gap-1.5">
-              <IconWrap className="bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
-                <BookingIconPerson className="h-6 w-6" />
-              </IconWrap>
-              <IconWrap className="bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">
-                <BookingIconMentorStudent className="h-6 w-6" />
-              </IconWrap>
-            </div>
+            <IconWrap className="bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
+              <BookingIconPerson className="h-6 w-6" />
+            </IconWrap>
           }
           title={t("booking.request.ruleCardIndividualTitle")}
           summary={t("booking.request.ruleCardIndividualSummary")}
+        />
+
+        <RuleCard
+          media={
+            <IconWrap className="bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">
+              <BookingIconMentorStudent className="h-6 w-6" />
+            </IconWrap>
+          }
+          title={t("booking.request.ruleCardTeacherReferredTitle")}
+          summary={t("booking.request.ruleCardTeacherReferredSummary")}
         />
 
         <RuleCard
@@ -300,6 +306,16 @@ export function BookingRulesVisual({ t, tr, windowDays }: { t: T; tr: Tr; window
           }
           title={t("booking.request.ruleCardTeachingTitle")}
           summary={t("booking.request.ruleCardTeachingSummary")}
+        />
+
+        <RuleCard
+          media={
+            <IconWrap className="bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-950/45 dark:text-fuchsia-200">
+              <BookingIconDualQuotaTier className="h-6 w-6" />
+            </IconWrap>
+          }
+          title={t("booking.request.ruleCardDualQuotaTitle")}
+          summary={t("booking.request.ruleCardDualQuotaSummary")}
         />
 
         <RuleCard

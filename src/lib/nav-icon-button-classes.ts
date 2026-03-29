@@ -25,5 +25,28 @@ const navDfestivalCtaVisual =
 /** Gold CTA for “About 2026 D Festival” — match register/login: min-h, px, rounded-full, full width in stacks. */
 export const navDfestivalCtaClass = `${navDfestivalCtaVisual} w-full px-5 sm:px-4 text-sm`;
 
+/** Narrow mobile drawer: smaller type + nowrap so long zh titles stay on one line. */
+export const navDfestivalCtaMobileDrawerClass = `${navDfestivalCtaVisual} w-full whitespace-nowrap px-2.5 py-2 text-[11px] font-semibold leading-tight sm:px-3 sm:text-xs`;
+
+/** Same look as `navDfestivalCtaClass` but tighter horizontal padding for the desktop “More” menu. */
+export const navDfestivalCtaMenuClass = `${navDfestivalCtaVisual.replace(
+  "inline-flex",
+  "flex",
+)} w-full max-w-none min-w-0 px-3 text-sm text-center`;
+
 /** Same CTA for desktop header bar (inline pill; cap width so long copy wraps inside the pill, not into neighbors). */
 export const navDfestivalCtaHeaderInlineClass = `${navDfestivalCtaVisual} w-auto max-w-[min(19rem,46vw)] shrink-0 px-3 text-xs sm:text-sm md:max-w-[min(22rem,40vw)]`;
+
+const navFantasiaCtaVisual =
+  "inline-flex min-h-[44px] items-center justify-center rounded-full border border-[#4a1520]/45 bg-gradient-to-b from-[#9a2d3e] via-[#722F37] to-[#511922] py-2 text-center font-semibold leading-snug text-white shadow-[0_6px_20px_rgba(81,25,34,0.42)] ring-1 ring-[#c97b86]/30 transition hover:from-[#a83447] hover:via-[#803542] hover:to-[#5c1f28] hover:ring-[#d4a0a8]/40 dark:ring-[#c97b86]/20 dark:hover:ring-[#d4a0a8]/30";
+
+/** Burgundy CTA for “About Fantasia Music Space” — paired styling with D Festival gold CTA. */
+export const navFantasiaCtaClass = `${navFantasiaCtaVisual} w-full px-5 sm:px-4 text-sm`;
+
+/** Tighter padding for the desktop “More” menu (pairs with `navDfestivalCtaMenuClass`). */
+export const navFantasiaCtaMenuClass = `${navFantasiaCtaVisual.replace(
+  "inline-flex",
+  "flex",
+)} w-full max-w-none min-w-0 px-3 text-sm text-center`;
+
+export const navFantasiaCtaHeaderInlineClass = `${navFantasiaCtaVisual} w-auto max-w-[min(13rem,42vw)] shrink-0 px-4 text-xs sm:text-sm`;

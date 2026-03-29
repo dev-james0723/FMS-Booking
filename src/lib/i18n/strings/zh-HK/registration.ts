@@ -33,6 +33,8 @@ export const regZhHK = {
   errPasskeyBeforeSubmit:
     "請先按「綁定 Face ID／指紋」並通過裝置驗證；生物認證為登記必要步驟。",
   submitFail: "提交失敗",
+  errorModalTitle: "無法繼續",
+  errorModalOk: "知道了",
   sectionBasic: "基本資料",
   sectionUserType: "使用者類別與登記分類",
   regProfileHint:

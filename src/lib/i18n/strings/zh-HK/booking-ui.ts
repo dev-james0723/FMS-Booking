@@ -10,17 +10,34 @@ export const bookingZhHK = {
   },
   portal: {
     title: "預約系統",
-    intro:
-      "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按帳戶配額級別統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。所有預約仍需主辦方審核，並非自動確認。",
+    introBeforeQuotaLink:
+      "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按",
+    introQuotaLinkLabel: "帳戶配額級別",
+    introAfterQuotaLink:
+      "統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。所有預約仍需主辦方審核，並非自動確認。",
     linkCalendar: "月曆總覽（時間軸）",
     linkHistory: "預約紀錄",
     linkAccount: "我的帳戶",
     linkHome: "主頁",
+    linkOpenSpace: "前往開放空間預約（無須重新登記）",
+    openSpaceCalloutTitle: "其他選擇時段途徑",
+    openSpacePoolStudioLabel: "琴室",
+    openSpacePoolStudioSub: "於此頁預約 · 隔音房",
+    openSpacePoolOpenLabel: "開放空間",
+    openSpacePoolOpenSub: "另一套時段庫存",
+    openSpacePoolDivider: "另一套庫存",
+    openSpacePoolCaption: "兩套庫存各自獨立；開放空間或另有更多可供選擇的時段。",
+    openSpaceFlowStep1: "如果你是非鋼琴使用者，而發現琴室時段不合適？",
+    openSpaceFlowStep2: "開放空間設有另一批可預約時段（庫存互不相同）。",
+    openSpaceFlowStep3: "請點擊下方連結，以同一帳戶前往（無須重新登記）。",
+    openSpaceQuotaPrefix: "節數上限仍與琴室預約共用；詳見",
+    openSpaceQuotaLinkLabel: "我的帳戶",
+    openSpaceQuotaSuffix: "配額說明。",
   },
   openSpacePortal: {
     title: "預約幻樂空間——開放空間（Open Space）時段",
     intro:
-      "此預約通道與琴室（房間內）時段名額完全分開；規則與帳戶配額計算方式與主預約系統相同。請先細讀下方場地說明，再選擇時段。",
+      "此處可預約的是開放空間時段庫存，與隔音琴室房內時段為不同庫存。若以琴室通道完成登記，開放空間與琴室預約共用同一套節數上限（單日／滑動三日），不會另有一套配額；若以大型樂器／開放空間通道登記，則只可於此通道預約。請先細讀下方場地說明，再選擇時段。",
     linkCalendar: "月曆總覽（時間軸）",
     linkHistory: "預約紀錄",
     linkAccount: "我的帳戶",
@@ -106,10 +123,16 @@ export const bookingZhHK = {
     ruleCardSlotSummary: "每格預約為 30 分鐘（半小時）。",
     ruleCardIndividualTitle: "個人配額級別",
     ruleCardIndividualSummary:
-      "個人練習／一般個人使用者，或老師推薦之學生 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
+      "個人練習／一般個人使用者 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
+    ruleCardTeacherReferredTitle: "老師推薦之學生配額級別",
+    ruleCardTeacherReferredSummary:
+      "經老師推薦參與、登記時填寫老師資料之帳戶；節數上限與「個人配額級別」相同 — 每日最多 5 節（2.5 小時）；任何連續 3 個曆日內最多 7 節（3.5 小時）。",
     ruleCardTeachingTitle: "教學配額級別",
     ruleCardTeachingSummary:
-      "教學、帶學生，或同時有教學與練習需求（帳戶屬此級別）— 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。",
+      "僅具教學或帶學生資格（無個人練習資格）之帳戶 — 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。",
+    ruleCardDualQuotaTitle: "雙重資格配額級別",
+    ruleCardDualQuotaSummary:
+      "同時具備個人練習與教學／帶學生資格之帳戶，配額級別為「教學配額級別」— 每日最多 8 節（4 小時）；任何連續 3 個曆日內最多 16 節（8 小時）。節數不按身份分開兩套計算。",
     ruleCardCooldownTitle: "提交冷卻",
     ruleCardCooldownSummary: "每次成功提交預約後，須等待 3 小時方可再提交新的預約。",
     ruleCardIdentityTitle: "雙重身份",
@@ -133,7 +156,8 @@ export const bookingZhHK = {
     refresh: "重新整理",
     submitted: "預約已提交（參考編號：{id}）。主辦方審核後將以電郵通知。",
     viewHistory: "查看紀錄",
-    linkCalendarOverview: "月曆總覽（時間軸）",
+    linkCalendarOverviewStudioRoom: "現時琴室預約狀況——月曆總覽（時間軸）",
+    linkCalendarOverviewOpenSpace: "現時大型樂器 / 開放空間預約情況——月曆總覽（時間軸）",
     limitsTitle: "節數追蹤（香港日期；每節 30 分鐘＝0.5 小時）",
     limitsToday:
       "今日（{todayKey}）已用 {committed} 節{committedH}，尚可 {remaining} 節{remainingH}（每日上限 {dailyMax} 節{dailyMaxH}）。配額級別：{tier}。",
@@ -208,7 +232,9 @@ export const bookingZhHK = {
     monthMay: "2026 年 5 月（活動尾段）",
     leaveOverview: "離開月曆總覽",
     legend:
-      "綠底：當日仍有可預約時段 · 紅底：當日開放時段均已滿 · 灰底：未有時段或不在免費體驗期內",
+      "綠底：當日仍有可預約時段 · 紅底：當日已無任何可預約時段（已滿或已關閉） · 灰底：未有時段或不在免費體驗期內",
+    legendStudioHold:
+      "（僅琴室月曆）時間軸上灰色時段：此時段不適用於預約（不影響開放空間預約）。",
     selectedDate: "已選日期：{date}（香港時間）",
     timelineRange:
       "時間軸範圍：{start}:00 – {end}:00（香港時間）",
@@ -223,6 +249,7 @@ export const bookingZhHK = {
     statusClosed: "已關閉",
     statusFull: "已滿／已被預約",
     statusOpen: "尚有名額",
+    studioHoldCaption: "此時段不適用於預約",
     bookedThis: "此節已被預約",
     canBookRemaining: "可預約 · 剩 {remaining}/{capacity} 名額",
   },

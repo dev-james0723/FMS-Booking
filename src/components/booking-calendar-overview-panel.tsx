@@ -15,6 +15,7 @@ import {
 } from "@/lib/booking/campaign-constants";
 import { TIMELINE_END_HOUR, TIMELINE_START_HOUR } from "@/lib/booking/day-timeline";
 import { buildCampaignPreviewTimelineSlots } from "@/lib/booking/preview-slots";
+import { applyStudioRoomCalendarHoldsToTimelineSlots } from "@/lib/booking/studio-room-calendar-holds";
 import { withBasePath } from "@/lib/base-path";
 import { buildMonthGrid } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
@@ -102,7 +103,7 @@ function MonthCalendarBlock(props: {
           } else if (sum.openAvailable > 0) {
             cellBg =
               "bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/40 dark:text-emerald-100";
-          } else if (sum.openFull > 0 && sum.openAvailable === 0) {
+          } else if (sum.total > 0 && sum.openAvailable === 0) {
             cellBg =
               "bg-red-50 hover:bg-red-100/80 dark:bg-red-950/45 dark:hover:bg-red-900/35 dark:text-red-100";
           }
@@ -172,9 +173,13 @@ export function BookingCalendarOverviewPanel(props: {
   const previewSlots = useMemo(() => buildCampaignPreviewTimelineSlots(), []);
 
   const displaySlots = useMemo((): TimelineSlotInput[] => {
-    if (!bookingLive) return previewSlots;
-    return apiSlots;
-  }, [apiSlots, bookingLive, previewSlots]);
+    const base = !bookingLive ? previewSlots : apiSlots;
+    return applyStudioRoomCalendarHoldsToTimelineSlots(
+      venueKind,
+      base,
+      !bookingLive ? "preview" : "live"
+    ) as TimelineSlotInput[];
+  }, [apiSlots, bookingLive, previewSlots, venueKind]);
 
   const fetchOverviewData = useCallback(async () => {
     const q = new URLSearchParams({ from: range.from, to: range.to, venue: venueKind });
@@ -233,8 +238,15 @@ export function BookingCalendarOverviewPanel(props: {
   }, [fetchOverviewData]);
 
   const summaryText = useMemo(
-    () => summarizeDaySlotsText(selected, displaySlots),
-    [selected, displaySlots]
+    () =>
+      summarizeDaySlotsText(
+        selected,
+        displaySlots,
+        venueKind === "studio_room"
+          ? { studioHoldCaption: t("booking.timeline.studioHoldCaption") }
+          : undefined
+      ),
+    [selected, displaySlots, venueKind, t]
   );
 
   return (
@@ -294,9 +306,12 @@ export function BookingCalendarOverviewPanel(props: {
         />
       </div>
 
-      <p className="text-center text-xs text-stone-500 dark:text-stone-500">
-        {t("booking.cal.legend")}
-      </p>
+      <div className="text-center text-xs text-stone-500 dark:text-stone-500">
+        <p>{t("booking.cal.legend")}</p>
+        {venueKind === "studio_room" ? (
+          <p className="mt-1.5">{t("booking.cal.legendStudioHold")}</p>
+        ) : null}
+      </div>
 
       <section className="space-y-3">
         <h3 className="font-medium text-stone-900 dark:text-stone-50">

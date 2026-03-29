@@ -3,6 +3,7 @@ import { BookingCalendarPageMain } from "@/components/booking-calendar-page-main
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { serverLocaleFromCookies, serverT } from "@/lib/i18n/server-translate";
 import { prisma } from "@/lib/prisma";
+import { userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
 
 export default async function OpenSpaceBookingCalendarPage() {
   const session = await getSessionFromCookies();
@@ -12,7 +13,10 @@ export default async function OpenSpaceBookingCalendarPage() {
     where: { id: session.sub },
     include: { profile: true },
   });
-  if (user?.profile?.bookingVenueKind !== "open_space") {
+  if (
+    !user?.profile ||
+    !userMayAccessBookingVenue(user.profile.bookingVenueKind, "open_space")
+  ) {
     redirect("/booking/calendar");
   }
 

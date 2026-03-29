@@ -12,6 +12,16 @@ export function bookingHrefForUser(user: SiteMeUser | null): string {
   return user?.bookingVenueKind === "open_space" ? "/booking/open-space" : "/booking";
 }
 
+/** Label for logged-in “go book” nav: studio channel vs large-instrument / open-space channel. */
+export function bookingNavEntryLabel(
+  user: SiteMeUser,
+  t: (key: string) => string,
+): string {
+  return user.bookingVenueKind === "open_space"
+    ? t("nav.bookOpenSpaceSlots")
+    : t("nav.bookPianoStudioSlots");
+}
+
 /**
  * Current session for public chrome (header, footer, home CTA).
  * Before the client `/api/v1/me` request finishes, `user` is always `null` so SSR and

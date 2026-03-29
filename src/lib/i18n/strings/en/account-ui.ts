@@ -4,6 +4,8 @@ export const accountEn = {
   limitsTitle: "Booking limits (30 minutes = 1 session)",
   limitsIntro:
     "Your account quota tier is “{tier}” (same bucket as on registration; dual eligibility still uses one tier, not doubled). Up to {dailyMax} sessions{dailyMaxH} on a single Hong Kong calendar day; up to {rollingMax} sessions{rollingMaxH} summed across any 3 consecutive Hong Kong calendar days.",
+  sharedQuotaVenuesNote:
+    "If you registered via the studio-room channel: studio-room and open-space bookings share the same session caps above (there is no second quota).",
   quotaTierIndividual: "Individual quota tier",
   quotaTierTeaching: "Teaching quota tier",
   meterTodayTitle: "Today (HK calendar day)",
@@ -22,8 +24,25 @@ export const accountEn = {
   todayRemaining: "Still bookable today (within daily cap): {n} sessions{nH}",
   rollingUsedLine:
     "Rolling 3-day total used so far: {used} / {rollingMax} sessions{rollingMaxH} (new picks are checked together when you submit)",
-  rollingFootnote:
-    "*Rolling 3 days: Hong Kong calendar days. For every window of three consecutive days, booked sessions are summed; the number shown is the maximum across all such windows. As the calendar moves, the window moves too (not a fixed Mon–Wed). Submitting re-checks with your newly selected slots.",
+  rollingExplainTitle: "How “rolling 3 days” works*",
+  rollingExplainStep1:
+    "Hong Kong calendar days: each group is any three consecutive calendar days; booked sessions in those days are summed.",
+  rollingExplainStep2:
+    "The number shown is the highest total across all such triples—the strictest window.",
+  rollingExplainStep3:
+    "As dates move forward or you reschedule, the checked triple slides with the calendar—not a fixed Mon–Wed pattern.",
+  rollingExplainStep4:
+    "On submit, the system recalculates including your new picks; rolling 3-day and daily caps are checked together.",
+  rollingExampleStripTotal: "Window total",
+  rollingExampleStripVersusCap: "{totalPack} (cap {maxPack})",
+  rollingExampleFailBefore: "Blocked · before adding (same 3-day window)",
+  rollingExampleFailAfter: "After +1 session on {day}",
+  rollingExamplePassBefore: "Allowed · adjusted counts, before adding",
+  rollingExamplePassAfter: "After +1 session on {day}",
+  rollingSlideWindowsCaption: "How it “slides” (later dates → later windows)",
+  rollingSlideWindow1: "5–7 Apr",
+  rollingSlideWindow2: "6–8 Apr",
+  rollingSlideWindow3: "7–9 Apr",
   exampleTitle: "Example (Alex Chan)",
   exampleName: "Alex Chan",
   exampleIntro:
@@ -60,6 +79,14 @@ export const accountEn = {
   prefsConsecutiveYes: "Prefer back-to-back where possible",
   prefsConsecutiveNo: "No need to be consecutive",
   sectionBookings: "Bookings (merged consecutive slots)",
+  sectionBookingsStudio: "Studio room bookings",
+  sectionBookingsOpenSpace: "Large instrument / open space bookings",
+  openSpaceChannelIntro:
+    "If studio slots are full or you prefer the open space, use the open-space booking flow without registering again; the same quota rules apply.",
+  emptyBookingsStudio: "No studio room bookings yet.",
+  emptyBookingsOpenSpace: "No open-space bookings yet.",
+  dtBookedDates: "Booked dates",
+  dtBookedTimes: "Booked time blocks",
   gcalConnect: "Connect Google Calendar",
   gcalSync: "Synchronize to Google Calendar",
   gcalSyncBusy: "Syncing…",
@@ -86,9 +113,13 @@ export const accountEn = {
   sessionsVenue: "({sessions} sessions{sessionsH} · {venue})",
   shortcuts: "Shortcuts",
   goBooking: "Go to booking",
+  goBookingStudioRooms: "Book studio room",
+  goOpenSpaceBooking: "Book open space",
   bookingLocked: "Booking not open yet or password change required",
   managePasskeys: "Manage passkeys",
   textHistory: "Text booking history",
+  textHistoryStudio: "Studio · text history",
+  textHistoryOpenSpace: "Open space · text history",
   backHome: "Back to home",
   dash: "—",
   identity: {
@@ -100,10 +131,24 @@ export const accountEn = {
     other: "Other",
   },
   ambassadorPlanTitle: "D Ambassador referral programme",
-  ambassadorSectionIntro:
-    "Share your personal link or QR code. Visits are counted when someone opens the link; when they complete registration through your channel, eligible ambassadors earn bonus session rewards (30 minutes = 0.5 hour each) (subject to programme rules and slot availability).",
-  ambassadorRewardRules:
-    "Each successful new registration you refer can earn 1 bonus slot (0.5 hour), up to 25 slots (12.5 hours) during this campaign (25 successful referrals). Bonus slots depend on availability, are non-transferable and cannot be exchanged for cash. All bonus slots may only be used after this free experience programme ends, i.e. after 3 May. Fantasia Music Space will then remind eligible referrers in batches when they may book rooms.",
+  ambassadorHowTitle: "How sharing works (3 steps)",
+  ambassadorHowStep1: "Share your personal link or QR code below.",
+  ambassadorHowStep2: "When someone opens the link, we record a counted visit.",
+  ambassadorHowStep3:
+    "If they complete a new registration through your channel, eligible ambassadors earn bonus sessions (30 minutes = 0.5 hour each; subject to programme rules and capacity).",
+  ambassadorRewardsTitle: "Referral rewards at a glance",
+  ambassadorRewardsStatPer: "Each successful referral",
+  ambassadorRewardsStatPerBig: "1",
+  ambassadorRewardsStatPerSub: "New registration → 1 bonus slot (0.5 hour)",
+  ambassadorRewardsStatCap: "This campaign · per ambassador cap",
+  ambassadorRewardsStatCapBig: "25",
+  ambassadorRewardsStatCapSub: "Slots (12.5 hours) · up to 25 successful referrals",
+  ambassadorRewardsNoteAvailability: "Subject to slot availability.",
+  ambassadorRewardsNoteTransfer: "Non-transferable and cannot be exchanged for cash.",
+  ambassadorRewardsNoteAfter:
+    "Bonus slots may only be used after this free experience programme ends (after 3 May).",
+  ambassadorRewardsNoteRemind:
+    "Fantasia Music Space will remind eligible referrers in batches when they may book rooms.",
   ambassadorShareLink: "Your share link",
   ambassadorCopyLink: "Copy link",
   ambassadorLinkCopied: "Copied",

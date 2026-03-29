@@ -18,10 +18,14 @@ function absAppUrl(path: string): string {
   return `${origin}${withBasePath(path)}`;
 }
 
+/** FMS venue reference (Wi‑Fi, room info, etc.); override with BOOKING_SPACE_INFO_GOOGLE_DRIVE_URL if it moves. */
+const DEFAULT_BOOKING_SPACE_INFO_DRIVE_URL =
+  "https://drive.google.com/drive/folders/1qhOhWbBcwYd95-J56z7nr1EzjSfuZU4A?usp=drive_link";
+
 function driveFolderUrl(): string | null {
   const raw = process.env.BOOKING_SPACE_INFO_GOOGLE_DRIVE_URL?.trim();
-  if (!raw || !/^https?:\/\//i.test(raw)) return null;
-  return raw;
+  if (raw && /^https?:\/\//i.test(raw)) return raw;
+  return DEFAULT_BOOKING_SPACE_INFO_DRIVE_URL;
 }
 
 const btnStyle =

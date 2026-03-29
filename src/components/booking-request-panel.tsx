@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { withBasePath } from "@/lib/base-path";
 import {
@@ -36,6 +36,7 @@ import {
   BookingIconTeaching,
 } from "@/components/booking-quota-icons";
 import { BookingRulesVisual } from "@/components/booking-rules-visual";
+import { useSiteMe } from "@/lib/auth/use-site-me";
 
 type SlotRow = {
   id: string;
@@ -149,9 +150,16 @@ export type BookingRequestVenue = "studio_room" | "open_space";
 export function BookingRequestPanel(props: {
   venueKind: BookingRequestVenue;
   bookingPathPrefix: string;
+  /** Studio portal: 「其他選擇時段途徑」— rendered above relocated 「規則速覽」. */
+  studioAlternatePathCallout?: ReactNode;
 }) {
-  const { venueKind, bookingPathPrefix } = props;
+  const { venueKind, bookingPathPrefix, studioAlternatePathCallout } = props;
+  const { user } = useSiteMe();
   const { t, tr, locale } = useTranslation();
+  const calendarOverviewLinkLabel =
+    venueKind === "open_space" || user?.bookingVenueKind === "open_space"
+      ? t("booking.request.linkCalendarOverviewOpenSpace")
+      : t("booking.request.linkCalendarOverviewStudioRoom");
   const campaignRange =
     locale === "en" ? CAMPAIGN_EXPERIENCE_RANGE_LABEL_EN : CAMPAIGN_EXPERIENCE_RANGE_LABEL_ZH;
   const weekdays = useMemo(
@@ -175,6 +183,8 @@ export function BookingRequestPanel(props: {
   const [blockFlashSlotId, setBlockFlashSlotId] = useState<string | null>(null);
   const [dailyCapHint, setDailyCapHint] = useState<string | null>(null);
   const [dualEligible, setDualEligible] = useState(false);
+  const [bookingPortalOpen, setBookingPortalOpen] = useState(false);
+  const [meGatesLoaded, setMeGatesLoaded] = useState(false);
   const [bookingIdentityChoice, setBookingIdentityChoice] = useState<
     "individual" | "teaching_or_with_students"
   >("individual");
@@ -244,12 +254,22 @@ export function BookingRequestPanel(props: {
     let cancelled = false;
     void (async () => {
       const res = await fetch(withBasePath("/api/v1/me"), { credentials: "same-origin" });
-      if (cancelled || !res.ok) return;
+      if (cancelled) return;
+      if (!res.ok) {
+        setMeGatesLoaded(true);
+        return;
+      }
       const data = (await res.json().catch(() => null)) as {
         user?: { bookingEligibility?: { dualEligible?: boolean } | null };
+        gates?: { bookingPortalOpen?: boolean };
       } | null;
       const d = data?.user?.bookingEligibility?.dualEligible === true;
-      if (!cancelled) setDualEligible(d);
+      const open = data?.gates?.bookingPortalOpen === true;
+      if (!cancelled) {
+        setDualEligible(d);
+        setBookingPortalOpen(open);
+        setMeGatesLoaded(true);
+      }
     })();
     return () => {
       cancelled = true;
@@ -299,7 +319,10 @@ export function BookingRequestPanel(props: {
 
   const bookingOpensAt =
     typeof settings?.booking_opens_at === "string" ? settings.booking_opens_at : null;
-  const bookingLive = bookingOpensAt ? nowMs >= new Date(bookingOpensAt).getTime() : false;
+  const bookingLiveFromSettings =
+    bookingOpensAt != null && nowMs >= new Date(bookingOpensAt).getTime();
+  /** After `/me` returns, use server gate (includes booking test mode). Before that, time-based avoids a flash when the portal is officially open. */
+  const bookingLive = meGatesLoaded ? bookingPortalOpen : bookingLiveFromSettings;
   const bookingOpensAtLabel =
     bookingOpensAt != null
       ? locale === "en"
@@ -444,11 +467,6 @@ export function BookingRequestPanel(props: {
             })}
           </p>
         </div>
-        <BookingRulesVisual
-          t={t}
-          tr={tr}
-          windowDays={String(ROLLING_WINDOW_CALENDAR_DAYS)}
-        />
         <button
           type="button"
           onClick={() => void loadMonthSlots()}
@@ -486,7 +504,7 @@ export function BookingRequestPanel(props: {
           href={`${bookingPathPrefix}/calendar`}
           className="flex w-full min-h-12 items-center justify-center rounded-lg border border-emerald-950/30 bg-emerald-900 px-5 sm:px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950 active:bg-emerald-950 sm:min-h-[3rem] sm:text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
         >
-          {t("booking.request.linkCalendarOverview")}
+          {calendarOverviewLinkLabel}
         </Link>
 
         {limits && (
@@ -1046,6 +1064,15 @@ export function BookingRequestPanel(props: {
       </div>
 
       <p className="text-xs text-stone-500 dark:text-stone-500">{t("booking.request.footnote")}</p>
+
+      <div className="mt-8 space-y-6">
+        {studioAlternatePathCallout}
+        <BookingRulesVisual
+          t={t}
+          tr={tr}
+          windowDays={String(ROLLING_WINDOW_CALENDAR_DAYS)}
+        />
+      </div>
     </div>
   );
 }

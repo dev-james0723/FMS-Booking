@@ -39,6 +39,93 @@ function normalizeOptedInPayload(raw: unknown): AmbassadorReferralPayload | null
 
 const REFERRAL_FETCH_RETRIES = 3;
 
+function AmbassadorProgramVisual(props: { t: (path: string) => string }) {
+  const { t } = props;
+  const steps = [
+    t("account.ambassadorHowStep1"),
+    t("account.ambassadorHowStep2"),
+    t("account.ambassadorHowStep3"),
+  ];
+  const rewardNotes = [
+    t("account.ambassadorRewardsNoteAvailability"),
+    t("account.ambassadorRewardsNoteTransfer"),
+    t("account.ambassadorRewardsNoteAfter"),
+    t("account.ambassadorRewardsNoteRemind"),
+  ];
+
+  return (
+    <div className="mt-4 space-y-6">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          {t("account.ambassadorHowTitle")}
+        </p>
+        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+          {steps.map((text, i) => (
+            <li
+              key={i}
+              className="flex gap-3 rounded-xl border border-stone-200/90 bg-stone-50/90 p-3.5 dark:border-stone-600/80 dark:bg-stone-900/45"
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-900 text-sm font-semibold text-white dark:bg-stone-100 dark:text-stone-900"
+                aria-hidden
+              >
+                {i + 1}
+              </span>
+              <span className="text-sm leading-snug text-stone-700 dark:text-stone-300">{text}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="rounded-xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-stone-50/40 p-4 dark:border-amber-900/35 dark:from-amber-950/25 dark:to-stone-950/40">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/90 dark:text-amber-200/90">
+          {t("account.ambassadorRewardsTitle")}
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-stone-200/80 bg-white/90 px-4 py-3 text-center shadow-sm dark:border-stone-700 dark:bg-stone-950/70">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("account.ambassadorRewardsStatPer")}
+            </p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+              {t("account.ambassadorRewardsStatPerBig")}
+            </p>
+            <p className="mt-1 text-xs leading-snug text-stone-600 dark:text-stone-400">
+              {t("account.ambassadorRewardsStatPerSub")}
+            </p>
+          </div>
+          <div className="rounded-lg border border-stone-200/80 bg-white/90 px-4 py-3 text-center shadow-sm dark:border-stone-700 dark:bg-stone-950/70">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              {t("account.ambassadorRewardsStatCap")}
+            </p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+              {t("account.ambassadorRewardsStatCapBig")}
+            </p>
+            <p className="mt-1 text-xs leading-snug text-stone-600 dark:text-stone-400">
+              {t("account.ambassadorRewardsStatCapSub")}
+            </p>
+          </div>
+        </div>
+        <ul className="mt-4 space-y-2 border-t border-amber-200/60 pt-4 dark:border-amber-900/30">
+          {rewardNotes.map((line, i) => (
+            <li
+              key={i}
+              className="flex gap-2.5 text-xs leading-relaxed text-stone-700 dark:text-stone-300"
+            >
+              <span
+                className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-600/15 text-[10px] font-bold text-amber-900 dark:bg-amber-400/15 dark:text-amber-200"
+                aria-hidden
+              >
+                ✓
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 async function fetchReferralPayloadWithRetries(): Promise<AmbassadorReferralPayload | null> {
   for (let attempt = 0; attempt < REFERRAL_FETCH_RETRIES; attempt++) {
     try {
@@ -261,14 +348,9 @@ export function AccountAmbassadorReferralSection(props: {
   return (
     <section className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-6 shadow-sm">
       <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("account.ambassadorPlanTitle")}</h2>
-      <p className="mt-3 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-        {t("account.ambassadorSectionIntro")}
-      </p>
-      <p className="mt-3 text-xs leading-relaxed text-stone-500 dark:text-stone-500">
-        {t("account.ambassadorRewardRules")}
-      </p>
+      <AmbassadorProgramVisual t={t} />
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
+      <div className="mt-8 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
         <div className="min-w-0 space-y-3">
           <p className="text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-500">
             {t("account.ambassadorShareLink")}

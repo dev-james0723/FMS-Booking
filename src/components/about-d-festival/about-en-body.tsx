@@ -5,6 +5,7 @@ import { DGalleryEmbed } from "@/components/d-gallery-embed";
 import { FestivalBackgroundMusic } from "@/components/festival-background-music";
 import { Mdw3dGlobeGallery } from "@/components/mdw-3d-globe-gallery";
 import { OFFICIAL_SITE_URL } from "@/lib/about-d-festival-env";
+import { navFantasiaCtaClass } from "@/lib/nav-icon-button-classes";
 
 export function AboutEnBody({
   dFestivalElfsightClass,
@@ -16,6 +17,12 @@ export function AboutEnBody({
       <h1 className="text-center font-serif text-2xl leading-snug text-stone-900 dark:text-stone-50 sm:text-3xl">
         About the 2026 D Festival Young Pianist Program
       </h1>
+
+      <div className="mt-6 flex justify-center">
+        <Link href="/about-fantasia-music-space" className={navFantasiaCtaClass}>
+          About Fantasia Music Space
+        </Link>
+      </div>
 
       <figure className="mt-8 sm:mt-10">
         <Image
