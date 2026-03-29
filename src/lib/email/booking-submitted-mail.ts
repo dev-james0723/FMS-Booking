@@ -163,8 +163,12 @@ export function buildBookingSubmittedMail(
     whatsapp: CONTACT_WHATSAPP_URL,
   };
 
-  const logoDf = absAppUrl("/branding/d-festival-young-pianist.png");
-  const logoFms = absAppUrl("/branding/fantasia-music-space.png");
+  const logoDf = absAppUrl(
+    withBasePath("/api/v1/branding-logo/d-festival-young-pianist"),
+  );
+  const logoFms = absAppUrl(
+    withBasePath("/api/v1/branding-logo/fantasia-music-space"),
+  );
 
   const cameraMail = cameraBlocksForBookingMail(
     locale,

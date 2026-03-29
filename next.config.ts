@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "argon2",
     "resend",
     "@google/genai",
+    "sharp",
   ],
   turbopack: {
     root: process.cwd(),

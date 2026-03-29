@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { withBasePath } from "@/lib/base-path";
+import { BrandingRgbaImage } from "@/components/branding-rgba-image";
 import { useTranslation } from "@/lib/i18n/use-translation";
 
 export function HomePartnerLogos() {
@@ -26,12 +25,11 @@ export function HomePartnerLogos() {
 
       <div className="relative flex flex-col items-center justify-center gap-8 sm:flex-row sm:gap-2 md:gap-6">
         <div className="partner-float-left flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
-          <Image
-            src={withBasePath("/branding/d-festival-young-pianist.png")}
+          <BrandingRgbaImage
+            key="d-festival-young-pianist-hi"
+            slug="d-festival-young-pianist"
             alt={t("partner.dfestivalAlt")}
-            width={10221}
-            height={383}
-            className="h-auto max-h-[6rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7rem]"
+            className="inline-flex h-[6rem] w-auto max-w-full justify-center sm:h-[7rem]"
             priority
           />
         </div>
@@ -43,12 +41,11 @@ export function HomePartnerLogos() {
         </div>
 
         <div className="partner-float-right flex w-full max-w-[min(100%,340px)] items-center justify-center sm:w-auto">
-          <Image
-            src={withBasePath("/branding/fantasia-music-space.png")}
+          <BrandingRgbaImage
+            key="fantasia-music-space-hi"
+            slug="fantasia-music-space"
             alt={t("partner.fmsAlt")}
-            width={2481}
-            height={2481}
-            className="h-auto max-h-[6.5rem] w-auto max-w-full bg-transparent object-contain object-center sm:max-h-[7.5rem]"
+            className="inline-flex h-[6.5rem] w-auto max-w-full justify-center sm:h-[7.5rem]"
             priority
           />
         </div>

@@ -8,7 +8,6 @@ export function sanitizeTwilioSecretValue(value: string | undefined): string | u
     .replace(/^\uFEFF/, "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/[\u2028\u2029]/g, "")
-    .replace(/\r?\n/g, "")
     .trim();
   return cleaned === "" ? undefined : cleaned;
 }

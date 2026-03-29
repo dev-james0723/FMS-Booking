@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useState, type ComponentType } from "react";
+import { BrandingRgbaImage } from "@/components/branding-rgba-image";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { withBasePath } from "@/lib/base-path";
 
@@ -514,12 +515,11 @@ function RegionRouteFigure({
         />
         <div className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/50 py-1.5 pl-2 pr-1.5 shadow-md backdrop-blur-sm">
           <ArrowTowardFantasiaLogo className="shrink-0 text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.5)]" />
-          <Image
-            src={withBasePath("/branding/fantasia-music-space.png")}
+          <BrandingRgbaImage
+            key="fantasia-music-space-lo"
+            slug="fantasia-music-space"
             alt=""
-            width={2481}
-            height={2481}
-            className="h-10 w-10 object-contain"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center object-contain"
           />
         </div>
       </div>

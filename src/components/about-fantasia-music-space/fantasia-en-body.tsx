@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BrandingRgbaImage } from "@/components/branding-rgba-image";
 import { FantasiaInstagramBlock } from "@/components/about-fantasia-music-space/fantasia-instagram-block";
-import { withBasePath } from "@/lib/base-path";
 
 const imgRounded =
   "h-auto w-full rounded-xl border border-stone-200 shadow-md dark:border-stone-700/80";
@@ -14,12 +14,11 @@ export function FantasiaEnBody({
   return (
     <main className="mx-auto max-w-3xl px-5 sm:px-4 pb-28 pt-8 sm:pt-10">
       <div className="flex flex-col items-center">
-        <Image
-          src={withBasePath("/branding/fantasia-music-space.png")}
+        <BrandingRgbaImage
+          key="fantasia-music-space-hi"
+          slug="fantasia-music-space"
           alt="Fantasia Music Space"
-          width={2481}
-          height={2481}
-          className="h-auto w-[min(100%,220px)] max-w-full object-contain"
+          className="inline-flex h-auto w-[min(100%,220px)] max-w-full justify-center object-contain"
           priority
         />
         <h1 className="mt-6 text-center font-serif text-2xl leading-snug text-stone-900 dark:text-stone-50 sm:text-3xl">

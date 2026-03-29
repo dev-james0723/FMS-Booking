@@ -17,7 +17,7 @@ import {
   type AmbassadorReferralPayload,
 } from "@/lib/referral/ambassador-referral-payload";
 import { getAllSettings, getEffectiveNow } from "@/lib/settings";
-import { isUserFacingDbLoadFailure } from "@/lib/prisma-user-facing-errors";
+import { isUnreachableDbError } from "@/lib/settings-fallback";
 import { hkDateKey } from "@/lib/time";
 import type { Prisma } from "@prisma/client";
 
@@ -184,8 +184,7 @@ export default async function AccountPage() {
       />
     );
   } catch (e) {
-    if (isUserFacingDbLoadFailure(e)) {
-      console.error("[account/page] db load failure", e);
+    if (isUnreachableDbError(e)) {
       return <AccountDbUnavailable email={session.email} />;
     }
     throw e;
