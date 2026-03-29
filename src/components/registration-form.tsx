@@ -813,6 +813,7 @@ export function RegistrationForm() {
           ) : null}
         </div>
         <InstrumentOtherModal
+          key={otherInstrumentOpen ? `other-${otherInstrumentId ?? ""}` : "closed"}
           open={otherInstrumentOpen}
           locale={locale}
           initialInstrumentId={otherInstrumentId}

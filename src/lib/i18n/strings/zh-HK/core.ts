@@ -43,7 +43,9 @@ export const coreZhHK = {
   footer: {
     line: "© {year} 香港幻樂國際有限公司 - 版權所有",
     designCredit: "網站設計：Atelier Fantasia 幻樂創藝有限公司",
-    designInquiry: "查詢網站設計",
+    designInquiryTagline:
+      "讓每一分預算都轉化為您的企業資產。0 月費/隱藏收費、低成本、高品質設計、完整擁有權——打造真正屬於您的網站資產。",
+    designInquiry: "👉 查詢網站設計詳情",
     atelierFantasiaLogoAlt: "幻樂創藝有限公司標誌",
     sitemapAria: "網站地圖",
     groupAccount: "帳戶與預約",

@@ -36,13 +36,9 @@ export function InstrumentOtherModal({
   t,
 }: Props) {
   const titleId = useId();
-  const [selectedId, setSelectedId] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setSelectedId(initialInstrumentId?.trim() ? initialInstrumentId : "");
-    }
-  }, [open, initialInstrumentId]);
+  const [selectedId, setSelectedId] = useState(() =>
+    initialInstrumentId?.trim() ? initialInstrumentId : "",
+  );
 
   useEffect(() => {
     if (!open) return;

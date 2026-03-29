@@ -75,7 +75,7 @@ export function AboutZhBody({
         <div className="flex flex-col items-center text-center">
           <Image
             src="/images/au-hin-sing-headshot.png"
-            alt="歐顯星（James）— 聯合創辦人、科技與營運總監 D Festival"
+            alt="歐顯星（James）— 聯合創辦人、科技與營運總監 | D Festival"
             width={612}
             height={556}
             className="h-28 w-28 rounded-full object-cover object-center shadow-md ring-2 ring-amber-300/50"
@@ -93,7 +93,7 @@ export function AboutZhBody({
             priority
           />
           <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-600 dark:text-black">
-            聯合創辦人、科技與營運總監 D Festival
+            聯合創辦人、科技與營運總監 | D Festival
           </p>
         </div>
       </section>

@@ -135,6 +135,9 @@ export function SiteFooter() {
           <p className="text-[11px] font-medium tracking-wide text-[#9a7b3c] dark:text-[#cbb882]">
             {t("footer.designCredit")}
           </p>
+          <p className="mx-auto max-w-md text-[11px] leading-relaxed text-stone-600 dark:text-stone-400">
+            {t("footer.designInquiryTagline")}
+          </p>
           <p className="text-[11px]">
             <a
               href={ATELIER_DESIGN_WHATSAPP_HREF}

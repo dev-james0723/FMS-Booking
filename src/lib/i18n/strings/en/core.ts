@@ -43,7 +43,9 @@ export const coreEn = {
   footer: {
     line: "© {year} Hong Kong Fantasia International Music Management Ltd. — All rights reserved.",
     designCredit: "Website design: Atelier Fantasia Limited",
-    designInquiry: "Website design inquiry",
+    designInquiryTagline:
+      "Turn every dollar of your budget into business assets. $0 monthly or hidden fees, low cost, high-quality design, full ownership — a website asset that is truly yours.",
+    designInquiry: "👉 Website design details",
     atelierFantasiaLogoAlt: "Atelier Fantasia Limited logo",
     sitemapAria: "Site map",
     groupAccount: "Account & booking",

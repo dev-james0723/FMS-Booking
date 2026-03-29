@@ -50,9 +50,10 @@ function readRegistrationBannerDismissedFromStorage(): boolean {
   }
 }
 
-const CHROME_SCROLL_SHOW_TOP_PX = 40;
+/** Below this scrollY the top chrome stays visible (hysteresis near the top). */
+const CHROME_SCROLL_TOP_VISIBLE_MAX_Y = 56;
 /** Min scrollY delta (px) per event to count as direction (scroll path; touch / scrollbar). */
-const CHROME_SCROLL_DIRECTION_EPS = 1;
+const CHROME_SCROLL_DIRECTION_EPS = 2;
 /** Ignore tiny wheel deltas (trackpad noise). */
 const CHROME_WHEEL_INTENT_EPS = 0.5;
 /** After hiding chrome, briefly ignore "scroll up" so layout/scroll-anchoring settle does not flash the bar back. */
@@ -274,7 +275,7 @@ export function SiteHeader() {
     const applyScrollChrome = () => {
       if (menuOpen || mobileDrawerPresent) return;
       const y = Math.max(0, window.scrollY);
-      if (y < CHROME_SCROLL_SHOW_TOP_PX) {
+      if (y < CHROME_SCROLL_TOP_VISIBLE_MAX_Y) {
         applyChromeTop(y);
         return;
       }
@@ -301,7 +302,7 @@ export function SiteHeader() {
       if (menuOpen || mobileDrawerPresent) return;
       if (e.ctrlKey) return;
       const y = Math.max(0, window.scrollY);
-      if (y < CHROME_SCROLL_SHOW_TOP_PX) {
+      if (y < CHROME_SCROLL_TOP_VISIBLE_MAX_Y) {
         applyChromeTop(y);
         return;
       }
@@ -324,14 +325,21 @@ export function SiteHeader() {
       }
     };
 
+    let scrollRaf = 0;
     const onScroll = () => {
       if (menuOpen || mobileDrawerPresent) return;
-      applyScrollChrome();
+      if (scrollRaf !== 0) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0;
+        applyScrollChrome();
+      });
     };
 
     window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
+      cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("scroll", onScroll);
     };
@@ -397,6 +405,12 @@ export function SiteHeader() {
 
   return (
     <>
+      {/*
+        Reserve in-flow height whenever the shell is measured so toggling translate
+        on the fixed header does not change document length or scrollY (avoids hide/show
+        feedback loops at the threshold). Height still transitions when the shell resizes
+        (e.g. registration banner).
+      */}
       <div
         aria-hidden
         className={`shrink-0 overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none ${
@@ -404,11 +418,7 @@ export function SiteHeader() {
         }`}
         style={{
           overflowAnchor: "none",
-          height: chromeCollapsed
-            ? 0
-            : shellReady
-              ? shellHeight
-              : CHROME_SHELL_HEIGHT_FALLBACK_PX,
+          height: shellReady ? shellHeight : CHROME_SHELL_HEIGHT_FALLBACK_PX,
         }}
       />
       <div

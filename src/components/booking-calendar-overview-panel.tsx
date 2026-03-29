@@ -173,7 +173,7 @@ export function BookingCalendarOverviewPanel(props: {
   const previewSlots = useMemo(() => buildCampaignPreviewTimelineSlots(), []);
 
   const displaySlots = useMemo((): TimelineSlotInput[] => {
-    const base = !bookingLive ? previewSlots : apiSlots;
+    const base: TimelineSlotInput[] = !bookingLive ? previewSlots : apiSlots;
     return applyStudioRoomCalendarHoldsToTimelineSlots(
       venueKind,
       base,
