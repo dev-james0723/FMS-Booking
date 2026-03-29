@@ -6,8 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrations (`prisma migrate deploy`) use this; runtime queries use `DATABASE_URL` (pooled).
+  directUrl = env("DIRECT_URL")
 }
 
 enum AccountStatus {

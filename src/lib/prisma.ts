@@ -4,10 +4,24 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   /** Set in dev so we can replace the client when Next reloads `.env` without a full server restart. */
   prismaEnvUrl?: string;
+  supabasePoolerWarned?: boolean;
 };
+
+/** Session-mode Supabase pooler (:5432) exhausts quickly on Vercel; transaction pool uses :6543. */
+function warnIfSupabaseSessionPooler(databaseUrl: string) {
+  if (process.env.NODE_ENV !== "production") return;
+  if (!databaseUrl.includes("pooler.supabase.com")) return;
+  if (databaseUrl.includes(":6543")) return;
+  if (globalForPrisma.supabasePoolerWarned) return;
+  globalForPrisma.supabasePoolerWarned = true;
+  console.warn(
+    "[prisma] DATABASE_URL looks like Supabase Session pooler (port 5432). On Vercel this often hits MaxClientsInSessionMode. Use the Transaction pool URI on port 6543 with ?pgbouncer=true&connection_limit=1 — see .env.example.",
+  );
+}
 
 function getPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL ?? "";
+  warnIfSupabaseSessionPooler(url);
 
   if (process.env.NODE_ENV === "production") {
     if (!globalForPrisma.prisma) {
