@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "build:production": "prisma migrate deploy && prisma generate && next build",
+    "build:production": "node scripts/build-production.mjs",
     "postinstall": "prisma generate && patch-package",
     "start": "next start",
     "lint": "eslint",
