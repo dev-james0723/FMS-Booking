@@ -7,6 +7,26 @@ const globalForPrisma = globalThis as unknown as {
   supabasePoolerWarned?: boolean;
 };
 
+/**
+ * Supabase-style URLs often use `connection_limit=1`, which is correct per serverless instance but
+ * starves `next dev` when many RSC + API handlers run in parallel. Bump pool only in development.
+ */
+function relaxDatabaseUrlForDev(databaseUrl: string): string {
+  if (!databaseUrl || process.env.NODE_ENV === "production") return databaseUrl;
+  try {
+    const u = new URL(databaseUrl);
+    if (u.searchParams.get("connection_limit") !== "1") return databaseUrl;
+    u.searchParams.set("connection_limit", "10");
+    const pt = u.searchParams.get("pool_timeout");
+    if (pt == null || Number(pt) < 20) {
+      u.searchParams.set("pool_timeout", "30");
+    }
+    return u.toString();
+  } catch {
+    return databaseUrl;
+  }
+}
+
 /** Session-mode Supabase pooler (:5432) exhausts quickly on Vercel; transaction pool uses :6543. */
 function warnIfSupabaseSessionPooler(databaseUrl: string) {
   if (process.env.NODE_ENV !== "production") return;
@@ -37,8 +57,12 @@ function getPrismaClient(): PrismaClient {
   }
 
   if (!globalForPrisma.prisma) {
+    const devUrl = relaxDatabaseUrlForDev(url);
     globalForPrisma.prisma = new PrismaClient({
       log: ["error", "warn"],
+      ...(devUrl !== url
+        ? { datasources: { db: { url: devUrl } } }
+        : {}),
     });
     globalForPrisma.prismaEnvUrl = url;
   }

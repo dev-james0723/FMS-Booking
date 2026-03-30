@@ -1,3 +1,4 @@
+import { BookingRequestStatus } from "@prisma/client";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
@@ -23,15 +24,17 @@ export async function GET(req: Request) {
     orderBy: { requestedAt: "desc" },
     include: {
       allocations: {
+        // Include released rows so cancelled requests still show the slots that were given up.
+        where: { status: { in: ["pending", "approved", "released"] } },
         include: { slot: true },
         orderBy: { slot: { startsAt: "asc" } },
       },
       statusLogs: {
         where: {
-          meta: {
-            path: ["action"],
-            equals: "admin_reschedule",
-          },
+          OR: [
+            { meta: { path: ["action"], equals: "admin_reschedule" } },
+            { meta: { path: ["action"], equals: "user_reschedule" } },
+          ],
         },
         select: { id: true },
         take: 1,
@@ -41,20 +44,28 @@ export async function GET(req: Request) {
 
   return jsonOk({
     venueKind,
-    bookings: rows.map((r) => ({
-      id: r.id,
-      status: r.status,
-      hasStaffReschedule: r.statusLogs.length > 0,
-      requestedAt: r.requestedAt.toISOString(),
-      bookingIdentityType: r.bookingIdentityType,
-      usesBonusSlot: r.usesBonusSlot,
-      slots: r.allocations.map((a) => ({
-        id: a.slot.id,
-        startsAt: a.slot.startsAt.toISOString(),
-        endsAt: a.slot.endsAt.toISOString(),
-        venueLabel: a.slot.venueLabel,
-        venueKind: a.slot.venueKind,
-      })),
-    })),
+    bookings: rows.map((r) => {
+      const showReleasedSlots = r.status === BookingRequestStatus.cancelled;
+      const allocationsForHistory = showReleasedSlots
+        ? r.allocations
+        : r.allocations.filter((a) => a.status === "pending" || a.status === "approved");
+      return {
+        id: r.id,
+        status: r.status,
+        hasStaffReschedule: r.statusLogs.length > 0,
+        hasReschedule: r.statusLogs.length > 0,
+        requestedAt: r.requestedAt.toISOString(),
+        bookingIdentityType: r.bookingIdentityType,
+        usesBonusSlot: r.usesBonusSlot,
+        slots: allocationsForHistory.map((a) => ({
+          id: a.slot.id,
+          startsAt: a.slot.startsAt.toISOString(),
+          endsAt: a.slot.endsAt.toISOString(),
+          venueLabel: a.slot.venueLabel,
+          venueKind: a.slot.venueKind,
+          allocationId: a.id,
+        })),
+      };
+    }),
   });
 }

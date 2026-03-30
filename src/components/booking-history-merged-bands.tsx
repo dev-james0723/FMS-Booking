@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/lib/i18n/use-translation";
 import {
   TIMELINE_HALF_HOUR_SEGMENT_COUNT,
   clipSlotToTimeline,
@@ -42,11 +43,15 @@ export function BookingHistoryMergedBands({
   merged,
   locale,
   bookingId,
+  cancelledVisual = false,
 }: {
   merged: MergedBandSlot[];
   locale: Locale;
   bookingId: string;
+  /** When true, bands are styled as voided and show a cross over the timeline block. */
+  cancelledVisual?: boolean;
 }) {
+  const { t } = useTranslation();
   if (merged.length === 0) return null;
 
   const locTag = locale === "en" ? "en-HK" : "zh-HK";
@@ -96,7 +101,11 @@ export function BookingHistoryMergedBands({
                 ))}
               </div>
               <div
-                className="relative flex-1 rounded-lg border border-stone-200 bg-stone-50 py-1.5 dark:border-stone-700 dark:bg-stone-900/80"
+                className={`relative flex-1 rounded-lg border py-1.5 ${
+                  cancelledVisual
+                    ? "border-stone-300 bg-stone-100/90 dark:border-stone-600 dark:bg-stone-900/60"
+                    : "border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-900/80"
+                }`}
                 style={{ minHeight: trackMinPx }}
               >
                 {halfHourLabels.map((label, i) => (
@@ -119,14 +128,35 @@ export function BookingHistoryMergedBands({
                   return (
                     <div
                       key={`${dateKey}-${idx}-${startIso}`}
-                      className="absolute left-1 right-1 z-[1] rounded-md border border-violet-700 bg-violet-500/92 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-white shadow-sm dark:border-violet-500 dark:bg-violet-600/95"
+                      className={
+                        cancelledVisual
+                          ? "absolute left-1 right-1 z-[1] rounded-md border border-dashed border-stone-500 bg-stone-400/35 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-stone-900 shadow-sm dark:border-stone-500 dark:bg-stone-600/40 dark:text-stone-100"
+                          : "absolute left-1 right-1 z-[1] rounded-md border border-violet-700 bg-violet-500/92 px-1.5 py-0.5 text-[10px] font-medium leading-tight text-white shadow-sm dark:border-violet-500 dark:bg-violet-600/95"
+                      }
                       style={{
                         top: `calc(${clip.topPct}% + 1px)`,
                         height: `max(1px, calc(${clip.heightPct}% - 2px))`,
                       }}
                       title={`${rangeLabel} · ${venue}${sessionsH}`}
                     >
-                      <span className="line-clamp-3 break-words">{rangeLabel}</span>
+                      <span
+                        className={`line-clamp-3 break-words ${cancelledVisual ? "opacity-75 line-through decoration-stone-600 dark:decoration-stone-400" : ""}`}
+                      >
+                        {rangeLabel}
+                      </span>
+                      {cancelledVisual ? (
+                        <div
+                          className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center"
+                          aria-hidden
+                        >
+                          <span
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-red-600/85 bg-stone-950/35 text-lg font-bold leading-none text-red-500 shadow-sm dark:border-red-500/90 dark:bg-stone-950/55 dark:text-red-400"
+                            title={t("booking.historyPanel.cancelledSlotCrossTitle")}
+                          >
+                            ✕
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -138,7 +168,13 @@ export function BookingHistoryMergedBands({
                 const endIso = m.end.toISOString();
                 return (
                   <li key={`${dateKey}-cap-${idx}`}>
-                    <span className="font-medium text-stone-800 dark:text-stone-200">
+                    <span
+                      className={`font-medium text-stone-800 dark:text-stone-200 ${
+                        cancelledVisual
+                          ? "line-through decoration-stone-500 opacity-80 dark:decoration-stone-500"
+                          : ""
+                      }`}
+                    >
                       {formatMergedBlockHkRange(startIso, endIso, locale)}
                     </span>
                     <span className="text-stone-500 dark:text-stone-500">

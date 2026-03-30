@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   DaySlotsTimeline,
   summarizeDaySlotsText,
@@ -18,7 +18,7 @@ import { TIMELINE_END_HOUR, TIMELINE_START_HOUR } from "@/lib/booking/day-timeli
 import { buildCampaignPreviewTimelineSlots } from "@/lib/booking/preview-slots";
 import { applyStudioRoomCalendarHoldsToTimelineSlots } from "@/lib/booking/studio-room-calendar-holds";
 import { withBasePath } from "@/lib/base-path";
-import { addDaysToDateKey, buildMonthGrid, isHkDayBookable } from "@/lib/hk-calendar-client";
+import { buildMonthGrid, isHkDayBookable } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
 
@@ -36,25 +36,6 @@ function defaultSelectedDay(): string {
   }
   if (t < CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY) return CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY;
   return CAMPAIGN_EXPERIENCE_LAST_DAY_KEY;
-}
-
-function firstLiveRollingCampaignDay(todayKey: string): string {
-  let dk = CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY;
-  for (;;) {
-    if (dk > CAMPAIGN_EXPERIENCE_LAST_DAY_KEY) return defaultSelectedDay();
-    if (
-      isHkDayBookable({
-        dateKey: dk,
-        todayKey,
-        campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
-        campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
-        rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
-      })
-    ) {
-      return dk;
-    }
-    dk = addDaysToDateKey(dk, 1);
-  }
 }
 
 function isSelectableCampaignDay(dateKey: string | null): dateKey is string {
@@ -142,7 +123,7 @@ function MonthCalendarBlock(props: {
           }
           if (isSel && selectable) {
             ring =
-              "ring-2 ring-stone-900 ring-offset-2 ring-offset-background dark:ring-stone-100 dark:ring-offset-background";
+              "ring-2 ring-emerald-600 ring-offset-2 ring-offset-background dark:ring-emerald-500 dark:ring-offset-background";
           }
           const dayNum = Number(key.slice(8, 10));
           if (!selectable) {
@@ -208,23 +189,7 @@ export function BookingCalendarOverviewPanel(props: {
   const [error, setError] = useState<string | null>(null);
 
   const todayKey = hkTodayYmd();
-
-  useEffect(() => {
-    if (!bookingLive) {
-      return;
-    }
-    setSelected((prev) =>
-      isHkDayBookable({
-        dateKey: prev,
-        todayKey,
-        campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
-        campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
-        rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
-      })
-        ? prev
-        : firstLiveRollingCampaignDay(todayKey)
-    );
-  }, [bookingLive, todayKey]);
+  const dayDetailAnchorRef = useRef<HTMLDivElement>(null);
 
   const previewSlots = useMemo(() => buildCampaignPreviewTimelineSlots(), []);
 
@@ -301,6 +266,20 @@ export function BookingCalendarOverviewPanel(props: {
     };
   }, [fetchOverviewData]);
 
+  const scrollDayDetailIntoView = useCallback(() => {
+    requestAnimationFrame(() => {
+      dayDetailAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  const selectDay = useCallback(
+    (dateKey: string) => {
+      setSelected(dateKey);
+      scrollDayDetailIntoView();
+    },
+    [scrollDayDetailIntoView]
+  );
+
   const refreshOverview = useCallback(() => {
     void (async () => {
       setLoading(true);
@@ -340,6 +319,25 @@ export function BookingCalendarOverviewPanel(props: {
           {overviewIntro.trim() ? (
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">{overviewIntro}</p>
           ) : null}
+          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+            {t("booking.cal.dayDetailHint")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => selectDay(CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY)}
+              className="rounded-lg border border-stone-300 bg-surface px-3 py-2 text-sm font-medium text-stone-800 shadow-sm transition hover:bg-stone-50 dark:border-stone-600 dark:text-stone-100 dark:hover:bg-neutral-800"
+            >
+              {t("booking.cal.jumpFirstCampaignDay")}
+            </button>
+            <button
+              type="button"
+              onClick={() => selectDay(CAMPAIGN_EXPERIENCE_LAST_DAY_KEY)}
+              className="rounded-lg border border-stone-300 bg-surface px-3 py-2 text-sm font-medium text-stone-800 shadow-sm transition hover:bg-stone-50 dark:border-stone-600 dark:text-stone-100 dark:hover:bg-neutral-800"
+            >
+              {t("booking.cal.jumpLastCampaignDay")}
+            </button>
+          </div>
         </div>
         <button
           type="button"
@@ -365,9 +363,9 @@ export function BookingCalendarOverviewPanel(props: {
           month1={APRIL_2026.month1}
           slots={displaySlots}
           selected={selected}
-          onSelect={setSelected}
+          onSelect={selectDay}
           weekdays={weekdays}
-          rollingLive={bookingLive}
+          rollingLive={false}
           todayKey={todayKey}
           footer={
             <Link
@@ -384,9 +382,9 @@ export function BookingCalendarOverviewPanel(props: {
           month1={MAY_2026.month1}
           slots={displaySlots}
           selected={selected}
-          onSelect={setSelected}
+          onSelect={selectDay}
           weekdays={weekdays}
-          rollingLive={bookingLive}
+          rollingLive={false}
           todayKey={todayKey}
         />
       </div>
@@ -403,7 +401,7 @@ export function BookingCalendarOverviewPanel(props: {
         ) : null}
       </div>
 
-      <section className="space-y-3">
+      <section ref={dayDetailAnchorRef} className="scroll-mt-4 space-y-3">
         <h3 className="font-medium text-stone-900 dark:text-stone-50">
           {tr("booking.cal.selectedDate", { date: selected })}
         </h3>

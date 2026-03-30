@@ -51,6 +51,7 @@ export const coreZhHK = {
     groupAccount: "帳戶與預約",
     groupInfo: "活動與政策",
     home: "主頁",
+    backToTop: "回到頁首",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",

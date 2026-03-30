@@ -7,7 +7,7 @@ import { accountSharedQuotaVenuesNote } from "@/lib/i18n/account-page-heading";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
 import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 import { loadUserExistingDayCounts } from "@/lib/booking/day-counts";
-import { maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
+import { bookableHeadroomForHkDay, maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
 import { getQuotaNumericLimits } from "@/lib/booking/booking-rules";
 import { parseBookingNumericSettings } from "@/lib/booking/settings";
 import { prisma } from "@/lib/prisma";
@@ -128,7 +128,12 @@ export default async function AccountPage() {
     const todayKey = hkDateKey(now);
     const existingDayCounts = await loadUserExistingDayCounts(user.id);
     const todayCommitted = existingDayCounts.get(todayKey) ?? 0;
-    const todayRemaining = Math.max(0, dailyMax - todayCommitted);
+    const todayRemaining = bookableHeadroomForHkDay(
+      existingDayCounts,
+      todayKey,
+      dailyMax,
+      rollingMax
+    );
     const rollingUsed = maxRollingThreeDaySum(existingDayCounts);
     const rollingStory = buildRollingLimitNarrative(dailyMax, rollingMax);
 

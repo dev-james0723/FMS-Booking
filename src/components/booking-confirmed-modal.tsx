@@ -102,7 +102,7 @@ export function BookingConfirmedModal({
         className="w-full max-w-md overflow-hidden rounded-2xl border border-stone-200 bg-surface shadow-2xl dark:border-stone-700"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-6 pb-10 pt-8 text-center text-white">
+        <div className="relative z-0 shrink-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-6 pb-6 pt-8 text-center text-white">
           <div
             className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30 backdrop-blur-sm"
             aria-hidden
@@ -114,7 +114,7 @@ export function BookingConfirmedModal({
           </h2>
         </div>
 
-        <div className="-mt-6 space-y-4 px-5 pb-5 pt-0">
+        <div className="relative z-10 space-y-4 px-5 pb-5 pt-4">
           <div
             id={descId}
             className="rounded-xl border border-stone-200 bg-stone-50/95 px-4 py-3 dark:border-stone-600 dark:bg-stone-900/50"

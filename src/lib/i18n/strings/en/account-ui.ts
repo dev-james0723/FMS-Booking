@@ -21,7 +21,8 @@ export const accountEn = {
     "The system sums sessions in every such triple and compares the highest total to your cap. The tiles illustrate one triple; in practice all sliding triples are checked.",
   rollingDetailsSummary: "Details & examples",
   todayUsed: "Today ({todayKey}) used: {n} sessions{nH}",
-  todayRemaining: "Still bookable today (within daily cap): {n} sessions{nH}",
+    todayRemaining:
+      "Still bookable today (within daily and rolling 3-day caps): {n} sessions{nH}",
   rollingUsedLine:
     "Rolling 3-day total used so far: {used} / {rollingMax} sessions{rollingMaxH} (new picks are checked together when you submit)",
   rollingExplainTitle: "How “rolling 3 days” works*",

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LocaleProvider } from "@/lib/i18n/locale-provider";
 import type { Locale } from "@/lib/i18n/types";
 import { ReferralAmbassadorHost } from "@/components/referral-ambassador-host";
+import { SiteBackToTop } from "@/components/site-back-to-top";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SiteMeProvider, type SiteMeUser } from "@/lib/auth/use-site-me";
@@ -31,6 +32,7 @@ export function SiteChrome({
         </Suspense>
       )}
       <div className="min-h-0 flex-1 bg-background">{children}</div>
+      {!hideMarketing && <SiteBackToTop />}
       {!hideMarketing && <SiteFooter />}
       </SiteMeProvider>
     </LocaleProvider>

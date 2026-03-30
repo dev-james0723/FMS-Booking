@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BrandingRgbaImage } from "@/components/branding-rgba-image";
+import { FantasiaFounderSection } from "@/components/about-fantasia-music-space/fantasia-founder-section";
 import { FantasiaInstagramBlock } from "@/components/about-fantasia-music-space/fantasia-instagram-block";
 
 const imgRounded =
@@ -158,6 +159,13 @@ export function FantasiaEnBody({
           </li>
         </ol>
       </section>
+
+      <FantasiaFounderSection
+        heading="Founder"
+        portraitAlt="Portrait of James Hin-sing Au, founder of Fantasia Music Space"
+        bio="James Au is a Hong Kong-born pianist, arts entrepreneur, and cultural curator. He received his early musical training at GMC Music in Hong Kong before continuing his studies at the Cleveland Institute of Music and the Indiana University Jacobs School of Music in the United States. Active on the international stage, he has been praised by legendary Portuguese pianist Maria João Pires for his “refined artistry and delicate playing.” Beyond performance, Au is dedicated to the development of young musicians, the contemporary reimagining of classical music, and the cross-disciplinary integration of the arts, education, and technology. He is the founder of Fantasia Music Space, Executive Director of Hong Kong Fantasia International Music Management Ltd., and co-founder of the D Festival Young Pianist Festival, through which he seeks to cultivate a dynamic musical ecosystem that bridges performance, education, creative programming, and industry development."
+        ctaLabel="Visit James Hin-sing Au’s official website"
+      />
 
       <FantasiaInstagramBlock
         elfsightClass={elfsightClass}

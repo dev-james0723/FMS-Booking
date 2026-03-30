@@ -19,7 +19,7 @@ export const accountZhHK = {
   slidingDiagramHint: "系統會檢查每一組「三日連續」的節數加總；上圖代表其中一組，實際會掃過所有可能組合並取最嚴的一個與上限比較。",
   rollingDetailsSummary: "詳細說明與例子",
   todayUsed: "今日（{todayKey}）已用：{n} 節{nH}",
-  todayRemaining: "今日尚可預約（同日上限內）：{n} 節{nH}",
+    todayRemaining: "今日尚可加報（同日及連續三日滾動上限內）：{n} 節{nH}",
   rollingUsedLine:
     "目前「滑動 3 日」* 合計已用：{used} / {rollingMax} 節{rollingMaxH}（提交新預約時系統會再連同新選時段驗證）",
   rollingExplainTitle: "「滑動 3 日」* 怎樣計",

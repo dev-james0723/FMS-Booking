@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { withBasePath } from "@/lib/base-path";
 import {
@@ -63,6 +70,8 @@ type LimitsPayload = {
   countsByDay: Record<string, number>;
   todayCommitted: number;
   todayRemaining: number;
+  /** Additional sessions still bookable today under daily + rolling-3d rules */
+  todayBookableRemaining?: number;
   rollingSumCommitted?: number;
   rollingWindow?: { calendarDays: number; startKey: string; endKey: string };
   eligibility?: {
@@ -76,6 +85,7 @@ type LimitsPayload = {
     wouldExceedRolling: boolean;
     firstViolatingDate: string | null;
     rollingSum: number;
+    todayBookableRemainingAfter?: number;
   };
 };
 
@@ -100,6 +110,118 @@ function QuotaBlockStrip({
           className={`h-2.5 min-w-0 flex-1 rounded-sm ${i < f ? filledClassName : emptyClassName}`}
         />
       ))}
+    </div>
+  );
+}
+
+type CamPref = null | "no" | "yes";
+type CamPay = null | "paid_before" | "pay_after" | "need_choice";
+
+function CameraRentalSection(props: {
+  t: (key: string) => string;
+  camPref: CamPref;
+  camPay: CamPay;
+  setCamPref: (v: CamPref) => void;
+  setCamPay: (v: CamPay) => void;
+  setCamModalOpen: (v: boolean) => void;
+  setCamModalPaidPick: (v: boolean | null) => void;
+}) {
+  const {
+    t,
+    camPref,
+    camPay,
+    setCamPref,
+    setCamPay,
+    setCamModalOpen,
+    setCamModalPaidPick,
+  } = props;
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+        {t("booking.request.cameraQuestion")}
+      </p>
+      <div className="overflow-hidden rounded-lg border border-stone-200 bg-white dark:border-stone-600 dark:bg-stone-950">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static marketing asset */}
+        <img
+          src={withBasePath(CAMERA_RENTAL_HERO_PATH)}
+          alt={t("booking.request.cameraHeroAlt")}
+          className="mx-auto block max-h-64 w-full object-contain"
+        />
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-8">
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+          <input
+            type="checkbox"
+            checked={camPref === "no"}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setCamPref("no");
+                setCamPay(null);
+                setCamModalOpen(false);
+              } else {
+                setCamPref(null);
+              }
+            }}
+            className="h-4 w-4 shrink-0 rounded border-stone-400"
+          />
+          <span>{t("booking.request.cameraNoNeed")}</span>
+        </label>
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
+          <input
+            type="checkbox"
+            checked={camPref === "yes"}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setCamPref("yes");
+                setCamPay(null);
+                setCamModalPaidPick(null);
+                setCamModalOpen(true);
+              } else {
+                setCamPref(null);
+                setCamPay(null);
+              }
+            }}
+            className="h-4 w-4 shrink-0 rounded border-stone-400"
+          />
+          <span>{t("booking.request.cameraNeed")}</span>
+        </label>
+      </div>
+
+      {camPref === "yes" && camPay === "paid_before" ? (
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() =>
+              window.open(CAMERA_USAGE_GUIDE_DRIVE_URL, "_blank", "noopener,noreferrer")
+            }
+            className="rounded-lg border border-emerald-800/40 bg-emerald-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950"
+          >
+            {t("booking.request.cameraOpenGuideButton")}
+          </button>
+        </div>
+      ) : null}
+
+      {camPref === "yes" && camPay === "need_choice" ? (
+        <div className="flex flex-wrap gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              setCamModalPaidPick(null);
+              setCamModalOpen(true);
+            }}
+            className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+          >
+            {t("booking.request.cameraPayFirstButton")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCamPay("pay_after")}
+            className="rounded-lg border border-blue-900/30 bg-blue-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-900"
+          >
+            {t("booking.request.cameraPayAfterButton")}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -200,12 +322,11 @@ export function BookingRequestPanel(props: {
     "individual" | "teaching_or_with_students"
   >("individual");
 
-  type CamPref = null | "no" | "yes";
-  type CamPay = null | "paid_before" | "pay_after" | "need_choice";
   const [camPref, setCamPref] = useState<CamPref>(null);
   const [camPay, setCamPay] = useState<CamPay>(null);
   const [camModalOpen, setCamModalOpen] = useState(false);
   const [camModalPaidPick, setCamModalPaidPick] = useState<boolean | null>(null);
+  const [cameraGateModalOpen, setCameraGateModalOpen] = useState(false);
 
   const cameraSubmitBlocking =
     camPref === null ||
@@ -244,18 +365,26 @@ export function BookingRequestPanel(props: {
   }, [viewYear, viewMonth]);
 
   const loadSettings = useCallback(async () => {
-    const res = await fetch(withBasePath("/api/v1/public/settings"));
-    const data = await res.json();
-    setSettings(data.settings ?? {});
-    const iso =
-      data && typeof data === "object" && typeof data.booking_effective_now_iso === "string"
-        ? data.booking_effective_now_iso
-        : null;
-    if (iso) {
-      const parsed = new Date(iso).getTime();
-      setServerEffectiveNowMs(Number.isNaN(parsed) ? null : parsed);
-    } else {
-      setServerEffectiveNowMs(null);
+    try {
+      const res = await fetch(withBasePath("/api/v1/public/settings"));
+      const data = (await res.json().catch(() => null)) as {
+        settings?: Record<string, unknown>;
+        booking_effective_now_iso?: string;
+      } | null;
+      if (!data || typeof data !== "object") return;
+      setSettings(data.settings ?? {});
+      const iso =
+        typeof data.booking_effective_now_iso === "string"
+          ? data.booking_effective_now_iso
+          : null;
+      if (iso) {
+        const parsed = new Date(iso).getTime();
+        setServerEffectiveNowMs(Number.isNaN(parsed) ? null : parsed);
+      } else {
+        setServerEffectiveNowMs(null);
+      }
+    } catch {
+      /* keep existing settings on network / non-JSON failure */
     }
   }, []);
 
@@ -267,16 +396,32 @@ export function BookingRequestPanel(props: {
       to: monthRange.to,
       venue: venueKind,
     });
-    const res = await fetch(withBasePath(`/api/v1/booking/availability?${q}`));
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data?.error?.message ?? t("booking.request.loadSlotsError"));
+    try {
+      const res = await fetch(withBasePath(`/api/v1/booking/availability?${q}`));
+      const data = (await res.json().catch(() => null)) as {
+        slots?: unknown;
+        error?: { message?: string };
+      } | null;
+      if (!res.ok) {
+        setError(
+          (data && typeof data === "object" && data.error?.message) ||
+            t("booking.request.loadSlotsError"),
+        );
+        setAllMonthSlots([]);
+        return;
+      }
+      if (!data || typeof data !== "object") {
+        setError(t("booking.request.loadSlotsError"));
+        setAllMonthSlots([]);
+        return;
+      }
+      setAllMonthSlots(Array.isArray(data.slots) ? data.slots : []);
+    } catch {
+      setError(t("booking.request.loadSlotsError"));
       setAllMonthSlots([]);
+    } finally {
       setLoading(false);
-      return;
     }
-    setAllMonthSlots(Array.isArray(data.slots) ? data.slots : []);
-    setLoading(false);
   }, [monthRange.from, monthRange.to, t, venueKind]);
 
   useEffect(() => {
@@ -455,7 +600,12 @@ export function BookingRequestPanel(props: {
     const dayKey = slotStartsAtToHkDateKey(slot.startsAt);
     const committed = countsByDay[dayKey] ?? 0;
     const selectedOnDay = selectedCountOnDay(dayKey, selected);
-    if (committed + selectedOnDay >= dailyMax) {
+    const isToday = limits && dayKey === limits.todayKey;
+    const dailyHeadroom = Math.max(0, dailyMax - committed);
+    const todayExtraHeadroom =
+      limits?.todayBookableRemaining ?? limits?.todayRemaining ?? dailyHeadroom;
+    const maxSelectableOnDay = isToday ? todayExtraHeadroom : dailyHeadroom;
+    if (selectedOnDay >= maxSelectableOnDay) {
       setBlockFlashSlotId(id);
       window.setTimeout(() => setBlockFlashSlotId(null), 650);
       setDailyCapHint(
@@ -539,6 +689,7 @@ export function BookingRequestPanel(props: {
     setSelected(new Set());
     setCamPref(null);
     setCamPay(null);
+    setCameraGateModalOpen(false);
     await loadMonthSlots();
     setSubmitting(false);
   }
@@ -557,14 +708,101 @@ export function BookingRequestPanel(props: {
     selected.size > 0 &&
     (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling);
   const submitDisabledCooldown = limits?.cooldown?.active === true;
-  const submitDisabled =
-    submitDisabledNoSelection ||
-    cameraSubmitBlocking ||
-    submitDisabledCooldown ||
-    submitDisabledLimits;
+  const submitHardDisabled =
+    submitDisabledNoSelection || submitDisabledCooldown || submitDisabledLimits;
+
+  function handlePrimarySubmitClick() {
+    if (submitHardDisabled) return;
+    if (cameraSubmitBlocking) {
+      setCameraGateModalOpen(true);
+      return;
+    }
+    void submit();
+  }
+
+  const showFloatingSubmit =
+    bookingLive && Boolean(selectedDayKey) && selected.size > 0;
+
+  const quotaExceedModalKey = useMemo(() => {
+    if (!limits || selected.size === 0) return null;
+    if (
+      !limits.provisional.wouldExceedDaily &&
+      !limits.provisional.wouldExceedRolling
+    ) {
+      return null;
+    }
+    return [
+      selectedKey,
+      limits.provisional.wouldExceedDaily ? "1" : "0",
+      limits.provisional.wouldExceedRolling ? "1" : "0",
+      String(limits.provisional.rollingSum),
+      limits.provisional.firstViolatingDate ?? "",
+    ].join("|");
+  }, [limits, selected.size, selectedKey]);
+
+  const quotaExceedModalBody = useMemo(() => {
+    if (!limits || selected.size === 0) return "";
+    if (
+      !limits.provisional.wouldExceedDaily &&
+      !limits.provisional.wouldExceedRolling
+    ) {
+      return "";
+    }
+    const parts: string[] = [];
+    if (limits.provisional.wouldExceedDaily) {
+      parts.push(
+        tr("booking.request.exceedDaily", {
+          dailyMax: String(limits.limits.dailyMax),
+          dailyMaxH: sessionHoursParen(locale, limits.limits.dailyMax),
+          datePart: limits.provisional.firstViolatingDate
+            ? tr("booking.request.exceedDailyDate", {
+                date: limits.provisional.firstViolatingDate,
+              })
+            : "",
+        }),
+      );
+    }
+    if (limits.provisional.wouldExceedRolling) {
+      parts.push(
+        tr("booking.request.exceedRolling", {
+          rollingSum: String(limits.provisional.rollingSum),
+          rollingMax: String(limits.limits.rollingMax),
+          rollingSumH: sessionHoursParen(locale, limits.provisional.rollingSum),
+          rollingMaxH: sessionHoursParen(locale, limits.limits.rollingMax),
+        }),
+      );
+    }
+    return parts.join("\n\n");
+  }, [limits, selected.size, tr, locale]);
+
+  const [quotaExceedModalOpen, setQuotaExceedModalOpen] = useState(false);
+  const dismissedQuotaExceedKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!quotaExceedModalKey) {
+      setQuotaExceedModalOpen(false);
+      dismissedQuotaExceedKeyRef.current = null;
+      return;
+    }
+    if (dismissedQuotaExceedKeyRef.current === quotaExceedModalKey) {
+      setQuotaExceedModalOpen(false);
+      return;
+    }
+    setQuotaExceedModalOpen(true);
+  }, [quotaExceedModalKey]);
+
+  const dismissQuotaExceedModal = useCallback(() => {
+    if (quotaExceedModalKey) dismissedQuotaExceedKeyRef.current = quotaExceedModalKey;
+    setQuotaExceedModalOpen(false);
+  }, [quotaExceedModalKey]);
+
+  const submitPrimaryClassName =
+    "rounded-lg bg-emerald-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950 disabled:opacity-40";
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6 ${showFloatingSubmit ? "max-md:pb-28" : ""}`}
+    >
       {!bookingLive && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-5 sm:px-4 py-3 text-sm text-amber-950">
           {t("booking.request.notOpenBanner")}
@@ -595,11 +833,25 @@ export function BookingRequestPanel(props: {
         </button>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-5 sm:px-4 py-2 text-sm text-red-900">
-          {error}
-        </div>
-      )}
+      <RegistrationErrorModal
+        open={Boolean(error)}
+        title={t("booking.request.actionErrorModalTitle")}
+        message={error ?? ""}
+        okLabel={t("booking.request.dailyCapModalOk")}
+        onDismiss={() => setError(null)}
+      />
+      <RegistrationErrorModal
+        open={
+          quotaExceedModalOpen &&
+          !error &&
+          Boolean(quotaExceedModalKey) &&
+          quotaExceedModalBody.length > 0
+        }
+        title={t("booking.request.wouldExceedTitle")}
+        message={quotaExceedModalBody}
+        okLabel={t("booking.request.dailyCapModalOk")}
+        onDismiss={dismissQuotaExceedModal}
+      />
       <BookingConfirmedModal
         open={Boolean(done)}
         bookingRequestId={done ?? ""}
@@ -624,7 +876,14 @@ export function BookingRequestPanel(props: {
           {calendarOverviewLinkLabel}
         </Link>
 
-        {limits && (
+        {limits && (() => {
+          const todayBookable =
+            limits.todayBookableRemaining ?? limits.todayRemaining;
+          const todayStripFilled = Math.min(
+            limits.limits.dailyMax,
+            Math.max(0, limits.limits.dailyMax - todayBookable)
+          );
+          return (
           <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-4 text-sm text-stone-700 dark:text-stone-300 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium text-stone-900 dark:text-stone-50">
@@ -653,10 +912,10 @@ export function BookingRequestPanel(props: {
                   date: limits.todayKey,
                   used: String(limits.todayCommitted),
                   max: String(limits.limits.dailyMax),
-                  remaining: String(limits.todayRemaining),
+                  remaining: String(todayBookable),
                   usedH: sessionHoursParen(locale, limits.todayCommitted),
                   maxH: sessionHoursParen(locale, limits.limits.dailyMax),
-                  remainingH: sessionHoursParen(locale, limits.todayRemaining),
+                  remainingH: sessionHoursParen(locale, todayBookable),
                 })}
               >
                 <div className="flex items-baseline justify-between gap-2">
@@ -687,12 +946,12 @@ export function BookingRequestPanel(props: {
                       {t("booking.request.limitsLeftLabel")}
                     </p>
                     <p className="mt-0.5 text-2xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
-                      {limits.todayRemaining}
+                      {todayBookable}
                       <span className="ml-1 text-sm font-normal text-emerald-700/80 dark:text-emerald-300/70">
                         {t("booking.request.limitsSessionsUnit")}
                       </span>
                       <span className="ml-1 text-xs font-normal text-emerald-800/80 dark:text-emerald-300/80">
-                        {sessionHoursParen(locale, limits.todayRemaining)}
+                        {sessionHoursParen(locale, todayBookable)}
                       </span>
                     </p>
                   </div>
@@ -703,7 +962,7 @@ export function BookingRequestPanel(props: {
                   {sessionHoursParen(locale, limits.limits.dailyMax)}
                 </p>
                 <QuotaBlockStrip
-                  filled={limits.todayCommitted}
+                  filled={todayStripFilled}
                   total={limits.limits.dailyMax}
                   filledClassName="bg-blue-600 dark:bg-blue-500"
                   emptyClassName="bg-stone-200 dark:bg-stone-600"
@@ -879,37 +1138,9 @@ export function BookingRequestPanel(props: {
               })}
             </p>
 
-            {selected.size > 0 &&
-              (limits.provisional.wouldExceedDaily || limits.provisional.wouldExceedRolling) && (
-                <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-                  {t("booking.request.wouldExceedTitle")}
-                  {limits.provisional.wouldExceedDaily && (
-                    <span className="mt-1 block font-normal">
-                      {tr("booking.request.exceedDaily", {
-                        dailyMax: String(limits.limits.dailyMax),
-                        dailyMaxH: sessionHoursParen(locale, limits.limits.dailyMax),
-                        datePart: limits.provisional.firstViolatingDate
-                          ? tr("booking.request.exceedDailyDate", {
-                              date: limits.provisional.firstViolatingDate,
-                            })
-                          : "",
-                      })}
-                    </span>
-                  )}
-                  {limits.provisional.wouldExceedRolling && (
-                    <span className="mt-1 block font-normal">
-                      {tr("booking.request.exceedRolling", {
-                        rollingSum: String(limits.provisional.rollingSum),
-                        rollingMax: String(limits.limits.rollingMax),
-                        rollingSumH: sessionHoursParen(locale, limits.provisional.rollingSum),
-                        rollingMaxH: sessionHoursParen(locale, limits.limits.rollingMax),
-                      })}
-                    </span>
-                  )}
-                </p>
-              )}
           </div>
-        )}
+          );
+        })()}
       </div>
 
       <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface p-4 shadow-sm">
@@ -993,7 +1224,7 @@ export function BookingRequestPanel(props: {
                   !bookable
                     ? "cursor-not-allowed border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 text-stone-300"
                     : isSelected
-                      ? "border-stone-900 bg-stone-900 text-white shadow-sm"
+                      ? "border-2 border-emerald-600 bg-surface text-stone-800 shadow-sm dark:border-emerald-500 dark:text-stone-100"
                       : "border-stone-200 dark:border-stone-700 bg-surface text-stone-800 dark:text-stone-200 hover:border-stone-400 dark:border-stone-500"
                 }`}
               >
@@ -1128,17 +1359,17 @@ export function BookingRequestPanel(props: {
                         flash ? "booking-slot-deny-flash" : ""
                       } ${
                         on
-                          ? "border-stone-900 bg-stone-900 text-white"
+                          ? "border-2 border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/40"
                           : "border-stone-200 dark:border-stone-700 bg-surface hover:border-stone-400 dark:border-stone-500"
                       }`}
                     >
-                      <span className="block font-medium">{formatSlotDateForLocale(s.startsAt, locale)}</span>
-                      <span
-                        className={`mt-0.5 block text-sm font-medium ${on ? "text-white" : "text-stone-800 dark:text-stone-200"}`}
-                      >
+                      <span className="block font-medium text-stone-800 dark:text-stone-100">
+                        {formatSlotDateForLocale(s.startsAt, locale)}
+                      </span>
+                      <span className="mt-0.5 block text-sm font-medium text-stone-800 dark:text-stone-200">
                         {formatSlotTimeRangeEn(s.startsAt, s.endsAt)}
                       </span>
-                      <span className={`mt-1 block text-xs ${on ? "text-stone-200" : "text-stone-500 dark:text-stone-500"}`}>
+                      <span className="mt-1 block text-xs text-stone-600 dark:text-stone-400">
                         {displayVenueLabel(s.venueLabel, locale)}
                       </span>
                     </button>
@@ -1163,96 +1394,20 @@ export function BookingRequestPanel(props: {
         <h2 className="text-base font-medium text-stone-900 dark:text-stone-50">
           {t("booking.request.cameraSectionTitle")}
         </h2>
-        <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-          {t("booking.request.cameraQuestion")}
-        </p>
-        <div className="overflow-hidden rounded-lg border border-stone-200 bg-white dark:border-stone-600 dark:bg-stone-950">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static marketing asset */}
-          <img
-            src={withBasePath(CAMERA_RENTAL_HERO_PATH)}
-            alt={t("booking.request.cameraHeroAlt")}
-            className="mx-auto block max-h-64 w-full object-contain"
-          />
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-8">
-          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
-            <input
-              type="checkbox"
-              checked={camPref === "no"}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setCamPref("no");
-                  setCamPay(null);
-                  setCamModalOpen(false);
-                } else {
-                  setCamPref(null);
-                }
-              }}
-              className="h-4 w-4 shrink-0 rounded border-stone-400"
-            />
-            <span>{t("booking.request.cameraNoNeed")}</span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-800 dark:text-stone-200">
-            <input
-              type="checkbox"
-              checked={camPref === "yes"}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setCamPref("yes");
-                  setCamPay(null);
-                  setCamModalPaidPick(null);
-                  setCamModalOpen(true);
-                } else {
-                  setCamPref(null);
-                  setCamPay(null);
-                }
-              }}
-              className="h-4 w-4 shrink-0 rounded border-stone-400"
-            />
-            <span>{t("booking.request.cameraNeed")}</span>
-          </label>
-        </div>
-
-        {camPref === "yes" && camPay === "paid_before" ? (
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={() =>
-                window.open(CAMERA_USAGE_GUIDE_DRIVE_URL, "_blank", "noopener,noreferrer")
-              }
-              className="rounded-lg border border-emerald-800/40 bg-emerald-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-950"
-            >
-              {t("booking.request.cameraOpenGuideButton")}
-            </button>
-          </div>
-        ) : null}
-
-        {camPref === "yes" && camPay === "need_choice" ? (
-          <div className="flex flex-wrap gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setCamModalPaidPick(null);
-                setCamModalOpen(true);
-              }}
-              className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm transition hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
-            >
-              {t("booking.request.cameraPayFirstButton")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setCamPay("pay_after")}
-              className="rounded-lg border border-blue-900/30 bg-blue-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-900"
-            >
-              {t("booking.request.cameraPayAfterButton")}
-            </button>
-          </div>
-        ) : null}
+        <CameraRentalSection
+          t={t}
+          camPref={camPref}
+          camPay={camPay}
+          setCamPref={setCamPref}
+          setCamPay={setCamPay}
+          setCamModalOpen={setCamModalOpen}
+          setCamModalPaidPick={setCamModalPaidPick}
+        />
       </div>
 
       {camModalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
           role="presentation"
           onClick={cancelCamModal}
         >
@@ -1336,6 +1491,71 @@ export function BookingRequestPanel(props: {
         </div>
       ) : null}
 
+      {cameraGateModalOpen ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-4 sm:items-center sm:p-6"
+          role="presentation"
+          onClick={() => setCameraGateModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-gate-modal-title"
+            className="max-h-[min(92vh,720px)] w-full max-w-lg overflow-y-auto rounded-xl border border-stone-200 bg-white p-5 shadow-xl dark:border-stone-600 dark:bg-stone-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-stone-200 pb-3 dark:border-stone-700">
+              <h2
+                id="camera-gate-modal-title"
+                className="pr-2 text-base font-semibold text-stone-900 dark:text-stone-50"
+              >
+                {t("booking.request.cameraGateModalTitle")}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setCameraGateModalOpen(false)}
+                className="shrink-0 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-800 dark:border-stone-600 dark:text-stone-200"
+              >
+                {t("booking.request.cameraGateClose")}
+              </button>
+            </div>
+            <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+              {t("booking.request.cameraGateModalIntro")}
+            </p>
+            <div className="mt-4">
+              <CameraRentalSection
+                t={t}
+                camPref={camPref}
+                camPay={camPay}
+                setCamPref={setCamPref}
+                setCamPay={setCamPay}
+                setCamModalOpen={setCamModalOpen}
+                setCamModalPaidPick={setCamModalPaidPick}
+              />
+            </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 pt-4 dark:border-stone-700">
+              <button
+                type="button"
+                onClick={() => setCameraGateModalOpen(false)}
+                className="rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-800 dark:border-stone-600 dark:text-stone-200"
+              >
+                {t("booking.request.cameraGateClose")}
+              </button>
+              <button
+                type="button"
+                disabled={submitHardDisabled || cameraSubmitBlocking || submitting}
+                onClick={() => void submit()}
+                className={`${submitPrimaryClassName} px-5 py-2.5`}
+              >
+                {submitting
+                  ? t("booking.request.submitting")
+                  : t("booking.request.cameraGateConfirmSubmit")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {bookingLive && dualEligible && (
         <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-surface px-5 sm:px-4 py-3 text-sm">
           <p className="font-medium text-stone-900 dark:text-stone-50">
@@ -1372,9 +1592,9 @@ export function BookingRequestPanel(props: {
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            disabled={submitDisabled}
-            onClick={() => void submit()}
-            className="rounded-full bg-stone-900 px-6 py-2.5 text-sm text-white disabled:opacity-40"
+            disabled={submitHardDisabled}
+            onClick={() => handlePrimarySubmitClick()}
+            className={submitPrimaryClassName}
           >
             {submitting
               ? t("booking.request.submitting")
@@ -1387,17 +1607,20 @@ export function BookingRequestPanel(props: {
             {t("booking.request.linkHistory")}
           </Link>
         </div>
-        {!submitDisabledNoSelection && submitDisabled && (
+        {!submitDisabledNoSelection && submitHardDisabled && (
           <p className="text-xs text-amber-800 dark:text-amber-200/90">
-            {cameraSubmitBlocking
-              ? t("booking.request.submitDisabledCamera")
-              : submitDisabledCooldown
-                ? t("booking.request.submitDisabledCooldown")
-                : limits?.provisional.wouldExceedDaily
-                  ? t("booking.request.submitDisabledDaily")
-                  : limits?.provisional.wouldExceedRolling
-                    ? t("booking.request.submitDisabledRolling")
-                    : null}
+            {submitDisabledCooldown
+              ? t("booking.request.submitDisabledCooldown")
+              : limits?.provisional.wouldExceedDaily
+                ? t("booking.request.submitDisabledDaily")
+                : limits?.provisional.wouldExceedRolling
+                  ? t("booking.request.submitDisabledRolling")
+                  : null}
+          </p>
+        )}
+        {!submitDisabledNoSelection && !submitHardDisabled && cameraSubmitBlocking && (
+          <p className="text-xs text-stone-600 dark:text-stone-400">
+            {t("booking.request.submitCameraGateHint")}
           </p>
         )}
       </div>
@@ -1424,6 +1647,30 @@ export function BookingRequestPanel(props: {
           windowDays={String(ROLLING_WINDOW_CALENDAR_DAYS)}
         />
       </div>
+
+      {showFloatingSubmit ? (
+        <div
+          className="fixed z-[55] max-w-[min(100vw-2rem,22rem)] md:hidden"
+          style={{
+            right: "max(1rem, env(safe-area-inset-right))",
+            bottom: "calc(max(1rem, env(safe-area-inset-bottom)) + 3.5rem + 0.75rem)",
+          }}
+        >
+          <button
+            type="button"
+            disabled={submitHardDisabled}
+            onClick={() => handlePrimarySubmitClick()}
+            className={`${submitPrimaryClassName} w-full px-4 py-3 text-center leading-snug shadow-lg`}
+          >
+            {submitting
+              ? t("booking.request.submitting")
+              : tr("booking.request.submitWithCount", {
+                  n: String(selected.size),
+                  nH: sessionHoursParen(locale, selected.size),
+                })}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

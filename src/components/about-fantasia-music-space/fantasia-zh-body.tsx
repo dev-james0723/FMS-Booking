@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BrandingRgbaImage } from "@/components/branding-rgba-image";
+import { FantasiaFounderSection } from "@/components/about-fantasia-music-space/fantasia-founder-section";
 import { FantasiaInstagramBlock } from "@/components/about-fantasia-music-space/fantasia-instagram-block";
 
 const imgRounded =
@@ -166,6 +167,13 @@ export function FantasiaZhBody({
           </li>
         </ol>
       </section>
+
+      <FantasiaFounderSection
+        heading="創辦人"
+        portraitAlt="幻樂空間創辦人歐顯星（James Hin-sing Au）肖像"
+        bio="歐顯星為香港出生之鋼琴家、藝術創業者及文化策劃人，早年於香港 GMC Music 接受音樂訓練，其後先後赴美國克利夫蘭音樂學院及印第安納大學積可斯音樂學院深造，活躍於國際舞台。葡萄牙傳奇鋼琴家 Maria João Pires 曾讚譽其具「精湛的藝術性與細膩的演奏」。除了作為演奏者，歐顯星亦長期關注青年音樂家的成長、古典音樂的當代轉化，以及藝術、教育與科技之間的跨界融合。他創辦幻樂空間，並任香港幻樂國際有限公司執行董事，亦共同創辦 D Festival 青年鋼琴家藝術節，致力建立一個結合演出、培育、策劃與產業連結的音樂生態平台。"
+        ctaLabel="瀏覽歐顯星 （James） 官方網站"
+      />
 
       <FantasiaInstagramBlock
         elfsightClass={elfsightClass}

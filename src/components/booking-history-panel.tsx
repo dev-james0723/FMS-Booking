@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { BOOKING_SELF_SERVICE_CUTOFF_MS } from "@/lib/booking/booking-self-service-policy";
 import { mergeConsecutiveSlots } from "@/lib/booking/merge-slots";
 import { BookingHistoryMergedBands } from "@/components/booking-history-merged-bands";
+import {
+  BookingContactOrganizerModal,
+  UserBookingCancelModal,
+  UserBookingRescheduleModal,
+  type SelfServiceSlot,
+} from "@/components/booking-user-self-service-modals";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { Locale } from "@/lib/i18n/types";
 import { bookingIdentityTypeLabelEn, bookingIdentityTypeLabelZh } from "@/lib/identity-labels";
@@ -12,12 +20,13 @@ import { HK_TZ } from "@/lib/time";
 type BookingRow = {
   id: string;
   status: string;
-  /** Staff changed slots after submission (see BookingStatusLog admin_reschedule). */
+  /** Staff or user changed slots after submission (BookingStatusLog). */
   hasStaffReschedule?: boolean;
+  hasReschedule?: boolean;
   requestedAt: string;
   bookingIdentityType: string;
   usesBonusSlot: boolean;
-  slots: { startsAt: string; endsAt: string; venueLabel: string | null }[];
+  slots: { id: string; startsAt: string; endsAt: string; venueLabel: string | null }[];
 };
 
 type HistorySituationFilter = "" | "cancelled" | "rescheduled" | "confirmed";
@@ -26,9 +35,22 @@ type HistoryStatusBucket = HistorySituationFilter | "other";
 
 function historyStatusBucket(row: BookingRow): HistoryStatusBucket {
   if (row.status === "cancelled") return "cancelled";
-  if (row.hasStaffReschedule) return "rescheduled";
+  if (row.hasReschedule || row.hasStaffReschedule) return "rescheduled";
   if (row.status === "pending" || row.status === "approved") return "confirmed";
   return "other";
+}
+
+function canSelfServiceBooking(row: BookingRow): boolean {
+  if (!["pending", "approved", "waitlisted"].includes(row.status)) return false;
+  return row.slots.length > 0;
+}
+
+function bookingRowWithinCutoff(row: BookingRow): boolean {
+  const now = Date.now();
+  for (const s of row.slots) {
+    if (new Date(s.startsAt).getTime() - now < BOOKING_SELF_SERVICE_CUTOFF_MS) return true;
+  }
+  return false;
 }
 
 function historyStatusBadge(
@@ -106,6 +128,14 @@ export function BookingHistoryPanel(props: {
   const [syncFlash, setSyncFlash] = useState<SyncFlash | null>(null);
   const [filterDate, setFilterDate] = useState("");
   const [filterSituation, setFilterSituation] = useState<HistorySituationFilter>("");
+  const [contactOrganizerOpen, setContactOrganizerOpen] = useState(false);
+  const [rescheduleTarget, setRescheduleTarget] = useState<{
+    id: string;
+    slots: SelfServiceSlot[];
+  } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; slots: SelfServiceSlot[] } | null>(
+    null
+  );
 
   const rowsAfterSituation = useMemo(() => {
     if (!filterSituation) return rows;
@@ -130,24 +160,53 @@ export function BookingHistoryPanel(props: {
 
   const connectHref = withBasePath("/api/v1/account/google-calendar/oauth/start");
 
-  useEffect(() => {
-    void (async () => {
-      const q = new URLSearchParams({ venue: venueKind });
-      const res = await fetch(withBasePath(`/api/v1/booking/history?${q}`));
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error?.message ?? t("booking.historyPanel.loadError"));
-        return;
-      }
-      const list = (data.bookings ?? []) as BookingRow[];
-      setRows(
-        list.map((r) => ({
-          ...r,
-          hasStaffReschedule: Boolean(r.hasStaffReschedule),
-        }))
-      );
-    })();
+  const loadHistory = useCallback(async () => {
+    const q = new URLSearchParams({ venue: venueKind });
+    const res = await fetch(withBasePath(`/api/v1/booking/history?${q}`));
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data?.error?.message ?? t("booking.historyPanel.loadError"));
+      return;
+    }
+    setError(null);
+    const list = (data.bookings ?? []) as BookingRow[];
+    setRows(
+      list.map((r) => ({
+        ...r,
+        hasStaffReschedule: Boolean(r.hasStaffReschedule),
+        hasReschedule: Boolean(r.hasReschedule ?? r.hasStaffReschedule),
+        slots: (r.slots ?? []).map((s) => ({
+          id: s.id,
+          startsAt: s.startsAt,
+          endsAt: s.endsAt,
+          venueLabel: s.venueLabel ?? null,
+        })),
+      }))
+    );
   }, [t, venueKind]);
+
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
+
+  function tryOpenSelfService(row: BookingRow, kind: "reschedule" | "cancel") {
+    if (!canSelfServiceBooking(row)) return;
+    if (bookingRowWithinCutoff(row)) {
+      setContactOrganizerOpen(true);
+      return;
+    }
+    const slots: SelfServiceSlot[] = row.slots.map((s) => ({
+      id: s.id,
+      startsAt: s.startsAt,
+      endsAt: s.endsAt,
+      venueLabel: s.venueLabel,
+    }));
+    if (kind === "reschedule") {
+      setRescheduleTarget({ id: row.id, slots });
+    } else {
+      setCancelTarget({ id: row.id, slots });
+    }
+  }
 
   async function runSyncBooking(bookingId: string) {
     setSyncBusyId(bookingId);
@@ -193,8 +252,27 @@ export function BookingHistoryPanel(props: {
     });
   }
 
+  const historyBannerSrc =
+    venueKind === "studio_room"
+      ? "/images/booking/history-studio-room-banner.png"
+      : "/images/booking/history-open-space-banner.png";
+  const historyBannerAltKey =
+    venueKind === "studio_room"
+      ? "booking.historyPage.bannerStudioRoomAlt"
+      : "booking.historyPage.bannerOpenSpaceAlt";
+
   return (
     <>
+      <figure className="mb-8 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
+        <Image
+          src={withBasePath(historyBannerSrc)}
+          alt={t(historyBannerAltKey)}
+          width={1024}
+          height={682}
+          className="h-auto w-full object-cover"
+          priority
+        />
+      </figure>
       <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-50">{pageHeading}</h1>
 
       {error ? (
@@ -276,6 +354,7 @@ export function BookingHistoryPanel(props: {
                 }))
               );
               const badge = historyStatusBadge(r, t);
+              const showCancelledTimeline = historyStatusBucket(r) === "cancelled";
 
               return (
                 <li
@@ -304,8 +383,18 @@ export function BookingHistoryPanel(props: {
                       : bookingIdentityTypeLabelZh(r.bookingIdentityType)}
                   </p>
 
+                  {showCancelledTimeline && merged.length > 0 ? (
+                    <p className="mt-3 text-xs font-medium text-red-800 dark:text-red-300/95">
+                      {t("booking.historyPanel.cancelledSlotsIntro")}
+                    </p>
+                  ) : null}
+
                   {merged.length === 0 ? (
-                    <p className="mt-3 text-xs text-stone-500 dark:text-stone-500">—</p>
+                    <p className="mt-3 text-xs text-stone-500 dark:text-stone-500">
+                      {showCancelledTimeline
+                        ? t("booking.historyPanel.cancelledNoSlotData")
+                        : "—"}
+                    </p>
                   ) : (
                     <BookingHistoryMergedBands
                       bookingId={r.id}
@@ -316,10 +405,30 @@ export function BookingHistoryPanel(props: {
                         sessionCount: m.sessionCount,
                       }))}
                       locale={locale}
+                      cancelledVisual={showCancelledTimeline}
                     />
                   )}
 
-                  {googleCalendarOAuthReady ? (
+                  {canSelfServiceBooking(r) ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => tryOpenSelfService(r, "reschedule")}
+                        className="rounded-full border border-sky-600 bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500"
+                      >
+                        {t("booking.historyPanel.selfService.changeBooking")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => tryOpenSelfService(r, "cancel")}
+                        className="rounded-full border border-rose-600 bg-transparent px-4 py-2 text-xs font-semibold text-rose-800 hover:bg-rose-50 dark:border-rose-400 dark:text-rose-200 dark:hover:bg-rose-950/60"
+                      >
+                        {t("booking.historyPanel.selfService.cancelBooking")}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {googleCalendarOAuthReady && !showCancelledTimeline ? (
                     <div className="mt-4 border-t border-stone-100 pt-3 dark:border-stone-800">
                       {googleCalendarLinked ? (
                         <button
@@ -360,6 +469,41 @@ export function BookingHistoryPanel(props: {
           )}
         </>
       )}
+
+      <BookingContactOrganizerModal
+        open={contactOrganizerOpen}
+        onClose={() => setContactOrganizerOpen(false)}
+      />
+
+      {rescheduleTarget ? (
+        <UserBookingRescheduleModal
+          open
+          onClose={() => setRescheduleTarget(null)}
+          bookingId={rescheduleTarget.id}
+          venueKind={venueKind}
+          currentSlots={rescheduleTarget.slots}
+          onApplied={() => void loadHistory()}
+          onWithinCutoff={() => {
+            setRescheduleTarget(null);
+            setContactOrganizerOpen(true);
+          }}
+        />
+      ) : null}
+
+      {cancelTarget ? (
+        <UserBookingCancelModal
+          open
+          onClose={() => setCancelTarget(null)}
+          bookingId={cancelTarget.id}
+          venueKind={venueKind}
+          currentSlots={cancelTarget.slots}
+          onApplied={() => void loadHistory()}
+          onWithinCutoff={() => {
+            setCancelTarget(null);
+            setContactOrganizerOpen(true);
+          }}
+        />
+      ) : null}
     </>
   );
 }

@@ -7,6 +7,10 @@ import {
 import { parseCampaignDateKeys } from "@/lib/booking/settings";
 import { getAllSettings } from "@/lib/settings";
 import { hkDateKey } from "@/lib/time";
+import {
+  countSlotUsageExcludingRequestDb,
+  runBookingRescheduleTx,
+} from "@/lib/booking/booking-reschedule-core";
 import { effectiveCapacityTotalForSlot } from "@/lib/booking/booking-rules";
 import { prisma } from "@/lib/prisma";
 
@@ -18,28 +22,6 @@ export class AdminBookingError extends Error {
     super(message);
     this.name = "AdminBookingError";
   }
-}
-
-async function countSlotUsageExcludingRequest(
-  slotId: string,
-  excludeRequestId: string
-): Promise<number> {
-  return prisma.bookingAllocation.count({
-    where: {
-      bookingSlotId: slotId,
-      bookingRequestId: { not: excludeRequestId },
-      status: { in: [BookingAllocationStatus.pending, BookingAllocationStatus.approved] },
-      request: {
-        status: {
-          in: [
-            BookingRequestStatus.pending,
-            BookingRequestStatus.approved,
-            BookingRequestStatus.waitlisted,
-          ],
-        },
-      },
-    },
-  });
 }
 
 export async function adminApproveBookingRequest(
@@ -61,7 +43,7 @@ export async function adminApproveBookingRequest(
   }
 
   for (const a of req.allocations) {
-    const others = await countSlotUsageExcludingRequest(a.bookingSlotId, bookingRequestId);
+    const others = await countSlotUsageExcludingRequestDb(prisma, a.bookingSlotId, bookingRequestId);
     const cap = effectiveCapacityTotalForSlot(a.slot);
     if (others + 1 > cap) {
       throw new AdminBookingError(
@@ -198,7 +180,7 @@ export async function adminWaitlistBookingRequest(
   });
 }
 
-const ADMIN_MANAGEABLE_REQUEST_STATUS: BookingRequestStatus[] = [
+export const ADMIN_MANAGEABLE_REQUEST_STATUS: BookingRequestStatus[] = [
   BookingRequestStatus.approved,
   BookingRequestStatus.pending,
   BookingRequestStatus.waitlisted,
@@ -352,7 +334,7 @@ export async function adminRescheduleBookingRequest(
     if (!slotRow) {
       throw new AdminBookingError("INTERNAL", "時段資料不一致");
     }
-    const others = await countSlotUsageExcludingRequest(slotId, bookingRequestId);
+    const others = await countSlotUsageExcludingRequestDb(prisma, slotId, bookingRequestId);
     const cap = effectiveCapacityTotalForSlot(slotRow);
     if (others + 1 > cap) {
       throw new AdminBookingError(
@@ -362,57 +344,18 @@ export async function adminRescheduleBookingRequest(
     }
   }
 
-  const newAllocStatus =
-    req.status === BookingRequestStatus.approved
-      ? BookingAllocationStatus.approved
-      : BookingAllocationStatus.pending;
-
   await prisma.$transaction(
     async (tx) => {
-      if (removeSlotIds.length > 0) {
-        await tx.bookingAllocation.updateMany({
-          where: {
-            bookingRequestId,
-            bookingSlotId: { in: removeSlotIds },
-            status: { in: [BookingAllocationStatus.pending, BookingAllocationStatus.approved] },
-          },
-          data: { status: BookingAllocationStatus.released },
-        });
-      }
-
-      for (const sid of addSlotIds) {
-        await tx.bookingAllocation.create({
-          data: {
-            bookingRequestId,
-            bookingSlotId: sid,
-            status: newAllocStatus,
-          },
-        });
-      }
-
-      await tx.bookingStatusLog.create({
-        data: {
-          bookingRequestId,
-          fromStatus: req.status,
-          toStatus: req.status,
-          actorType: AuditActorType.admin,
-          actorId: adminUserId,
-          meta: {
-            action: "admin_reschedule",
-            removedSlotIds: removeSlotIds,
-            addedSlotIds: addSlotIds,
-          },
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          adminUserId,
-          action: "booking.reschedule_by_admin",
-          entityType: "booking_request",
-          entityId: bookingRequestId,
-          diff: { removeSlotIds, addSlotIds },
-        },
+      await runBookingRescheduleTx(tx, {
+        bookingRequestId,
+        req,
+        removeSlotIds,
+        addSlotIds,
+        addSlots,
+        actorType: AuditActorType.admin,
+        actorId: adminUserId,
+        statusLogMetaAction: "admin_reschedule",
+        adminUserIdForAudit: adminUserId,
       });
     },
     {

@@ -10,7 +10,7 @@ export const bookingZhHK = {
     completed: "已完成",
   },
   portal: {
-    title: "預約系統",
+    title: "琴室預約系統",
     introBeforeQuotaLink:
       "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按",
     introQuotaLinkLabel: "帳戶配額級別",
@@ -36,7 +36,7 @@ export const bookingZhHK = {
     openSpaceQuotaSuffix: "配額說明。",
   },
   openSpacePortal: {
-    title: "預約幻樂空間——開放空間（Open Space）時段",
+    title: "大型樂器 / 開放空間預約系統",
     intro:
       "此處可預約的是開放空間時段庫存，與隔音琴室房內時段為不同庫存。若以琴室通道完成登記，開放空間與琴室預約共用同一套節數上限（單日／滑動三日），不會另有一套配額；若以大型樂器／開放空間通道登記，則只可於此通道預約。請先細讀下方場地說明，再選擇時段。",
     linkCalendar: "月曆總覽（時間軸）",
@@ -76,6 +76,8 @@ export const bookingZhHK = {
     titleStudioRoom: "琴室預約紀錄",
     titleOpenSpace: "大型樂器/開放空間預約紀錄",
     back: "返回預約系統",
+    bannerStudioRoomAlt: "幻樂空間琴室：木牆練習房內的三角鋼琴。",
+    bannerOpenSpaceAlt: "幻樂空間走廊，牆身為柔和水彩風格壁畫。",
   },
   calendarPage: {
     titleStudioRoom: "琴室預約月曆總覽",
@@ -90,12 +92,62 @@ export const bookingZhHK = {
     empty: "暫未有預約紀錄。",
     submittedAt: "提交時間：",
     bonusSlot: "使用 bonus 時段",
+    cancelledSlotsIntro: "以下為取消前曾預約的時段（已不再保留）：",
+    cancelledSlotCrossTitle: "此時段已取消",
+    cancelledNoSlotData: "此筆已取消紀錄未能顯示時段資料。",
     syncToGoogleCalendar: "同步到 Google Calendar",
     filterByDateLabel: "跳到某日預約",
     filterByDateAll: "全部日期",
     filterSituationLabel: "預約情況",
     filterSituationAll: "全部狀態",
     noRowsForFilters: "沒有符合篩選條件的預約紀錄。",
+    selfService: {
+      changeBooking: "更改預約",
+      cancelBooking: "取消預約",
+      contactTitle: "請聯絡主辦方",
+      contactBody1:
+        "預約開始前 15 小時內，為保障場地使用公平與時間分配，系統無法讓你自行更改或取消預約。",
+      contactBody2:
+        "請使用下方 WhatsApp 連結或掃描 QR code 聯絡主辦方；能否改期或取消將視乎情況個別處理。",
+      contactBody3:
+        "若經常於臨近時段才提出更改或取消，主辦方保留拒絕該使用者日後預約之權利。",
+      contactWhatsappCta: "開啟 WhatsApp 對話",
+      contactClose: "關閉",
+      rescheduleTitle: "更改時段",
+      rescheduleIntro:
+        "先勾選要釋放的原有時段，再於月曆選日並點選可加入的新時段。可加入的日期與新預約相同：只限香港曆日起計未來 {windowDays} 日內（已滿或他人已佔用的節數不會出現為可選）。",
+      rescheduleRollingHint:
+        "可選新時段之日期：{from} 至 {to}（香港曆日，與新預約相同之 {windowDays} 日滾動窗口）。",
+      rescheduleNoRollingWindow: "目前沒有符合滾動窗口之可改期日期；請稍後再試或聯絡主辦方。",
+      rescheduleOriginalLabel: "原有時段（勾選＝釋放該節）",
+      reschedulePrevMonth: "上月",
+      rescheduleNextMonth: "下月",
+      reschedulePickDay: "請在月曆上選擇一天",
+      reschedulePickDayHint: "選日後會列出該日可選的新時段。",
+      rescheduleSlotsForDay: "可加入的時段",
+      rescheduleNoSlotsDay: "此日沒有時段資料。",
+      rescheduleKept: "已保留",
+      rescheduleClosed: "已關閉",
+      rescheduleFull: "已滿",
+      rescheduleSummary: "將釋放 {remove} 節 · 將新增 {add} 節 · 更改後共 {total} 節",
+      rescheduleSessionsUnit: "節",
+      rescheduleCancel: "取消",
+      rescheduleConfirm: "確認更改",
+      rescheduleBusy: "處理中…",
+      rescheduleLoadError: "載入可選時段失敗",
+      rescheduleNeedChange: "請選擇要釋放的時段和／或要新增的替換時段。",
+      rescheduleNeedOne: "更改後須至少保留一個時段。",
+      rescheduleFail: "更改失敗",
+      cancelTitle: "取消預約時段",
+      cancelPickDay: "選擇日期",
+      cancelPickSlots: "勾選要取消的時段（或使用下方一鍵取消當天）",
+      cancelAllDay: "一鍵取消當天全部時段",
+      cancelSubmit: "確認取消",
+      cancelBusy: "處理中…",
+      cancelFail: "取消失敗",
+      cancelNeedPick: "請選擇要取消的時段，或使用一鍵取消當天。",
+      cancelLoadError: "無法提交取消",
+    },
   },
   request: {
     loadSlotsError: "無法載入時段",
@@ -198,7 +250,8 @@ export const bookingZhHK = {
     no: "無",
     cooldownLine: "你正處於預約冷卻時間，約於 {until}（香港時間）後可再提交新的預約。",
     limitsPickHint:
-      "每格 30 分鐘。同一日選滿 {dailyMax} 格{dailyMaxH}後再選會顯示紅色提示並無法加入。",
+      "每格 30 分鐘。同一日選滿 {dailyMax} 格{dailyMaxH}後再選會以彈窗提示並無法加入。",
+    actionErrorModalTitle: "無法進行預約",
     wouldExceedTitle: "目前所選時段會超出上限：",
     exceedDaily: "同一日超過 {dailyMax} 節{dailyMaxH}{datePart}。",
     exceedDailyDate: "（{date}）",
@@ -272,11 +325,22 @@ export const bookingZhHK = {
     cameraSubmitPickRentalHint: "請選擇是否需要租用 Sony 4K 攝錄機（需要／不需要）。",
     cameraSubmitCompletePaymentFlowHint:
       "您已選擇需要租用攝錄機，請先完成付款確認（已付款、或選擇預約後付款）。",
+    cameraGateModalTitle: "租用攝錄機（提交前必填）",
+    cameraGateModalIntro:
+      "請先完成以下選項；完成後可按「確認並提交預約」送出本次預約。",
+    cameraGateConfirmSubmit: "確認並提交預約",
+    cameraGateClose: "關閉",
+    submitCameraGateHint:
+      "點擊「提交預約」將先開啟此視窗，完成攝錄機選項後即可送出。",
   },
   cal: {
     overviewTitleStudioRoom: "{range} · 琴室時段總覽",
     overviewTitleOpenSpace: "{range} · 大型樂器／開放空間時段總覽",
     overviewIntro: "",
+    dayDetailHint:
+      "點選下方月曆上的日期，即可查看該日每個時段是「仍可預約」、「已預約」或「已關閉」。此頁只供查閱，提交預約請使用預約版面。",
+    jumpFirstCampaignDay: "查看活動首天（4 月 3 日）",
+    jumpLastCampaignDay: "查看活動最後一天（5 月 3 日）",
     refresh: "重新整理",
     loading: "載入中…",
     loadError: "無法載入月曆資料",

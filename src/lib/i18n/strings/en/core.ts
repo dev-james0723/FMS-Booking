@@ -51,6 +51,7 @@ export const coreEn = {
     groupAccount: "Account & booking",
     groupInfo: "Programme & policies",
     home: "Home",
+    backToTop: "Back to top",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",

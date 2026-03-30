@@ -10,7 +10,7 @@ export const bookingEn = {
     completed: "Completed",
   },
   portal: {
-    title: "Booking",
+    title: "Piano studio booking",
     introBeforeQuotaLink:
       "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single ",
     introQuotaLinkLabel: "quota tier",
@@ -36,7 +36,7 @@ export const bookingEn = {
     openSpaceQuotaSuffix: "for quota details.",
   },
   openSpacePortal: {
-    title: "Fantasia Music Space — Open Space sessions",
+    title: "Large instruments / Open Space booking",
     intro:
       "These slots are from the Open Space inventory, separate from the soundproof studio room pool. If you registered via the studio-room channel, Open Space and studio bookings share the same session caps (daily and rolling 3-day)—there is no second quota. If you registered via the large-instrument / Open Space channel, you may only book here. Please read the venue notes below before choosing times.",
     linkCalendar: "Calendar overview (timeline)",
@@ -76,6 +76,10 @@ export const bookingEn = {
     titleStudioRoom: "Piano studio booking history",
     titleOpenSpace: "Large instruments / Open Space booking history",
     back: "Back to booking",
+    bannerStudioRoomAlt:
+      "Grand piano in a wood-paneled practice room at Fantasia Music Space.",
+    bannerOpenSpaceAlt:
+      "Hallway at Fantasia Music Space with soft pastel mural walls.",
   },
   calendarPage: {
     titleStudioRoom: "Piano studio booking — calendar overview",
@@ -90,12 +94,63 @@ export const bookingEn = {
     empty: "No bookings yet.",
     submittedAt: "Submitted: ",
     bonusSlot: "Bonus slot",
+    cancelledSlotsIntro: "Booked time blocks before cancellation (no longer reserved):",
+    cancelledSlotCrossTitle: "This time block was cancelled",
+    cancelledNoSlotData: "Slot times are not available for this cancelled record.",
     syncToGoogleCalendar: "Sync to Google Calendar",
     filterByDateLabel: "Jump to a booked day",
     filterByDateAll: "All days",
     filterSituationLabel: "Booking status",
     filterSituationAll: "All statuses",
     noRowsForFilters: "No bookings match your filters.",
+    selfService: {
+      changeBooking: "Change booking",
+      cancelBooking: "Cancel slots",
+      contactTitle: "Contact the organiser",
+      contactBody1:
+        "Within 15 hours before your session starts, you cannot change or cancel online—this keeps scheduling fair for everyone.",
+      contactBody2:
+        "Use the WhatsApp link below or scan the QR code; changes or cancellations are handled case by case.",
+      contactBody3:
+        "If this happens often, the organiser may refuse future bookings from the same user.",
+      contactWhatsappCta: "Open WhatsApp",
+      contactClose: "Close",
+      rescheduleTitle: "Change time slots",
+      rescheduleIntro:
+        "Tick slots to release, pick a day on the calendar, then choose new slots. Like new bookings, you may only add slots within the next {windowDays} Hong Kong calendar days from today (full or closed slots stay unselectable).",
+      rescheduleRollingHint:
+        "Dates open for new slots: {from}–{to} (Hong Kong calendar; same {windowDays}-day rolling window as new bookings).",
+      rescheduleNoRollingWindow:
+        "No dates are currently inside the rolling window for changes. Try again later or contact the organiser.",
+      rescheduleOriginalLabel: "Current slots (tick to release)",
+      reschedulePrevMonth: "Prev",
+      rescheduleNextMonth: "Next",
+      reschedulePickDay: "Pick a day on the calendar",
+      reschedulePickDayHint: "Available new slots for that day will appear below.",
+      rescheduleSlotsForDay: "Slots you can add",
+      rescheduleNoSlotsDay: "No slot data for this day.",
+      rescheduleKept: "Kept",
+      rescheduleClosed: "Closed",
+      rescheduleFull: "Full",
+      rescheduleSummary: "Release {remove} · Add {add} · {total} slots after change",
+      rescheduleSessionsUnit: "slots",
+      rescheduleCancel: "Cancel",
+      rescheduleConfirm: "Confirm",
+      rescheduleBusy: "Working…",
+      rescheduleLoadError: "Could not load availability",
+      rescheduleNeedChange: "Choose slots to release and/or new slots to add.",
+      rescheduleNeedOne: "You must keep at least one slot after the change.",
+      rescheduleFail: "Could not apply change",
+      cancelTitle: "Cancel booking slots",
+      cancelPickDay: "Choose a date",
+      cancelPickSlots: "Tick slots to cancel, or use cancel-all for that day",
+      cancelAllDay: "Cancel all slots on this day",
+      cancelSubmit: "Confirm cancellation",
+      cancelBusy: "Working…",
+      cancelFail: "Cancellation failed",
+      cancelNeedPick: "Pick slots to cancel or use cancel-all for the day.",
+      cancelLoadError: "Could not submit cancellation",
+    },
   },
   request: {
     loadSlotsError: "Could not load slots",
@@ -203,7 +258,8 @@ export const bookingEn = {
     no: "No",
     cooldownLine: "Booking cooldown active — you can submit again after {until} (Hong Kong time).",
     limitsPickHint:
-      "30 minutes per slot. After {dailyMax} picks{dailyMaxH} on one day, further picks show a red hint and cannot be added.",
+      "30 minutes per slot. After {dailyMax} picks{dailyMaxH} on one day, a popup explains why more cannot be added.",
+    actionErrorModalTitle: "Booking cannot proceed",
     wouldExceedTitle: "Current selection would exceed limits:",
     exceedDaily: "More than {dailyMax} sessions{dailyMaxH} on one day{datePart}.",
     exceedDailyDate: " ({date})",
@@ -278,11 +334,22 @@ export const bookingEn = {
     cameraSubmitPickRentalHint: "Please choose whether you need the Sony 4K camcorder rental.",
     cameraSubmitCompletePaymentFlowHint:
       "You chose camcorder rental — please confirm payment (paid, or pay after booking) before submitting.",
+    cameraGateModalTitle: "Camcorder rental (required before submit)",
+    cameraGateModalIntro:
+      "Complete the options below, then tap “Confirm and submit” to send this booking.",
+    cameraGateConfirmSubmit: "Confirm and submit",
+    cameraGateClose: "Close",
+    submitCameraGateHint:
+      "Tap “Submit request” to open this step and finish camcorder options before sending.",
   },
   cal: {
     overviewTitleStudioRoom: "{range} · studio room slots",
     overviewTitleOpenSpace: "{range} · large instruments / Open Space slots",
     overviewIntro: "",
+    dayDetailHint:
+      "Tap a date on the calendars below to see each slot as available, booked, or closed. This page is view-only — use the booking flow to submit a request.",
+    jumpFirstCampaignDay: "View campaign first day (3 Apr)",
+    jumpLastCampaignDay: "View campaign last day (3 May)",
     refresh: "Refresh",
     loading: "Loading…",
     loadError: "Could not load calendar data",

@@ -10,7 +10,11 @@ import {
   getQuotaNumericLimits,
   rollingWindowEndDateKey,
 } from "@/lib/booking/booking-rules";
-import { hkCalendarDaysBetween, maxRollingThreeDaySum } from "@/lib/booking/hk-dates";
+import {
+  bookableHeadroomForHkDay,
+  hkCalendarDaysBetween,
+  maxRollingThreeDaySum,
+} from "@/lib/booking/hk-dates";
 import {
   parseBookingNumericSettings,
   parseCampaignDateKeys,
@@ -137,11 +141,23 @@ export async function GET(req: Request) {
     countsByDay: Object.fromEntries(existing),
     todayCommitted,
     todayRemaining: Math.max(0, dailyMax - todayCommitted),
+    todayBookableRemaining: bookableHeadroomForHkDay(
+      existing,
+      todayKey,
+      dailyMax,
+      rollingMax
+    ),
     rollingSumCommitted: maxRollingThreeDaySum(existing),
     provisional: {
       slotIds: extraIds,
       todayAfterExtra,
       todayRemainingAfter: Math.max(0, dailyMax - todayAfterExtra),
+      todayBookableRemainingAfter: bookableHeadroomForHkDay(
+        withExtra,
+        todayKey,
+        dailyMax,
+        rollingMax
+      ),
       rollingSum,
       wouldExceedDaily: firstViolatingDate !== null,
       wouldExceedRolling,

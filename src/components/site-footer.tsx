@@ -19,7 +19,7 @@ export function SiteFooter() {
   const year = String(new Date().getFullYear());
 
   return (
-    <footer className="border-t border-stone-200 bg-[color:var(--chrome-bg)] text-stone-600 backdrop-blur-md dark:border-stone-800 dark:text-stone-400">
+    <footer className="bg-[color:var(--chrome-bg)] text-stone-600 backdrop-blur-md dark:text-stone-400">
       <div className="mx-auto max-w-5xl px-5 sm:px-4 py-10">
         <nav
           aria-label={t("footer.sitemapAria")}

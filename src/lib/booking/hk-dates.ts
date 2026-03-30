@@ -44,3 +44,33 @@ export function maxRollingThreeDaySum(counts: Map<string, number>): number {
   }
   return maxSum;
 }
+
+/**
+ * Max additional sessions bookable on `dayKey` without breaking daily cap or any
+ * 3-consecutive-HK-day rolling sum cap (only windows that include `dayKey` matter).
+ */
+export function bookableHeadroomForHkDay(
+  counts: Map<string, number>,
+  dayKey: string,
+  dailyMax: number,
+  rollingMax: number
+): number {
+  const committed = counts.get(dayKey) ?? 0;
+  const dailyHeadroom = dailyMax - committed;
+  if (dailyHeadroom <= 0) return 0;
+
+  let minRollingHeadroom = rollingMax;
+  let start = shiftHkDateKey(dayKey, -2);
+  for (let i = 0; i < 3; i++) {
+    const d0 = start;
+    const d1 = shiftHkDateKey(start, 1);
+    const d2 = shiftHkDateKey(start, 2);
+    const sum =
+      (counts.get(d0) ?? 0) + (counts.get(d1) ?? 0) + (counts.get(d2) ?? 0);
+    const h = rollingMax - sum;
+    if (h < minRollingHeadroom) minRollingHeadroom = h;
+    start = shiftHkDateKey(start, 1);
+  }
+
+  return Math.max(0, Math.min(dailyHeadroom, minRollingHeadroom));
+}
