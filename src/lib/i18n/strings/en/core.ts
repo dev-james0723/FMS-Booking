@@ -30,7 +30,7 @@ export const coreEn = {
     language: "Language",
     aboutDfestival2026: "About 2026 D Festival Young Pianist Program",
     aboutFantasiaMusicSpace: "About Fantasia Music Space",
-    openSpaceBookingInfo: "Open Space booking info",
+    openSpaceBookingInfo: "Large instrument / Open Space booking info",
     homeAria: "Limited-time free piano studio booking (home)",
     openMenu: "Open menu",
     closeMenu: "Close menu",
@@ -52,6 +52,9 @@ export const coreEn = {
     groupInfo: "Programme & policies",
     home: "Home",
     backToTop: "Back to top",
+    experienceHowToVideoTitle: "How to take part in this experience (video guide)",
+    experienceHowToVideoIframeTitle:
+      "Embedded video: how to take part in this limited-time free studio experience",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",
@@ -65,6 +68,8 @@ export const coreEn = {
       "Booking activates after the opening time; you can still register and create an account first.",
     sponsorLogoAlt: "Hong Kong Huayue International Music Management Company",
     sponsorCaption: "Proud sponsor",
+    leadPhotoAlt:
+      "Fantasia Music Space studio with a grand piano, wood-panelled walls, and bright lighting.",
     eligibilityMemo: {
       sectionAria: "How to qualify for the free studio experience",
       title: "How to qualify for this free experience",

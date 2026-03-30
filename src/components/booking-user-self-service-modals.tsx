@@ -41,6 +41,18 @@ function monthRangeKeys(year: number, month1: number): { from: string; to: strin
   };
 }
 
+function selfServiceSlotsResetSignature(slots: SelfServiceSlot[]): string {
+  return slots.map((s) => s.id).join("\0");
+}
+
+function selfServiceSlotDatesSignature(slots: SelfServiceSlot[]): string {
+  const s = new Set<string>();
+  for (const x of slots) {
+    s.add(slotStartsAtToHkDateKey(x.startsAt));
+  }
+  return [...s].sort().join("\0");
+}
+
 function initialMonthFromSlots(slots: SelfServiceSlot[]): { year: number; month1: number } {
   if (slots.length === 0) {
     const t = hkTodayKey();
@@ -122,7 +134,7 @@ export function BookingContactOrganizerModal(props: { open: boolean; onClose: ()
   );
 }
 
-export function UserBookingRescheduleModal(props: {
+type UserBookingRescheduleModalProps = {
   open: boolean;
   onClose: () => void;
   bookingId: string;
@@ -130,8 +142,28 @@ export function UserBookingRescheduleModal(props: {
   currentSlots: SelfServiceSlot[];
   onApplied: () => void;
   onWithinCutoff?: () => void;
-}) {
-  const { open, onClose, bookingId, venueKind, currentSlots, onApplied, onWithinCutoff } = props;
+};
+
+export function UserBookingRescheduleModal(props: UserBookingRescheduleModalProps) {
+  if (!props.open) return null;
+  const sig = selfServiceSlotsResetSignature(props.currentSlots);
+  return (
+    <UserBookingRescheduleModalOpen
+      key={`${props.bookingId}-${sig}`}
+      onClose={props.onClose}
+      bookingId={props.bookingId}
+      venueKind={props.venueKind}
+      currentSlots={props.currentSlots}
+      onApplied={props.onApplied}
+      onWithinCutoff={props.onWithinCutoff}
+    />
+  );
+}
+
+function UserBookingRescheduleModalOpen(
+  props: Omit<UserBookingRescheduleModalProps, "open">,
+) {
+  const { onClose, bookingId, venueKind, currentSlots, onApplied, onWithinCutoff } = props;
   const { t, tr, locale } = useTranslation();
 
   const [{ year, month1 }, setYm] = useState(() => initialMonthFromSlots(currentSlots));
@@ -153,17 +185,7 @@ export function UserBookingRescheduleModal(props: {
     [locale]
   );
 
-  useEffect(() => {
-    if (!open) return;
-    setYm(initialMonthFromSlots(currentSlots));
-    setSelectedDayKey(null);
-    setRemoveIds(new Set());
-    setAddIds(new Set());
-    setBookableDateRange(null);
-  }, [open, bookingId, currentSlots]);
-
   const loadAvail = useCallback(async () => {
-    if (!open) return;
     setLoadError(null);
     const { from, to } = monthRangeKeys(year, month1);
     const params = new URLSearchParams();
@@ -193,19 +215,20 @@ export function UserBookingRescheduleModal(props: {
       setBookableDateRange(null);
     }
     setAvail(data.slots ?? []);
-  }, [open, year, month1, venueKind, bookingId, t]);
+  }, [year, month1, venueKind, bookingId, t]);
 
   useEffect(() => {
-    if (!open) return;
     const timer = window.setTimeout(() => void loadAvail(), 0);
     return () => window.clearTimeout(timer);
-  }, [open, loadAvail]);
+  }, [loadAvail]);
 
-  useEffect(() => {
-    if (!bookableDateRange || !selectedDayKey) return;
+  const effectiveSelectedDayKey = useMemo(() => {
+    if (!selectedDayKey) return null;
+    if (!bookableDateRange || bookableDateRange.from > bookableDateRange.to) return selectedDayKey;
     if (selectedDayKey < bookableDateRange.from || selectedDayKey > bookableDateRange.to) {
-      setSelectedDayKey(null);
+      return null;
     }
+    return selectedDayKey;
   }, [bookableDateRange, selectedDayKey]);
 
   const currentIdSet = useMemo(() => new Set(currentSlots.map((s) => s.id)), [currentSlots]);
@@ -219,18 +242,17 @@ export function UserBookingRescheduleModal(props: {
   }, [currentIdSet, removeIds]);
 
   const finalCount = useMemo(() => {
-    let n = 0;
-    for (const id of keptIds) n++;
-    for (const id of addIds) {
-      if (!keptIds.has(id)) n++;
+    let n = keptIds.size;
+    for (const addId of addIds) {
+      if (!keptIds.has(addId)) n++;
     }
     return n;
   }, [keptIds, addIds]);
 
   const daySlots = useMemo(() => {
-    if (!selectedDayKey) return [];
-    return avail.filter((s) => slotStartsAtToHkDateKey(s.startsAt) === selectedDayKey);
-  }, [avail, selectedDayKey]);
+    if (!effectiveSelectedDayKey) return [];
+    return avail.filter((s) => slotStartsAtToHkDateKey(s.startsAt) === effectiveSelectedDayKey);
+  }, [avail, effectiveSelectedDayKey]);
 
   async function submit() {
     if (finalCount < 1) {
@@ -269,8 +291,6 @@ export function UserBookingRescheduleModal(props: {
     onApplied();
     onClose();
   }
-
-  if (!open) return null;
 
   const title =
     locale === "en"
@@ -383,7 +403,7 @@ export function UserBookingRescheduleModal(props: {
                 const pickable = dayList.filter(
                   (s) => !keptIds.has(s.id) && s.isOpen && s.remaining > 0
                 ).length;
-                const selected = selectedDayKey === key;
+                const selected = effectiveSelectedDayKey === key;
                 return (
                   <button
                     key={key}
@@ -427,11 +447,11 @@ export function UserBookingRescheduleModal(props: {
 
           <section>
             <p className="mb-2 text-sm font-medium text-slate-200">
-              {selectedDayKey
-                ? `${selectedDayKey} · ${t("booking.historyPanel.selfService.rescheduleSlotsForDay")}`
+              {effectiveSelectedDayKey
+                ? `${effectiveSelectedDayKey} · ${t("booking.historyPanel.selfService.rescheduleSlotsForDay")}`
                 : t("booking.historyPanel.selfService.reschedulePickDay")}
             </p>
-            {!selectedDayKey ? (
+            {!effectiveSelectedDayKey ? (
               <p className="text-xs text-slate-500">{t("booking.historyPanel.selfService.reschedulePickDayHint")}</p>
             ) : daySlots.length === 0 ? (
               <p className="text-xs text-slate-500">{t("booking.historyPanel.selfService.rescheduleNoSlotsDay")}</p>
@@ -547,7 +567,7 @@ function formatDateKeyForDisplay(dateKey: string, locale: Locale): string {
   });
 }
 
-export function UserBookingCancelModal(props: {
+type UserBookingCancelModalProps = {
   open: boolean;
   onClose: () => void;
   bookingId: string;
@@ -555,13 +575,27 @@ export function UserBookingCancelModal(props: {
   currentSlots: SelfServiceSlot[];
   onApplied: () => void;
   onWithinCutoff?: () => void;
-}) {
-  const { open, onClose, bookingId, venueKind, currentSlots, onApplied, onWithinCutoff } = props;
-  const { t, locale } = useTranslation();
+};
 
-  const [dateKey, setDateKey] = useState<string | null>(null);
-  const [pickIds, setPickIds] = useState<Set<string>>(() => new Set());
-  const [busy, setBusy] = useState(false);
+export function UserBookingCancelModal(props: UserBookingCancelModalProps) {
+  if (!props.open) return null;
+  const dk = selfServiceSlotDatesSignature(props.currentSlots);
+  return (
+    <UserBookingCancelModalOpen
+      key={`${props.bookingId}-${dk}`}
+      onClose={props.onClose}
+      bookingId={props.bookingId}
+      venueKind={props.venueKind}
+      currentSlots={props.currentSlots}
+      onApplied={props.onApplied}
+      onWithinCutoff={props.onWithinCutoff}
+    />
+  );
+}
+
+function UserBookingCancelModalOpen(props: Omit<UserBookingCancelModalProps, "open">) {
+  const { onClose, bookingId, venueKind, currentSlots, onApplied, onWithinCutoff } = props;
+  const { t, locale } = useTranslation();
 
   const dates = useMemo(() => {
     const s = new Set<string>();
@@ -571,11 +605,9 @@ export function UserBookingCancelModal(props: {
     return [...s].sort();
   }, [currentSlots]);
 
-  useEffect(() => {
-    if (!open) return;
-    setDateKey(dates[0] ?? null);
-    setPickIds(new Set());
-  }, [open, bookingId, dates]);
+  const [dateKey, setDateKey] = useState<string | null>(() => dates[0] ?? null);
+  const [pickIds, setPickIds] = useState<Set<string>>(() => new Set());
+  const [busy, setBusy] = useState(false);
 
   const slotsOnDay = useMemo(() => {
     if (!dateKey) return [];
@@ -634,8 +666,6 @@ export function UserBookingCancelModal(props: {
     onApplied();
     onClose();
   }
-
-  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">

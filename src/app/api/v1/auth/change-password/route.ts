@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
+import { prisma } from "@/lib/prisma";
 import {
   attachUserSessionCookie,
   getSessionFromCookies,
@@ -14,9 +16,14 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const locale = await serverLocaleFromCookies();
   const session = await getSessionFromCookies();
   if (!session) {
-    return jsonError("UNAUTHORIZED", "Not logged in", 401);
+    return jsonError(
+      "UNAUTHORIZED",
+      apiBilingual(locale, "尚未登入", "Not logged in"),
+      401
+    );
   }
 
   let body: unknown;
@@ -35,12 +42,20 @@ export async function POST(req: Request) {
     where: { userId: session.sub },
   });
   if (!cred) {
-    return jsonError("NOT_FOUND", "No credentials", 404);
+    return jsonError(
+      "NOT_FOUND",
+      apiBilingual(locale, "找不到登入憑證", "No credentials on file"),
+      404
+    );
   }
 
   const match = await verifyPassword(cred.passwordHash, parsed.data.currentPassword);
   if (!match) {
-    return jsonError("AUTH_INVALID", "Current password incorrect", 401);
+    return jsonError(
+      "AUTH_INVALID",
+      apiBilingual(locale, "目前密碼不正確", "Current password incorrect"),
+      401
+    );
   }
 
   const newHash = await hashPassword(parsed.data.newPassword);

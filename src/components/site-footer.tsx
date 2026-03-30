@@ -12,6 +12,9 @@ const footerLinkClass =
 
 const ATELIER_DESIGN_WHATSAPP_HREF = "https://wa.link/g5niw4";
 
+/** “How to participate” walkthrough — shown sitewide in the footer (below sitemap incl. Contact). */
+const EXPERIENCE_HOWTO_YOUTUBE_EMBED_ID = "0eJpv-S-O9Q";
+
 export function SiteFooter() {
   const { t, tr, locale, toggleLocale } = useTranslation();
   const { user: meUser, bookingHref } = useSiteMe();
@@ -118,6 +121,27 @@ export function SiteFooter() {
             </ul>
           </div>
         </nav>
+        <section
+          className="mt-10 border-t border-stone-200 pt-10 dark:border-stone-800"
+          aria-labelledby="footer-experience-howto-video-heading"
+        >
+          <h2
+            id="footer-experience-howto-video-heading"
+            className="text-center text-sm font-semibold text-stone-700 dark:text-stone-300"
+          >
+            {t("footer.experienceHowToVideoTitle")}
+          </h2>
+          <div className="mx-auto mt-4 aspect-video w-full max-w-3xl overflow-hidden rounded-lg border border-stone-200 bg-stone-900/[0.04] shadow-sm dark:border-stone-700 dark:bg-stone-950/40">
+            <iframe
+              className="h-full w-full"
+              src={`https://www.youtube-nocookie.com/embed/${EXPERIENCE_HOWTO_YOUTUBE_EMBED_ID}`}
+              title={t("footer.experienceHowToVideoIframeTitle")}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </section>
         <div className="mt-8 flex justify-center border-t border-stone-200 pt-8 dark:border-stone-800">
           <button
             type="button"

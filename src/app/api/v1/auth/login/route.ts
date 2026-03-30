@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
+import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { attachUserSessionCookie, signUserSession } from "@/lib/auth/session";
 import { z } from "zod";
@@ -10,6 +12,7 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const locale = await serverLocaleFromCookies();
   let body: unknown;
   try {
     body = await req.json();
@@ -29,16 +32,28 @@ export async function POST(req: Request) {
   });
 
   if (!user?.credentials) {
-    return jsonError("AUTH_INVALID", "Invalid email or password", 401);
+    return jsonError(
+      "AUTH_INVALID",
+      apiBilingual(locale, "電郵或密碼不正確", "Invalid email or password"),
+      401
+    );
   }
 
   if (user.accountStatus !== "active") {
-    return jsonError("AUTH_DISABLED", "Account is not active", 403);
+    return jsonError(
+      "AUTH_DISABLED",
+      apiBilingual(locale, "帳戶未啟用", "Account is not active"),
+      403
+    );
   }
 
   const ok = await verifyPassword(user.credentials.passwordHash, parsed.data.password);
   if (!ok) {
-    return jsonError("AUTH_INVALID", "Invalid email or password", 401);
+    return jsonError(
+      "AUTH_INVALID",
+      apiBilingual(locale, "電郵或密碼不正確", "Invalid email or password"),
+      401
+    );
   }
 
   await prisma.loginCredential.update({

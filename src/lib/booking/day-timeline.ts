@@ -25,7 +25,8 @@ export function listHalfHourTimelineTickLabels(): string[] {
 }
 
 /** First hour (HKT) for bookable 30-minute slots on each campaign day (06:00–20:00). */
-export function bookableStartHourForCampaignDateKey(_dateKey: string): number {
+export function bookableStartHourForCampaignDateKey(dateKey: string): number {
+  void dateKey;
   return TIMELINE_START_HOUR;
 }
 

@@ -16,9 +16,12 @@ import { verifyPhoneRegistrationProof } from "@/lib/phone-registration-proof";
 import { AccountStatus, Prisma, RegistrationSubmissionStatus } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { deriveRegistrationProfile } from "@/lib/registration/profile-kind";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { getAllSettings } from "@/lib/settings";
 
 export async function POST(req: Request) {
+  const locale = await serverLocaleFromCookies();
   let body: unknown;
   try {
     body = await req.json();
@@ -42,7 +45,11 @@ export async function POST(req: Request) {
   if (!phoneNorm) {
     return jsonError(
       "INVALID_PHONE",
-      "電話號碼格式無法用於短訊驗證，請檢查後再試。",
+      apiBilingual(
+        locale,
+        "電話號碼格式無法用於短訊驗證，請檢查後再試。",
+        "That phone number cannot be used for SMS verification — please check and try again."
+      ),
       422
     );
   }
@@ -51,7 +58,11 @@ export async function POST(req: Request) {
   if (!phoneProof || phoneProof.phoneNorm !== phoneNorm) {
     return jsonError(
       "PHONE_NOT_VERIFIED",
-      "請先完成電話短訊驗證（發送驗證碼並輸入正確的 6 位數字）。",
+      apiBilingual(
+        locale,
+        "請先完成電話短訊驗證（發送驗證碼並輸入正確的 6 位數字）。",
+        "Please complete SMS verification first (send the code and enter the 6 digits)."
+      ),
       400
     );
   }
@@ -68,7 +79,11 @@ export async function POST(req: Request) {
     if (!challenge) {
       return jsonError(
         "PHONE_VERIFICATION_EXPIRED",
-        "電話驗證已失效，請重新發送驗證碼並完成驗證。",
+        apiBilingual(
+          locale,
+          "電話驗證已失效，請重新發送驗證碼並完成驗證。",
+          "Phone verification has expired — resend the code and verify again."
+        ),
         400
       );
     }
@@ -80,7 +95,11 @@ export async function POST(req: Request) {
     if (phoneTaken) {
       return jsonError(
         "PHONE_EXISTS",
-        "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+        apiBilingual(
+          locale,
+          "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+          "This phone number is already registered to another account; each number may only register once."
+        ),
         409
       );
     }
@@ -104,7 +123,15 @@ export async function POST(req: Request) {
 
     const dup = await prisma.user.findUnique({ where: { email } });
     if (dup) {
-      return jsonError("EMAIL_EXISTS", "此電郵已被登記，請直接登入或使用其他電郵。", 409);
+      return jsonError(
+        "EMAIL_EXISTS",
+        apiBilingual(
+          locale,
+          "此電郵已被登記，請直接登入或使用其他電郵。",
+          "This email is already registered — sign in or use a different email."
+        ),
+        409
+      );
     }
 
     const passkeyTok = data.passkeyPreregToken.trim();
@@ -112,7 +139,11 @@ export async function POST(req: Request) {
     if (!dec) {
       return jsonError(
         "PASSKEY_TOKEN_INVALID",
-        "生物認證憑證無效或已過期，請重新按「綁定 Face ID／指紋」完成驗證。",
+        apiBilingual(
+          locale,
+          "生物認證憑證無效或已過期，請重新按「綁定 Face ID／指紋」完成驗證。",
+          "Biometric proof is invalid or expired — tap “Bind Face ID / fingerprint” again to verify."
+        ),
         400
       );
     }
@@ -130,7 +161,11 @@ export async function POST(req: Request) {
     if (!pkRow?.credentialId || !pkRow.publicKey || pkRow.counter === null) {
       return jsonError(
         "PASSKEY_TOKEN_INVALID",
-        "生物認證未完成或已失效，請重新綁定 Face ID／指紋。",
+        apiBilingual(
+          locale,
+          "生物認證未完成或已失效，請重新綁定 Face ID／指紋。",
+          "Biometric setup is incomplete or no longer valid — bind Face ID / fingerprint again."
+        ),
         400
       );
     }
@@ -355,30 +390,54 @@ export async function POST(req: Request) {
         if (target.includes("phone")) {
           return jsonError(
             "PHONE_EXISTS",
-            "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+            apiBilingual(
+              locale,
+              "此電話號碼已用於登記另一個帳戶；每個號碼只可綁定一個帳戶。",
+              "This phone number is already registered to another account; each number may only register once."
+            ),
             409
           );
         }
         if (target.some((t) => t.includes("credential_id"))) {
           return jsonError(
             "PASSKEY_CONFLICT",
-            "此裝置的通行密鑰已被使用，請重新整理頁面後再試，或改用其他裝置完成生物認證。",
+            apiBilingual(
+              locale,
+              "此裝置的通行密鑰已被使用，請重新整理頁面後再試，或改用其他裝置完成生物認證。",
+              "This device’s passkey is already in use — refresh the page or use another device to complete biometrics."
+            ),
             409
           );
         }
-        return jsonError("EMAIL_EXISTS", "此電郵已被登記，請直接登入或使用其他電郵。", 409);
+        return jsonError(
+          "EMAIL_EXISTS",
+          apiBilingual(
+            locale,
+            "此電郵已被登記，請直接登入或使用其他電郵。",
+            "This email is already registered — sign in or use a different email."
+          ),
+          409
+        );
       }
       if (e.code === "P2022") {
         return jsonError(
           "DB_SCHEMA_MISMATCH",
-          "伺服器資料庫尚未更新至最新版本。請聯絡主辦方，或於部署環境執行：npx prisma migrate deploy",
+          apiBilingual(
+            locale,
+            "伺服器資料庫尚未更新至最新版本。請聯絡主辦方，或於部署環境執行：npx prisma migrate deploy",
+            "The database is not migrated to the latest version. Contact the organiser or run npx prisma migrate deploy on the server."
+          ),
           503
         );
       }
       if (e.code === "P1001" || e.code === "P1002" || e.code === "P1017") {
         return jsonError(
           "DB_UNAVAILABLE",
-          "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+          apiBilingual(
+            locale,
+            "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+            "Cannot reach the database right now. Please try again later or contact the organiser if it continues."
+          ),
           503
         );
       }
@@ -391,14 +450,22 @@ export async function POST(req: Request) {
     ) {
       return jsonError(
         "DB_UNAVAILABLE",
-        "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+        apiBilingual(
+          locale,
+          "暫時無法連接資料庫，請稍後再試。若問題持續，請聯絡主辦方。",
+          "Cannot reach the database right now. Please try again later or contact the organiser if it continues."
+        ),
         503
       );
     }
     if (errMsg === "PHONE_VERIFICATION_ALREADY_USED") {
       return jsonError(
         "PHONE_VERIFICATION_ALREADY_USED",
-        "此電話驗證已使用過，請重新發送驗證碼後再試。",
+        apiBilingual(
+          locale,
+          "此電話驗證已使用過，請重新發送驗證碼後再試。",
+          "This phone verification was already used — resend a code and try again."
+        ),
         409
       );
     }
@@ -406,7 +473,11 @@ export async function POST(req: Request) {
     if (hint) {
       return jsonError(
         "DB_SCHEMA_MISMATCH",
-        "資料庫結構與程式版本不一致（例如缺少新欄位）。請在伺服器執行 npx prisma migrate deploy 後再試。",
+        apiBilingual(
+          locale,
+          "資料庫結構與程式版本不一致（例如缺少新欄位）。請在伺服器執行 npx prisma migrate deploy 後再試。",
+          "Database schema does not match the app (e.g. missing columns). Run npx prisma migrate deploy on the server."
+        ),
         503
       );
     }
@@ -414,7 +485,11 @@ export async function POST(req: Request) {
       process.env.NODE_ENV === "development" && e instanceof Error ? errMsg : undefined;
     return jsonError(
       "REGISTRATION_FAILED",
-      "登記暫時未能完成。請稍後再試；若你已收到確認電郵，可嘗試直接登入。若問題持續，請聯絡主辦方。",
+      apiBilingual(
+        locale,
+        "登記暫時未能完成。請稍後再試；若你已收到確認電郵，可嘗試直接登入。若問題持續，請聯絡主辦方。",
+        "Registration could not be completed. Try again later; if you already received a confirmation email, try signing in. Contact the organiser if it continues."
+      ),
       500,
       devMessage ? { devMessage } : undefined
     );

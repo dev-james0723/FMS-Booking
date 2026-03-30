@@ -209,7 +209,10 @@ export function BookingCalendarOverviewPanel(props: {
 
   const fetchOverviewData = useCallback(async () => {
     const q = new URLSearchParams({ from: range.from, to: range.to, venue: venueKind });
-    const res = await fetch(withBasePath(`/api/v1/booking/calendar-overview?${q}`));
+    const res = await fetch(withBasePath(`/api/v1/booking/calendar-overview?${q}`), {
+      credentials: "include",
+      cache: "no-store",
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return {
@@ -296,6 +299,12 @@ export function BookingCalendarOverviewPanel(props: {
       setLoading(false);
     })();
   }, [fetchOverviewData]);
+
+  useEffect(() => {
+    const onExternalRefresh = () => refreshOverview();
+    window.addEventListener("fms-booking-calendar-overview-refresh", onExternalRefresh);
+    return () => window.removeEventListener("fms-booking-calendar-overview-refresh", onExternalRefresh);
+  }, [refreshOverview]);
 
   const summaryText = useMemo(
     () =>

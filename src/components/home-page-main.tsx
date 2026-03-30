@@ -46,6 +46,20 @@ export function HomePageMain({
         {tr("home.lead", { campaignRange })}
       </p>
 
+      <div className="mx-auto mt-8 w-full max-w-3xl">
+        <figure className="overflow-hidden rounded-xl border border-stone-200/80 shadow-sm dark:border-stone-700/60">
+          <Image
+            src={withBasePath("/images/home/lead-grand-piano-studio.png")}
+            alt={t("home.leadPhotoAlt")}
+            width={1024}
+            height={682}
+            className="h-auto w-full object-cover"
+            priority
+            sizes="(max-width: 768px) 100vw, 768px"
+          />
+        </figure>
+      </div>
+
       <HomeEligibilityMemo />
 
       <div className="mx-auto mt-12 max-w-lg space-y-6">

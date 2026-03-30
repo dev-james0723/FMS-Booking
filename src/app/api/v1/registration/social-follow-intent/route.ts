@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
+import { prisma } from "@/lib/prisma";
 import {
   SOCIAL_FOLLOW_LINK_KEYS,
   allSocialFollowLinksClicked,
@@ -40,6 +42,7 @@ export async function POST(req: Request) {
   }
 
   const { token, linkKey } = parsed.data;
+  const locale = await serverLocaleFromCookies();
 
   const user = await prisma.user.findUnique({
     where: { socialFollowSetupToken: token },
@@ -47,7 +50,15 @@ export async function POST(req: Request) {
   });
 
   if (!user?.profile) {
-    return jsonError("INVALID_TOKEN", "連結已失效或無效。若您已完成步驟，請直接登入。", 401);
+    return jsonError(
+      "INVALID_TOKEN",
+      apiBilingual(
+        locale,
+        "連結已失效或無效。若您已完成步驟，請直接登入。",
+        "This link is invalid or has expired. If you already finished the steps, please sign in."
+      ),
+      401
+    );
   }
 
   const { profile } = user;

@@ -124,6 +124,8 @@ export const accountEn = {
   goOpenSpaceBooking: "Book open space",
   bookingLocked: "Booking not open yet or password change required",
   managePasskeys: "Manage passkeys",
+  passkeysRefresh: "Refresh",
+  passkeysNetworkError: "Network error. Check your connection and try again.",
   textHistory: "Text booking history",
   textHistoryStudio: "Studio · text history",
   textHistoryOpenSpace: "Open space · text history",
@@ -187,4 +189,14 @@ export const accountEn = {
   ambassadorPopupClose: "Close",
   ambassadorPopupCopyLeadEn: "D Ambassador {name} invites you to the free experience programme. You may use:",
   ambassadorPopupCopyLeadZh: "D Ambassador {name} invites you to the free experience programme.",
+  changePassword: {
+    title: "Change password",
+    intro:
+      "For your security, you must change your temporary password on first sign-in. Your new password must be at least 10 characters.",
+    currentLabel: "Current password (temporary password)",
+    newLabel: "New password",
+    submit: "Confirm change",
+    updating: "Updating…",
+    genericError: "Could not change password",
+  },
 };

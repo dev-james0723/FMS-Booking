@@ -53,6 +53,7 @@ import {
   CAMERA_RENTAL_STRIPE_CHECKOUT_URL,
   CAMERA_USAGE_GUIDE_DRIVE_URL,
 } from "@/lib/booking/camera-rental";
+import { markExpectFreshBookingHistory } from "@/lib/booking/booking-history-client-flag";
 
 type SlotRow = {
   id: string;
@@ -686,6 +687,7 @@ export function BookingRequestPanel(props: {
       return;
     }
     setDone(data.bookingRequestId ?? "OK");
+    markExpectFreshBookingHistory(venueKind);
     setSelected(new Set());
     setCamPref(null);
     setCamPay(null);

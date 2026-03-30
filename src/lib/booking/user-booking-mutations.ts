@@ -23,10 +23,20 @@ import { prisma } from "@/lib/prisma";
 import { getAllSettings, getEffectiveNow } from "@/lib/settings";
 import { hkDateKey } from "@/lib/time";
 
+export type UserBookingMutationDetails = {
+  reason?: "no_profile" | "booking_channel";
+  slotId?: string;
+  day?: string;
+  dailyMax?: number;
+  rollingMax?: number;
+  count?: number;
+};
+
 export class UserBookingMutationError extends Error {
   constructor(
     public code: string,
-    message: string
+    message: string,
+    public details?: UserBookingMutationDetails
   ) {
     super(message);
     this.name = "UserBookingMutationError";
@@ -75,10 +85,14 @@ export async function userRescheduleBookingRequest(
     throw new UserBookingMutationError("NOT_FOUND", "預約不存在");
   }
   if (!req.user.profile) {
-    throw new UserBookingMutationError("FORBIDDEN", "無法處理此預約");
+    throw new UserBookingMutationError("FORBIDDEN", "無法處理此預約", {
+      reason: "no_profile",
+    });
   }
   if (!userMayAccessBookingVenue(req.user.profile.bookingVenueKind, req.venueKind)) {
-    throw new UserBookingMutationError("FORBIDDEN", "此帳戶不可修改此通道的預約");
+    throw new UserBookingMutationError("FORBIDDEN", "此帳戶不可修改此通道的預約", {
+      reason: "booking_channel",
+    });
   }
   if (!ADMIN_MANAGEABLE_REQUEST_STATUS.includes(req.status)) {
     throw new UserBookingMutationError("INVALID_STATUS", "此預約狀態無法更改時段");
@@ -204,7 +218,7 @@ export async function userRescheduleBookingRequest(
     );
   } catch (e) {
     if (e instanceof RescheduleCoreError) {
-      throw new UserBookingMutationError(e.code, e.message);
+      throw new UserBookingMutationError(e.code, e.message, e.details);
     }
     throw e;
   }
@@ -234,10 +248,14 @@ export async function userReleaseBookingSlots(
     throw new UserBookingMutationError("NOT_FOUND", "預約不存在");
   }
   if (!req.user.profile) {
-    throw new UserBookingMutationError("FORBIDDEN", "無法處理此預約");
+    throw new UserBookingMutationError("FORBIDDEN", "無法處理此預約", {
+      reason: "no_profile",
+    });
   }
   if (!userMayAccessBookingVenue(req.user.profile.bookingVenueKind, req.venueKind)) {
-    throw new UserBookingMutationError("FORBIDDEN", "此帳戶不可修改此通道的預約");
+    throw new UserBookingMutationError("FORBIDDEN", "此帳戶不可修改此通道的預約", {
+      reason: "booking_channel",
+    });
   }
   if (!ADMIN_MANAGEABLE_REQUEST_STATUS.includes(req.status)) {
     throw new UserBookingMutationError("INVALID_STATUS", "此預約狀態無法取消時段");

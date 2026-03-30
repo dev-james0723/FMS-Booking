@@ -229,4 +229,41 @@ export const regZhHK = {
     slot_15_18: "3 PM - 6 PM",
     slot_18_20: "6 PM - 8 PM",
   },
+  successPage: {
+    title: "登記成功",
+    emailSentBody:
+      "確認電郵已透過系統寄出（含臨時密碼及登入連結）。請檢查收件匣及垃圾郵件資料夾。",
+    emailNotSentBody: "帳戶已建立。若已設定電郵服務，你會收到確認電郵；否則請依下方說明登入。",
+    devModeTitle: "開發模式：臨時登入資料",
+    devEmailLabel: "登入帳號（Email）",
+    devPasswordLabel: "臨時密碼",
+    devPasswordWarning: "正式環境不會在畫面上顯示密碼；請勿於公開部署開啟此行為。",
+    footerHint: "首次登入後請立即更改密碼；預約系統將於主辦公布時間開放預約。",
+    socialFollowLinkMissing:
+      "已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。",
+    goLogin: "前往登入",
+  },
+  socialFollowSetup: {
+    progressUpdateFail: "無法更新進度",
+    networkError: "網絡錯誤，請稍後再試。",
+    linkNotConfigured: "此連結尚未設定，請聯絡主辦方或稍後再試。",
+    completedTitle: "追蹤步驟已完成",
+    completedBody:
+      "你已透過本頁開啟全部六個官方帳戶連結；系統已記錄你完成登記時承諾之「追蹤指定社交媒體帳號」步驟。此舉不會帶來額外預約時段；免費體驗之名額與批核仍依活動條款及主辦安排為準。",
+    sectionTitle: "追蹤官方帳戶（登記承諾）",
+    intro: "參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶。",
+    missingUrls: "有 {count} 個官方連結未能載入，對應按鈕暫時無法使用。請稍後再試或聯絡主辦方。",
+    progressLabel: "進度：",
+    progressLoading: "…",
+    desktopHint:
+      "請在電腦瀏覽器完成此步驟效果最佳。若你曾清除瀏覽器資料或更換裝置，請登入後聯絡主辦方協助。",
+    followed: "已追蹤 {label}",
+    processing: "處理中…",
+    goTo: "前往 {label}",
+  },
+  repostWidget: {
+    title: "轉發指定貼文（登記承諾）",
+    body:
+      "請於下方小工具開啟指定貼文，並分享到 Instagram 或 Facebook 限時動態；於限時動態標註 (tag)「D Festival 青年鋼琴家藝術節」及「幻樂空間 Fantasia Music Space」的 Instagram 與 Facebook 帳號。主辦方可依活動條款核實參與情況。",
+  },
 } as const;

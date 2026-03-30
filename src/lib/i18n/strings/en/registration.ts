@@ -232,4 +232,45 @@ export const regEn = {
     slot_15_18: "3 PM – 6 PM",
     slot_18_20: "6 PM – 8 PM",
   },
+  successPage: {
+    title: "Registration successful",
+    emailSentBody:
+      "A confirmation email has been sent (with your temporary password and sign-in link). Check your inbox and spam folder.",
+    emailNotSentBody:
+      "Your account was created. If email is configured on this server, you will receive a confirmation message; otherwise follow the instructions below to sign in.",
+    devModeTitle: "Development: temporary sign-in details",
+    devEmailLabel: "Sign-in email",
+    devPasswordLabel: "Temporary password",
+    devPasswordWarning:
+      "Production never shows passwords on screen; do not enable this behaviour on a public deployment.",
+    footerHint:
+      "Change your temporary password right after first sign-in; booking will open when the organiser announces it.",
+    socialFollowLinkMissing:
+      "You opted in to follow official accounts, but the follow links could not be loaded. Contact the organiser or register again if needed.",
+    goLogin: "Go to sign in",
+  },
+  socialFollowSetup: {
+    progressUpdateFail: "Could not update progress",
+    networkError: "Network error. Please try again later.",
+    linkNotConfigured: "This link is not configured yet — contact the organiser or try again later.",
+    completedTitle: "Follow steps completed",
+    completedBody:
+      "You opened all six official account links from this page; we recorded your registration commitment to follow the designated social accounts. This does not add extra booking slots; eligibility still follows the campaign terms and organiser decisions.",
+    sectionTitle: "Follow official accounts (registration commitment)",
+    intro: "To take part in this free experience you must follow the official accounts below on Instagram and Facebook.",
+    missingUrls:
+      "{count} official link(s) could not be loaded, so those buttons are unavailable. Try again later or contact the organiser.",
+    progressLabel: "Progress:",
+    progressLoading: "…",
+    desktopHint:
+      "A desktop browser works best for this step. If you cleared browser data or switched devices, sign in and contact the organiser for help.",
+    followed: "Followed {label}",
+    processing: "Working…",
+    goTo: "Open {label}",
+  },
+  repostWidget: {
+    title: "Repost designated posts (registration commitment)",
+    body:
+      "Use the widget below to open the designated posts and share them to Instagram or Facebook Stories; tag the D Festival Young Pianist Program and Fantasia Music Space on Instagram and Facebook. The organiser may verify participation under the campaign terms.",
+  },
 } as const;

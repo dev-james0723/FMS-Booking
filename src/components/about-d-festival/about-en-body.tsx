@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import { FlipbookReloadHint } from "@/components/about-d-festival/flipbook-reload-hint";
 import { DGalleryEmbed } from "@/components/d-gallery-embed";
 import { FestivalBackgroundMusic } from "@/components/festival-background-music";
 import { Mdw3dGlobeGallery } from "@/components/mdw-3d-globe-gallery";
@@ -161,7 +162,10 @@ export function AboutEnBody({
         <p className="mx-auto mt-2 max-w-xl text-center text-sm text-stone-600 dark:text-stone-400">
           D Festival digital programme — explore this year&apos;s highlights.
         </p>
-        <div className="flipbook-embed-wrapper mt-8 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-inner dark:border-stone-700/80 dark:bg-stone-800/50">
+        <FlipbookReloadHint ariaLabel="Reload the page to try loading the digital programme again">
+          If it doesn&apos;t load, tap here to reload the page
+        </FlipbookReloadHint>
+        <div className="flipbook-embed-wrapper mt-6 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-inner dark:border-stone-700/80 dark:bg-stone-800/50">
           <iframe
             src="https://d-festival-flipbook.vercel.app"
             title="D Festival 2026 digital programme"

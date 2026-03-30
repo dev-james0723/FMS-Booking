@@ -3,11 +3,13 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 function Form() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/account";
+  const { t } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -25,7 +27,11 @@ function Form() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data?.error?.message ?? "更改失敗");
+      const msg =
+        typeof data?.error?.message === "string" && data.error.message.trim()
+          ? data.error.message
+          : t("account.changePassword.genericError");
+      setError(msg);
       setLoading(false);
       return;
     }
@@ -39,15 +45,17 @@ function Form() {
       onSubmit={onSubmit}
       className="mx-auto max-w-sm space-y-4 rounded-2xl border border-stone-200 dark:border-stone-700 bg-surface p-8 shadow-sm"
     >
-      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">更改密碼</h1>
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">
+        {t("account.changePassword.title")}
+      </h1>
       <p className="text-xs text-stone-600 dark:text-stone-400">
-        為保障帳戶安全，首次登入須更改臨時密碼。新密碼至少 10 個字元。
+        {t("account.changePassword.intro")}
       </p>
       {error && (
         <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
       )}
       <label className="block text-sm">
-        目前密碼（臨時密碼）
+        {t("account.changePassword.currentLabel")}
         <input
           type="password"
           required
@@ -57,7 +65,7 @@ function Form() {
         />
       </label>
       <label className="block text-sm">
-        新密碼
+        {t("account.changePassword.newLabel")}
         <input
           type="password"
           required
@@ -72,16 +80,21 @@ function Form() {
         disabled={loading}
         className="w-full rounded-full bg-stone-900 py-2.5 text-sm text-white hover:bg-stone-800 disabled:opacity-50"
       >
-        {loading ? "更新中…" : "確認更改"}
+        {loading ? t("account.changePassword.updating") : t("account.changePassword.submit")}
       </button>
     </form>
   );
 }
 
 export default function ChangePasswordPage() {
+  const { t } = useTranslation();
   return (
     <main className="flex flex-1 flex-col justify-center px-5 sm:px-4 py-16">
-      <Suspense fallback={<p className="text-center text-stone-500 dark:text-stone-500">載入中…</p>}>
+      <Suspense
+        fallback={
+          <p className="text-center text-stone-500 dark:text-stone-500">{t("core.login.loading")}</p>
+        }
+      >
         <Form />
       </Suspense>
     </main>

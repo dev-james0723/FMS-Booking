@@ -6,7 +6,10 @@ import { BookingRuleError, validateAndCreateBookingRequest } from "@/lib/booking
 import type { BookingIdentityType, CameraRentalPaymentChoice } from "@prisma/client";
 import { sendBookingSubmitted } from "@/lib/email/booking";
 import { sendBookingAdminNotification } from "@/lib/email/booking-admin-notify";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { bookingRuleErrorUserMessage } from "@/lib/i18n/booking-user-api-messages";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -134,6 +137,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     if (e instanceof BookingRuleError) {
+      const locale = await serverLocaleFromCookies();
       const forbidden = new Set([
         "BOOKING_NOT_OPEN",
         "MUST_CHANGE_PASSWORD",
@@ -157,9 +161,14 @@ export async function POST(req: Request) {
         : badRequest.has(e.code)
           ? 400
           : 409;
-      return jsonError(e.code, e.message, status, e.details);
+      return jsonError(e.code, bookingRuleErrorUserMessage(locale, e), status, e.details);
     }
     console.error(e);
-    return jsonError("BOOKING_FAILED", "無法建立預約", 500);
+    const locale = await serverLocaleFromCookies();
+    return jsonError(
+      "BOOKING_FAILED",
+      apiBilingual(locale, "無法建立預約", "Could not complete your booking. Please try again later."),
+      500
+    );
   }
 }

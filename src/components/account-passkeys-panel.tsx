@@ -4,10 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { startRegistration } from "@simplewebauthn/browser";
 import { withBasePath } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type PasskeyRow = { id: string; createdAt: string; hint: string };
 
+const PASSKEY_LIST_RETRY_MS = [0, 400, 1000];
+
 export function AccountPasskeysPanel() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<PasskeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,17 +19,43 @@ export function AccountPasskeysPanel() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [webauthnSupported, setWebauthnSupported] = useState(false);
 
-  const fetchList = useCallback(async () => {
-    setError(null);
-    const res = await fetch(withBasePath("/api/v1/account/passkeys"), { credentials: "same-origin" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(typeof data?.error?.message === "string" ? data.error.message : "無法載入");
-      setItems([]);
-      return;
-    }
-    setItems(Array.isArray(data?.passkeys) ? data.passkeys : []);
-  }, []);
+  const fetchList = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true;
+      if (!silent) setLoading(true);
+      if (!silent) setError(null);
+      let lastMsg = "無法載入";
+      try {
+        for (let i = 0; i < PASSKEY_LIST_RETRY_MS.length; i++) {
+          const delay = PASSKEY_LIST_RETRY_MS[i] ?? 0;
+          if (delay > 0) {
+            await new Promise((r) => setTimeout(r, delay));
+          }
+          try {
+            const res = await fetch(withBasePath("/api/v1/account/passkeys"), {
+              credentials: "include",
+              cache: "no-store",
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+              setError(null);
+              setItems(Array.isArray(data?.passkeys) ? data.passkeys : []);
+              return;
+            }
+            lastMsg =
+              typeof data?.error?.message === "string" ? data.error.message : "無法載入";
+          } catch {
+            lastMsg = t("account.passkeysNetworkError");
+          }
+        }
+        setError(lastMsg);
+        setItems([]);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     setWebauthnSupported(
@@ -34,14 +64,15 @@ export function AccountPasskeysPanel() {
   }, []);
 
   useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    void fetchList().finally(() => {
-      if (alive) setLoading(false);
-    });
-    return () => {
-      alive = false;
+    void fetchList();
+  }, [fetchList]);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) void fetchList({ silent: true });
     };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, [fetchList]);
 
   function formatDate(iso: string) {
@@ -101,7 +132,7 @@ export function AccountPasskeysPanel() {
         );
         return;
       }
-      await fetchList();
+      await fetchList({ silent: true });
     } finally {
       setAddBusy(false);
     }
@@ -142,17 +173,30 @@ export function AccountPasskeysPanel() {
         </p>
       </div>
 
+      <div>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => void fetchList()}
+          className="flex w-full min-h-11 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? t("booking.historyPanel.loading") : t("account.passkeysRefresh")}
+        </button>
+      </div>
+
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100">
           {error}
         </div>
       )}
 
-      {loading ? (
-        <p className="text-sm text-stone-500 dark:text-stone-500">載入中…</p>
-      ) : items.length === 0 ? (
+      {loading && items.length === 0 && !error ? (
+        <p className="text-sm text-stone-500 dark:text-stone-500">{t("booking.historyPanel.loading")}</p>
+      ) : null}
+      {!loading && items.length === 0 && !error ? (
         <p className="text-sm text-stone-600 dark:text-stone-400">目前未有通行密鑰。您可按下方新增（須瀏覽器支援）。</p>
-      ) : (
+      ) : null}
+      {items.length > 0 ? (
         <ul className="space-y-2">
           {items.map((p) => (
             <li
@@ -174,7 +218,7 @@ export function AccountPasskeysPanel() {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
 
       <div className="border-t border-stone-200 dark:border-stone-700 pt-4">
         <button

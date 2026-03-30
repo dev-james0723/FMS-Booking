@@ -119,6 +119,8 @@ export const accountZhHK = {
   goOpenSpaceBooking: "前往開放空間預約",
   bookingLocked: "預約未開放或須先更改密碼",
   managePasskeys: "管理通行密鑰",
+  passkeysRefresh: "重新整理",
+  passkeysNetworkError: "網絡異常，請檢查連線後再試。",
   textHistory: "文字版預約紀錄",
   textHistoryStudio: "琴室 · 文字版紀錄",
   textHistoryOpenSpace: "開放空間 · 文字版紀錄",
@@ -178,4 +180,13 @@ export const accountZhHK = {
   ambassadorPopupClose: "關閉",
   ambassadorPopupCopyLeadEn: "",
   ambassadorPopupCopyLeadZh: "D Ambassador {name} 向你推薦了免費體驗活動。你可以享有以下禮遇：",
+  changePassword: {
+    title: "更改密碼",
+    intro: "為保障帳戶安全，首次登入須更改臨時密碼。新密碼至少 10 個字元。",
+    currentLabel: "目前密碼（臨時密碼）",
+    newLabel: "新密碼",
+    submit: "確認更改",
+    updating: "更新中…",
+    genericError: "更改失敗",
+  },
 };

@@ -18,7 +18,8 @@
     "db:clear-customers": "tsx scripts/clear-customer-data.ts",
     "db:apply-apr-holds": "tsx scripts/apply-apr-5-6-slot-holds.ts",
     "db:backfill-slots-6-20": "tsx scripts/backfill-booking-slots-6-20-hkt.ts",
-    "verify:twilio": "tsx scripts/verify-twilio-credentials.ts"
+    "verify:twilio": "tsx scripts/verify-twilio-credentials.ts",
+    "build:george-li-gallery": "tsx scripts/build-george-li-gallery.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

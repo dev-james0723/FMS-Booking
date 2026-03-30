@@ -11,6 +11,8 @@ import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { prisma } from "@/lib/prisma";
 import { getAllSettings, getEffectiveNow } from "@/lib/settings";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { hkDateKey } from "@/lib/time";
 
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,12 +38,17 @@ export async function GET(req: Request) {
     return jsonError("VALIDATION_ERROR", "excludeRequestId is required", 400);
   }
 
+  const locale = await serverLocaleFromCookies();
   const user = await prisma.user.findUnique({
     where: { id: auth.userId },
     include: { profile: true },
   });
   if (!user?.profile || !userMayAccessBookingVenue(user.profile.bookingVenueKind, venueKind)) {
-    return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(locale, "此帳戶不可使用此預約通道", "This account cannot use this booking channel."),
+      403
+    );
   }
 
   const owned = await prisma.bookingRequest.findFirst({
@@ -49,7 +56,15 @@ export async function GET(req: Request) {
     select: { id: true },
   });
   if (!owned) {
-    return jsonError("FORBIDDEN", "只可查閱與自己預約相關的時段庫存", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(
+        locale,
+        "只可查閱與自己預約相關的時段庫存",
+        "You can only load availability for your own booking."
+      ),
+      403
+    );
   }
 
   const reqStart = hkDayStartUtc(from);

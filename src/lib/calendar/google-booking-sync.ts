@@ -27,9 +27,6 @@ export async function syncBookingRequestToGoogleCalendar(
 ): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   const jsonStr = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON?.trim();
   if (!jsonStr) {
-    console.info(
-      "[google-calendar] GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON not set; skip Calendar sync"
-    );
     return { ok: true, skipped: true };
   }
 

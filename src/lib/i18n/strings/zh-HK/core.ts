@@ -30,7 +30,7 @@ export const coreZhHK = {
     language: "語言",
     aboutDfestival2026: "關於 2026 D Festival 青年鋼琴家藝術節",
     aboutFantasiaMusicSpace: "關於幻樂空間",
-    openSpaceBookingInfo: "開放空間預約說明",
+    openSpaceBookingInfo: "大型樂器/開放空間預約說明",
     homeAria: "限時免費琴室體驗預約（主頁）",
     openMenu: "開啟選單",
     closeMenu: "關閉選單",
@@ -52,6 +52,8 @@ export const coreZhHK = {
     groupInfo: "活動與政策",
     home: "主頁",
     backToTop: "回到頁首",
+    experienceHowToVideoTitle: "如何參與今次體驗活動（教學影片）",
+    experienceHowToVideoIframeTitle: "如何參與今次體驗活動教學影片",
   },
   home: {
     tagline: "D Festival × Fantasia Music Space",
@@ -65,6 +67,8 @@ export const coreZhHK = {
       "預約將於開放時間後啟用；您仍可先完成登記及建立帳戶。",
     sponsorLogoAlt: "香港華樂國際音樂管理公司",
     sponsorCaption: "全力贊助",
+    leadPhotoAlt:
+      "幻樂空間琴室內景：設有三角鋼琴的練習與排練空間，牆身為木飾面，環境整潔明亮。",
     eligibilityMemo: {
       sectionAria: "免費體驗活動參加資格說明",
       title: "如何獲得今次免費體驗活動資格",

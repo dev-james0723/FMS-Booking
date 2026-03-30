@@ -15,7 +15,6 @@ import { buildBookingCalendarDescription, getVenueCalendarEnv } from "@/lib/venu
 import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
 
 const OAUTH_STATE_TYP = "gcal_oauth";
-const CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar.events"];
 
 export function isGoogleCalendarUserOAuthConfigured(): boolean {
   return Boolean(

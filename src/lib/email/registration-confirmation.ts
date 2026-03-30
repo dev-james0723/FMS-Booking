@@ -1,7 +1,7 @@
 import { EmailLogStatus } from "@prisma/client";
 import { Resend } from "resend";
 import { parseBookingOpensAt } from "@/lib/booking/booking-opens-at";
-import { getAllSettings, parseInstantSetting } from "@/lib/settings";
+import { getAllSettings } from "@/lib/settings";
 import { escapeHtml } from "@/lib/email/escape-html";
 import { logEmail } from "@/lib/email/log";
 

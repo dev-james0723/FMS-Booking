@@ -3,6 +3,8 @@ import { requireUserSession } from "@/lib/auth/require-session";
 import { hkDayEndUtc, hkDayStartUtc } from "@/lib/booking/hk-dates";
 import { listAvailability } from "@/lib/booking/service";
 import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { prisma } from "@/lib/prisma";
 
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -23,16 +25,25 @@ export async function GET(req: Request) {
   }
 
   const venueKind = parseBookingVenueQuery(url.searchParams.get("venue"));
+  const locale = await serverLocaleFromCookies();
 
   const user = await prisma.user.findUnique({
     where: { id: auth.userId },
     include: { profile: true },
   });
   if (!user?.hasCompletedRegistration || user.accountStatus !== "active") {
-    return jsonError("FORBIDDEN", "無法查閱時段", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(locale, "無法查閱時段", "You cannot view slots in your current account state."),
+      403
+    );
   }
   if (!user.profile || !userMayAccessBookingVenue(user.profile.bookingVenueKind, venueKind)) {
-    return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(locale, "此帳戶不可使用此預約通道", "This account cannot use this booking channel."),
+      403
+    );
   }
 
   const start = hkDayStartUtc(from);

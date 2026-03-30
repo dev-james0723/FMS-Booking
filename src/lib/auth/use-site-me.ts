@@ -5,7 +5,6 @@ import {
   createElement,
   useContext,
   useEffect,
-  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -64,10 +63,11 @@ export function useSiteMe(): {
   const pathname = usePathname();
   /** `undefined` = not yet resolved for this pathname; fall back to `serverUser`. */
   const [clientUser, setClientUser] = useState<SiteMeUser | null | undefined>(undefined);
-
-  useLayoutEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setClientUser(undefined);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     let cancelled = false;

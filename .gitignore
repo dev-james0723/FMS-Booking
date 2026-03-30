@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Staging PNGs for scripts/build-george-li-gallery.ts (WebP output is committed)
+/public/images/about-d-festival/george-li-gallery-source/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

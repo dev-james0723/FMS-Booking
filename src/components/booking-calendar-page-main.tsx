@@ -24,7 +24,15 @@ export function BookingCalendarPageMain(props: {
           bookingPathPrefix={bookingPathPrefix}
         />
       </div>
-      <div className="mt-12 flex flex-wrap gap-4 text-sm">
+      <div className="mt-12 space-y-4">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("fms-booking-calendar-overview-refresh"))}
+          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-5 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800 sm:min-h-[3rem] sm:text-base"
+        >
+          {t("booking.cal.refresh")}
+        </button>
+        <div className="flex flex-wrap gap-4 text-sm">
         <Link href={bookingPathPrefix} className="text-stone-800 dark:text-stone-200 underline">
           {t("booking.calendarPage.backBooking")}
         </Link>
@@ -34,6 +42,7 @@ export function BookingCalendarPageMain(props: {
         <Link href="/account" className="text-stone-600 dark:text-stone-400 underline">
           {t("booking.calendarPage.linkAccount")}
         </Link>
+        </div>
       </div>
     </main>
   );

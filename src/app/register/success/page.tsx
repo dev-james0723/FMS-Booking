@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ElfsightDfestivalRepostWidget } from "@/components/elfsight-dfestival-repost-widget";
 import { SocialFollowSetupPanel } from "@/components/social-follow-setup-panel";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type SuccessPayload = {
   email: string;
@@ -17,6 +18,7 @@ type SuccessPayload = {
 };
 
 export default function RegisterSuccessPage() {
+  const { t } = useTranslation();
   const [payload, setPayload] = useState<SuccessPayload | null>(null);
 
   useEffect(() => {
@@ -40,14 +42,16 @@ export default function RegisterSuccessPage() {
 
   return (
     <main className="mx-auto max-w-lg px-5 sm:px-4 py-24 text-center">
-      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">登記成功</h1>
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-stone-50">
+        {t("reg.successPage.title")}
+      </h1>
       {payload?.emailSent ? (
         <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
-          確認電郵已透過系統寄出（含臨時密碼及登入連結）。請檢查收件匣及垃圾郵件資料夾。
+          {t("reg.successPage.emailSentBody")}
         </p>
       ) : (
         <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
-          帳戶已建立。若已設定電郵服務，你會收到確認電郵；否則請依下方說明登入。
+          {t("reg.successPage.emailNotSentBody")}
         </p>
       )}
       {payload?.devNote && (
@@ -62,32 +66,40 @@ export default function RegisterSuccessPage() {
       )}
       {showDevPassword && (
         <div className="mx-auto mt-6 max-w-md rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-5 sm:px-4 py-4 text-left text-sm text-stone-800 dark:text-stone-200">
-          <p className="font-medium text-stone-900 dark:text-stone-50">開發模式：臨時登入資料</p>
+          <p className="font-medium text-stone-900 dark:text-stone-50">
+            {t("reg.successPage.devModeTitle")}
+          </p>
           <p className="mt-2">
-            <span className="text-stone-600 dark:text-stone-400">登入帳號（Email）</span>
+            <span className="text-stone-600 dark:text-stone-400">
+              {t("reg.successPage.devEmailLabel")}
+            </span>
             <br />
-            <span className="mt-1 inline-block break-all font-mono text-stone-900 dark:text-stone-50">{payload!.email}</span>
+            <span className="mt-1 inline-block break-all font-mono text-stone-900 dark:text-stone-50">
+              {payload!.email}
+            </span>
           </p>
           <p className="mt-3">
-            <span className="text-stone-600 dark:text-stone-400">臨時密碼</span>
+            <span className="text-stone-600 dark:text-stone-400">
+              {t("reg.successPage.devPasswordLabel")}
+            </span>
             <br />
             <code className="mt-1 inline-block rounded-lg bg-surface px-3 py-2 font-mono text-stone-900 dark:text-stone-50 ring-1 ring-stone-200 dark:ring-stone-600">
               {payload!.tempPassword}
             </code>
           </p>
           <p className="mt-3 text-xs text-stone-500 dark:text-stone-500">
-            正式環境不會在畫面上顯示密碼；請勿於公開部署開啟此行為。
+            {t("reg.successPage.devPasswordWarning")}
           </p>
         </div>
       )}
       <p className="mt-6 text-sm text-stone-600 dark:text-stone-400">
-        首次登入後請立即更改密碼；預約系統將於主辦公布時間開放預約。
+        {t("reg.successPage.footerHint")}
       </p>
       {payload?.socialFollowOptIn && payload.socialFollowSetupToken ? (
         <SocialFollowSetupPanel token={payload.socialFollowSetupToken} />
       ) : payload?.socialFollowOptIn && !payload.socialFollowSetupToken ? (
         <p className="mx-auto mt-8 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-5 sm:px-4 py-3 text-left text-sm text-amber-950">
-          已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。
+          {t("reg.successPage.socialFollowLinkMissing")}
         </p>
       ) : null}
       {payload ? <ElfsightDfestivalRepostWidget /> : null}
@@ -95,7 +107,7 @@ export default function RegisterSuccessPage() {
         href="/login"
         className="mt-8 inline-block rounded-full bg-stone-900 px-8 py-3 text-sm text-white hover:bg-stone-800"
       >
-        前往登入
+        {t("reg.successPage.goLogin")}
       </Link>
     </main>
   );

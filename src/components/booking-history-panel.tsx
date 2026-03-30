@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { consumeExpectFreshBookingHistory } from "@/lib/booking/booking-history-client-flag";
 import { BOOKING_SELF_SERVICE_CUTOFF_MS } from "@/lib/booking/booking-self-service-policy";
 import { mergeConsecutiveSlots } from "@/lib/booking/merge-slots";
 import { BookingHistoryMergedBands } from "@/components/booking-history-merged-bands";
@@ -124,6 +125,7 @@ export function BookingHistoryPanel(props: {
   const { t, tr, locale } = useTranslation();
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [syncBusyId, setSyncBusyId] = useState<string | null>(null);
   const [syncFlash, setSyncFlash] = useState<SyncFlash | null>(null);
   const [filterDate, setFilterDate] = useState("");
@@ -160,33 +162,79 @@ export function BookingHistoryPanel(props: {
 
   const connectHref = withBasePath("/api/v1/account/google-calendar/oauth/start");
 
-  const loadHistory = useCallback(async () => {
-    const q = new URLSearchParams({ venue: venueKind });
-    const res = await fetch(withBasePath(`/api/v1/booking/history?${q}`));
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data?.error?.message ?? t("booking.historyPanel.loadError"));
-      return;
-    }
-    setError(null);
-    const list = (data.bookings ?? []) as BookingRow[];
-    setRows(
-      list.map((r) => ({
-        ...r,
-        hasStaffReschedule: Boolean(r.hasStaffReschedule),
-        hasReschedule: Boolean(r.hasReschedule ?? r.hasStaffReschedule),
-        slots: (r.slots ?? []).map((s) => ({
-          id: s.id,
-          startsAt: s.startsAt,
-          endsAt: s.endsAt,
-          venueLabel: s.venueLabel ?? null,
-        })),
-      }))
-    );
-  }, [t, venueKind]);
+  const loadHistory = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true;
+      if (!silent) setLoading(true);
+      const q = new URLSearchParams({ venue: venueKind });
+      const url = withBasePath(`/api/v1/booking/history?${q}`);
+      let lastMsg = t("booking.historyPanel.loadError");
+      try {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) {
+            await new Promise((r) => setTimeout(r, 280 * attempt));
+          }
+          const res = await fetch(url, { credentials: "include", cache: "no-store" });
+          const data = (await res.json().catch(() => ({}))) as {
+            bookings?: BookingRow[];
+            error?: { message?: string };
+          };
+          if (res.ok) {
+            setError(null);
+            const list = (data.bookings ?? []) as BookingRow[];
+            setRows(
+              list.map((r) => ({
+                ...r,
+                hasStaffReschedule: Boolean(r.hasStaffReschedule),
+                hasReschedule: Boolean(r.hasReschedule ?? r.hasStaffReschedule),
+                slots: (r.slots ?? []).map((s) => ({
+                  id: s.id,
+                  startsAt: s.startsAt,
+                  endsAt: s.endsAt,
+                  venueLabel: s.venueLabel ?? null,
+                })),
+              }))
+            );
+            return;
+          }
+          lastMsg = data?.error?.message ?? t("booking.historyPanel.loadError");
+        }
+        setError(lastMsg);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [t, venueKind]
+  );
 
   useEffect(() => {
-    void loadHistory();
+    let cancelled = false;
+    const expectFresh = consumeExpectFreshBookingHistory(venueKind);
+    let t1 = 0;
+    let t2 = 0;
+    void (async () => {
+      await loadHistory();
+      if (cancelled || !expectFresh) return;
+      t1 = window.setTimeout(() => {
+        if (!cancelled) void loadHistory({ silent: true });
+      }, 450);
+      t2 = window.setTimeout(() => {
+        if (!cancelled) void loadHistory({ silent: true });
+      }, 1300);
+    })();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [loadHistory, venueKind]);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) void loadHistory({ silent: true });
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, [loadHistory]);
 
   function tryOpenSelfService(row: BookingRow, kind: "reschedule" | "cancel") {
@@ -275,8 +323,23 @@ export function BookingHistoryPanel(props: {
       </figure>
       <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-50">{pageHeading}</h1>
 
-      {error ? (
-        <p className="mt-8 text-sm text-red-700">{error}</p>
+      <div className="mt-4">
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => void loadHistory()}
+          className="flex w-full min-h-12 items-center justify-center rounded-lg border border-blue-950/40 bg-blue-950 px-5 py-3 text-center text-sm font-medium text-white shadow-sm transition hover:bg-blue-900 active:bg-blue-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[3rem] sm:text-base"
+        >
+          {loading ? t("booking.historyPanel.loading") : t("booking.historyPanel.refresh")}
+        </button>
+      </div>
+
+      {loading && rows.length === 0 && !error ? (
+        <p className="mt-8 text-sm text-stone-500 dark:text-stone-500">
+          {t("booking.historyPanel.loading")}
+        </p>
+      ) : error ? (
+        <p className="mt-8 text-sm text-red-700 dark:text-red-300">{error}</p>
       ) : rows.length === 0 ? (
         <p className="mt-8 text-sm text-stone-500 dark:text-stone-500">
           {t("booking.historyPanel.empty")}

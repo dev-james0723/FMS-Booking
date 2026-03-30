@@ -5,6 +5,9 @@ import {
   sendBookingUserRescheduleNotifications,
 } from "@/lib/email/booking-user-mutation-notify";
 import { UserBookingMutationError, userRescheduleBookingRequest } from "@/lib/booking/user-booking-mutations";
+import { apiBilingual } from "@/lib/i18n/api-bilingual";
+import { userBookingMutationUserMessage } from "@/lib/i18n/booking-user-api-messages";
+import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -24,12 +27,17 @@ export async function POST(req: Request, ctx: Ctx) {
   const url = new URL(req.url);
   const venueKind = parseBookingVenueQuery(url.searchParams.get("venue"));
 
+  const locale = await serverLocaleFromCookies();
   const user = await prisma.user.findUnique({
     where: { id: auth.userId },
     include: { profile: true },
   });
   if (!user?.profile || !userMayAccessBookingVenue(user.profile.bookingVenueKind, venueKind)) {
-    return jsonError("FORBIDDEN", "此帳戶不可使用此預約通道", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(locale, "此帳戶不可使用此預約通道", "This account cannot use this booking channel."),
+      403
+    );
   }
 
   const brCheck = await prisma.bookingRequest.findFirst({
@@ -37,10 +45,18 @@ export async function POST(req: Request, ctx: Ctx) {
     select: { venueKind: true },
   });
   if (!brCheck) {
-    return jsonError("NOT_FOUND", "預約不存在", 404);
+    return jsonError(
+      "NOT_FOUND",
+      apiBilingual(locale, "預約不存在", "Booking not found."),
+      404
+    );
   }
   if (brCheck.venueKind !== venueKind) {
-    return jsonError("FORBIDDEN", "場地通道與此預約不符", 403);
+    return jsonError(
+      "FORBIDDEN",
+      apiBilingual(locale, "場地通道與此預約不符", "Venue channel does not match this booking."),
+      403
+    );
   }
 
   let jsonBody: unknown;
@@ -70,7 +86,7 @@ export async function POST(req: Request, ctx: Ctx) {
             : e.code === "WITHIN_CUTOFF"
               ? 409
               : 400;
-      return jsonError(e.code, e.message, status);
+      return jsonError(e.code, userBookingMutationUserMessage(locale, e), status, e.details);
     }
     throw e;
   }

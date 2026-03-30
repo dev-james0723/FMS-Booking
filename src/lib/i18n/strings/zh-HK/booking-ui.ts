@@ -68,7 +68,7 @@ export const bookingZhHK = {
     infoCardNoticeBody:
       "現場或有大門及走廊人流與聲音，可能影響寧靜度與私隱感。若您對環境聲音或人流較為敏感，請自行評估是否適合使用。",
     infoPageLead:
-      "以下說明亦適用於選單「開放空間預約說明」。完成登記並獲分配為開放空間預約系統的帳戶，登入後請使用本頁所連結的預約入口。",
+      "以下說明亦適用於選單「大型樂器/開放空間預約說明」。完成登記並獲分配為開放空間預約系統的帳戶，登入後請使用本頁所連結的預約入口。",
     ctaRegister: "前往開放空間登記（新帳戶）",
     ctaBooking: "前往開放空間預約（已登入）",
   },
@@ -89,6 +89,8 @@ export const bookingZhHK = {
   },
   historyPanel: {
     loadError: "無法載入",
+    loading: "載入中…",
+    refresh: "重新整理",
     empty: "暫未有預約紀錄。",
     submittedAt: "提交時間：",
     bonusSlot: "使用 bonus 時段",

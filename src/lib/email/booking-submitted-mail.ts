@@ -198,7 +198,7 @@ export function buildBookingSubmittedMail(
         ].join("\n")
       : [
           "",
-          "Venue details are also on the site under “Open Space booking info” and related pages.",
+          "Venue details are also on the site under “Large instrument / Open Space booking info” and related pages.",
         ].join("\n");
 
     const text = [
@@ -217,7 +217,7 @@ export function buildBookingSubmittedMail(
       `• About 2026 D Festival Young Pianist Program: ${urls.aboutDf}`,
       `• FAQ: ${urls.faq}`,
       `• How to get to Fantasia Music Space: ${urls.directions}`,
-      `• Open Space booking info: ${urls.openSpace}`,
+      `• Large instrument / Open Space booking info: ${urls.openSpace}`,
       `• Privacy policy: ${urls.privacy}`,
       `• Terms & conditions: ${urls.terms}`,
       `• Contact: ${urls.contact}`,
@@ -250,14 +250,14 @@ export function buildBookingSubmittedMail(
     const driveHtml = driveUrl
       ? `<p style="margin:16px 0 8px;font-size:14px;">Building access (door / Wi‑Fi), venue and facility reference materials are in this Google Drive folder:</p>
   <p style="margin:0 0 16px;">${linkButton(driveUrl, "Open Google Drive folder")}</p>`
-      : `<p style="margin:16px 0;font-size:13px;color:#78716c;">More venue details are on the site under Open Space booking info and related pages.</p>`;
+      : `<p style="margin:16px 0;font-size:13px;color:#78716c;">More venue details are on the site under Large instrument / Open Space booking info and related pages.</p>`;
 
     const navLabels: [string, string][] = [
       [urls.history, "View my booking history"],
       [urls.aboutDf, "About 2026 D Festival Young Pianist Program"],
       [urls.faq, "FAQ"],
       [urls.directions, "How to get to Fantasia Music Space"],
-      [urls.openSpace, "Open Space booking info"],
+      [urls.openSpace, "Large instrument / Open Space booking info"],
       [urls.privacy, "Privacy policy"],
       [urls.terms, "Terms & conditions"],
       [urls.contact, "Contact"],
@@ -328,7 +328,7 @@ export function buildBookingSubmittedMail(
         "大門/Wi-Fi密碼、活動場地和設施之參考資料（Google Drive 資料夾）：",
         driveUrl,
       ].join("\n")
-    : ["", "場地說明亦可於本網站「開放空間預約說明」及相關頁面查閱。"].join(
+    : ["", "場地說明亦可於本網站「大型樂器/開放空間預約說明」及相關頁面查閱。"].join(
         "\n",
       );
 
@@ -348,7 +348,7 @@ export function buildBookingSubmittedMail(
     `• 關於 2026 D Festival 青年鋼琴家藝術節：${urls.aboutDf}`,
     `• 常見問題（FAQ）：${urls.faq}`,
     `• 如何前往幻樂空間：${urls.directions}`,
-    `• 開放空間預約說明：${urls.openSpace}`,
+    `• 大型樂器/開放空間預約說明：${urls.openSpace}`,
     `• 私隱條例：${urls.privacy}`,
     `• 條款與細則：${urls.terms}`,
     `• 聯絡資訊：${urls.contact}`,
@@ -381,14 +381,14 @@ export function buildBookingSubmittedMail(
   const driveHtml = driveUrl
     ? `<p style="margin:16px 0 8px;font-size:14px;">有關大門/Wi-Fi密碼、活動場地和設施之參考資料已整理於以下 Google Drive 資料夾：</p>
   <p style="margin:0 0 16px;">${linkButton(driveUrl, "開啟 Google Drive 資料夾")}</p>`
-    : `<p style="margin:16px 0;font-size:13px;color:#78716c;">場地說明亦可於本網站「開放空間預約說明」及相關頁面查閱。</p>`;
+    : `<p style="margin:16px 0;font-size:13px;color:#78716c;">場地說明亦可於本網站「大型樂器/開放空間預約說明」及相關頁面查閱。</p>`;
 
   const navLabels: [string, string][] = [
     [urls.history, "查看我的預約紀錄"],
     [urls.aboutDf, "關於 2026 D Festival 青年鋼琴家藝術節"],
     [urls.faq, "常見問題（FAQ）"],
     [urls.directions, "如何前往幻樂空間"],
-    [urls.openSpace, "開放空間預約說明"],
+    [urls.openSpace, "大型樂器/開放空間預約說明"],
     [urls.privacy, "私隱條例"],
     [urls.terms, "條款與細則"],
     [urls.contact, "聯絡資訊"],

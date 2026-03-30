@@ -68,7 +68,7 @@ export const bookingEn = {
     infoCardNoticeBody:
       "Expect some movement and sound at the main door and along the corridor, which may affect quietness and privacy. If you are sensitive to noise or foot traffic, please decide carefully before booking.",
     infoPageLead:
-      "This is the same information linked from the site menu under “Open Space booking info”. Accounts registered for the Open Space programme should use the Open Space booking entry after login.",
+      "This is the same information linked from the site menu under “Large instrument / Open Space booking info”. Accounts registered for the Open Space programme should use the Open Space booking entry after login.",
     ctaRegister: "Register for Open Space (new account)",
     ctaBooking: "Open Space booking (logged in)",
   },
@@ -91,6 +91,8 @@ export const bookingEn = {
   },
   historyPanel: {
     loadError: "Could not load",
+    loading: "Loading…",
+    refresh: "Refresh",
     empty: "No bookings yet.",
     submittedAt: "Submitted: ",
     bonusSlot: "Bonus slot",

@@ -95,7 +95,8 @@ export async function assertUserQuotaAfterRescheduleTx(
     if (n > params.dailyMax) {
       throw new RescheduleCoreError(
         "BOOKING_LIMIT_DAILY",
-        `此更改會令你於 ${day} 超出每日節數上限（${params.dailyMax} 節）。`
+        `此更改會令你於 ${day} 超出每日節數上限（${params.dailyMax} 節）。`,
+        { day, dailyMax: params.dailyMax }
       );
     }
   }
@@ -103,7 +104,8 @@ export async function assertUserQuotaAfterRescheduleTx(
   if (maxRollingThreeDaySum(map) > params.rollingMax) {
     throw new RescheduleCoreError(
       "BOOKING_LIMIT_ROLLING_3D",
-      `此更改會令你超出連續三個曆日之節數上限（${params.rollingMax} 節）。`
+      `此更改會令你超出連續三個曆日之節數上限（${params.rollingMax} 節）。`,
+      { rollingMax: params.rollingMax }
     );
   }
 }
@@ -111,7 +113,8 @@ export async function assertUserQuotaAfterRescheduleTx(
 export class RescheduleCoreError extends Error {
   constructor(
     public code: string,
-    message: string
+    message: string,
+    public details?: { day?: string; dailyMax?: number; rollingMax?: number }
   ) {
     super(message);
     this.name = "RescheduleCoreError";

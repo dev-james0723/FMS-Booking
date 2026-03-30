@@ -8,6 +8,7 @@ import {
   type SocialFollowLinkKey,
 } from "@/lib/social-follow";
 import { withBasePath } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type ApiClicks = Partial<Record<SocialFollowLinkKey, boolean>>;
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function SocialFollowSetupPanel({ token }: Props) {
+  const { t, tr } = useTranslation();
   const missingUrlCount = SOCIAL_FOLLOW_LINK_KEYS.filter((k) => !getSocialFollowUrl(k)).length;
 
   const [clicks, setClicks] = useState<ApiClicks>({});
@@ -38,7 +40,11 @@ export function SocialFollowSetupPanel({ token }: Props) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setError(data?.error?.message ?? "無法更新進度");
+          setError(
+            typeof data?.error?.message === "string" && data.error.message.trim()
+              ? data.error.message
+              : t("reg.socialFollowSetup.progressUpdateFail")
+          );
           return;
         }
         if (data?.clicks && typeof data.clicks === "object") {
@@ -52,13 +58,13 @@ export function SocialFollowSetupPanel({ token }: Props) {
           setVerified(false);
         }
       } catch {
-        setError("網絡錯誤，請稍後再試。");
+        setError(t("reg.socialFollowSetup.networkError"));
       } finally {
         setPendingKey(null);
         if (!linkKey) setLoading(false);
       }
     },
-    [token]
+    [token, t]
   );
 
   useEffect(() => {
@@ -68,7 +74,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
   function openAndRecord(linkKey: SocialFollowLinkKey) {
     const url = getSocialFollowUrl(linkKey);
     if (!url) {
-      setError("此連結尚未設定，請聯絡主辦方或稍後再試。");
+      setError(t("reg.socialFollowSetup.linkNotConfigured"));
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
@@ -78,9 +84,11 @@ export function SocialFollowSetupPanel({ token }: Props) {
   if (verified) {
     return (
       <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 sm:px-4 py-6 text-left">
-        <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤步驟已完成</h2>
+        <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">
+          {t("reg.socialFollowSetup.completedTitle")}
+        </h2>
         <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
-          你已透過本頁開啟全部六個官方帳戶連結；系統已記錄你完成登記時承諾之「追蹤指定社交媒體帳號」步驟。此舉不會帶來額外預約時段；免費體驗之名額與批核仍依活動條款及主辦安排為準。
+          {t("reg.socialFollowSetup.completedBody")}
         </p>
       </section>
     );
@@ -88,13 +96,15 @@ export function SocialFollowSetupPanel({ token }: Props) {
 
   return (
     <section className="mx-auto mt-10 max-w-4xl rounded-2xl border border-violet-200 bg-violet-50/50 px-5 sm:px-4 py-6 text-left">
-      <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">追蹤官方帳戶（登記承諾）</h2>
+      <h2 className="font-serif text-lg text-stone-900 dark:text-stone-50">
+        {t("reg.socialFollowSetup.sectionTitle")}
+      </h2>
       <p className="mt-2 text-sm font-medium text-stone-800 dark:text-stone-200">
-        參與本免費體驗須於 Instagram 及 Facebook 追蹤下列官方帳戶。
+        {t("reg.socialFollowSetup.intro")}
       </p>
       {missingUrlCount > 0 && (
         <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-          有 {missingUrlCount} 個官方連結未能載入，對應按鈕暫時無法使用。請稍後再試或聯絡主辦方。
+          {tr("reg.socialFollowSetup.missingUrls", { count: String(missingUrlCount) })}
         </p>
       )}
       {error && (
@@ -103,7 +113,8 @@ export function SocialFollowSetupPanel({ token }: Props) {
         </p>
       )}
       <p className="mt-3 text-sm font-medium text-stone-800 dark:text-stone-200">
-        進度：{loading ? "…" : `${progress} / 6`}
+        {t("reg.socialFollowSetup.progressLabel")}
+        {loading ? t("reg.socialFollowSetup.progressLoading") : `${progress} / 6`}
       </p>
 
       <div className="mt-6 grid gap-6 md:grid-cols-3">
@@ -112,7 +123,9 @@ export function SocialFollowSetupPanel({ token }: Props) {
             key={col.columnTitle}
             className="rounded-xl border border-stone-200 dark:border-stone-700 bg-surface px-3 py-4 shadow-sm"
           >
-            <h3 className="text-sm font-semibold leading-snug text-stone-900 dark:text-stone-50">{col.columnTitle}</h3>
+            <h3 className="text-sm font-semibold leading-snug text-stone-900 dark:text-stone-50">
+              {col.columnTitle}
+            </h3>
             <div className="mt-4 flex flex-col gap-2">
               <FollowButton
                 label="Instagram"
@@ -133,7 +146,7 @@ export function SocialFollowSetupPanel({ token }: Props) {
         ))}
       </div>
       <p className="mt-4 text-xs font-medium text-amber-900 dark:text-amber-200">
-        請在電腦瀏覽器完成此步驟效果最佳。若你曾清除瀏覽器資料或更換裝置，請登入後聯絡主辦方協助。
+        {t("reg.socialFollowSetup.desktopHint")}
       </p>
     </section>
   );
@@ -152,21 +165,22 @@ function FollowButton({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const { t, tr } = useTranslation();
   return (
     <button
       type="button"
       disabled={disabled || busy || done}
       onClick={onPress}
-      className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-stone-50 dark:bg-stone-900 px-3 py-2.5 text-sm font-medium text-stone-800 dark:text-stone-200 transition hover:bg-stone-100 dark:hover:bg-stone-700 dark:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-stone-50 dark:bg-stone-900 px-3 py-2.5 text-sm font-medium text-stone-800 dark:text-stone-200 transition hover:bg-stone-100 dark:hover:bg-stone-700 dark:hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {done ? (
         <>
-          <span className="text-emerald-600">✓</span> 以追蹤 {label}
+          <span className="text-emerald-600">✓</span> {tr("reg.socialFollowSetup.followed", { label })}
         </>
       ) : busy ? (
-        <>處理中…</>
+        <>{t("reg.socialFollowSetup.processing")}</>
       ) : (
-        <>前往 {label}</>
+        <>{tr("reg.socialFollowSetup.goTo", { label })}</>
       )}
     </button>
   );

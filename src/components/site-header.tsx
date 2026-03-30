@@ -17,7 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import {
   navDfestivalCtaMobileDrawerClass,
-  navFantasiaCtaClass,
+  navFantasiaCtaMobileDrawerClass,
   navIconButtonMdHome,
 } from "@/lib/nav-icon-button-classes";
 import { bookingNavEntryLabel, useSiteMe } from "@/lib/auth/use-site-me";
@@ -26,16 +26,13 @@ import {
   bookingNavLoginOpenSpaceDrawerClass,
   bookingNavLoginPianoClass,
   bookingNavLoginPianoDrawerClass,
-  navBookingPrimaryCtaMenuStudioClass,
+  navEmeraldDrawerStackClass,
 } from "@/lib/booking-nav-login-button-classes";
 
 const MOBILE_MAX_WIDTH_QUERY = "(max-width: 767px)";
 
 const btnOutline =
   "inline-flex min-h-[44px] items-center justify-center rounded-full border border-stone-300 dark:border-stone-600 px-5 sm:px-4 py-2 text-sm text-stone-800 dark:text-stone-200 transition hover:border-stone-900 hover:bg-stone-50 dark:hover:border-stone-400 dark:hover:bg-stone-800";
-/** Mobile main-menu drawer only: deep green CTA, white type. */
-const btnRegisterMobileDrawer =
-  "inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-emerald-950/80 bg-emerald-950 px-5 py-2 text-center text-sm font-semibold text-white shadow-[0_4px_18px_rgba(6,78,59,0.4)] ring-1 ring-emerald-800/50 transition hover:bg-emerald-900 hover:ring-emerald-700/55 active:bg-[#042f24] dark:border-emerald-900/90 dark:bg-emerald-950 dark:hover:bg-emerald-900";
 const linkPlain =
   "inline-flex min-h-[44px] items-center text-sm text-stone-600 transition hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-50";
 
@@ -603,7 +600,7 @@ export function SiteHeader() {
                     <MobileNavZipItem index={1}>
                       <Link
                         href="/register"
-                        className={`${btnRegisterMobileDrawer} text-center`}
+                        className={`${navEmeraldDrawerStackClass} text-center`}
                         onClick={closeMobileMenu}
                       >
                         {t("nav.registerCta")}
@@ -639,7 +636,7 @@ export function SiteHeader() {
                     <MobileNavZipItem index={5}>
                       <Link
                         href="/about-fantasia-music-space"
-                        className={`${navFantasiaCtaClass} text-center`}
+                        className={`${navFantasiaCtaMobileDrawerClass} text-center`}
                         onClick={closeMobileMenu}
                       >
                         {t("nav.aboutFantasiaMusicSpace")}
@@ -719,7 +716,7 @@ export function SiteHeader() {
                     <MobileNavZipItem index={1}>
                       <Link
                         href={bookingHref}
-                        className={`${navBookingPrimaryCtaMenuStudioClass} text-center`}
+                        className={`${navEmeraldDrawerStackClass} text-center`}
                         onClick={closeMobileMenu}
                       >
                         {bookingNavEntryLabel(meUser, t)}
@@ -746,7 +743,7 @@ export function SiteHeader() {
                     <MobileNavZipItem index={4}>
                       <Link
                         href="/about-fantasia-music-space"
-                        className={`${navFantasiaCtaClass} text-center`}
+                        className={`${navFantasiaCtaMobileDrawerClass} text-center`}
                         onClick={closeMobileMenu}
                       >
                         {t("nav.aboutFantasiaMusicSpace")}

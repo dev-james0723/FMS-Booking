@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
 import { getSessionFromCookies } from "@/lib/auth/session";
@@ -10,10 +9,55 @@ import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
 /** Avoid Prisma at build time when DB is unavailable (CI / local build without Postgres). */
 export const dynamic = "force-dynamic";
 
+/** Canonical origin for absolute URLs in metadata (Open Graph, etc.). */
+function siteMetadataBase(): URL {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (appUrl) {
+    try {
+      const u = new URL(appUrl);
+      return u;
+    } catch {
+      /* fall through */
+    }
+  }
+  const vu = process.env.VERCEL_URL?.trim();
+  if (vu) {
+    const host = vu.replace(/^https?:\/\//, "").split("/")[0];
+    return new URL(`https://${host}`);
+  }
+  return new URL("http://localhost:3000");
+}
+
+const defaultTitle = "D Festival × 幻樂空間｜限時免費琴室體驗預約";
+const defaultDescription =
+  "D Festival 青年鋼琴藝術節與 Fantasia Music Space 幻樂空間聯合企劃 — 登記、預約與禮遇一站式平台。";
+/** Same asset as the home hero; explicit OG image so crawlers don’t pick partner logos above the fold. */
+const ogImage = "/images/home/lead-grand-piano-studio.png";
+
 export const metadata: Metadata = {
-  title: "D Festival × 幻樂空間｜限時免費琴室體驗預約",
-  description:
-    "D Festival 青年鋼琴藝術節與 Fantasia Music Space 幻樂空間聯合企劃 — 登記、預約與禮遇一站式平台。",
+  metadataBase: siteMetadataBase(),
+  title: defaultTitle,
+  description: defaultDescription,
+  openGraph: {
+    title: defaultTitle,
+    description: defaultDescription,
+    type: "website",
+    locale: "zh_HK",
+    images: [
+      {
+        url: ogImage,
+        width: 1024,
+        height: 682,
+        alt: "幻樂空間琴室 — 三角鋼琴與練習空間",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+    images: [ogImage],
+  },
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=false;if(t==="dark")d=true;else if(t!=="light")d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
@@ -43,12 +87,15 @@ export default async function RootLayout({
       suppressHydrationWarning
       className="h-full antialiased"
     >
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <Script
+      <head>
+        {/* Inline in <head>: React 19 rejects next/script beforeInteractive in the body tree. */}
+        <script
           id="fms-theme-init"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
+          suppressHydrationWarning
         />
+      </head>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <SiteChrome initialLocale={initialLocale} initialSiteMeUser={initialSiteMeUser}>
           {children}
         </SiteChrome>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AboutEnBody } from "@/components/about-d-festival/about-en-body";
 import { AboutDfestivalLocaleSwitch } from "@/components/about-d-festival/about-locale-switch";
 import { AboutZhBody } from "@/components/about-d-festival/about-zh-body";
+import { GeorgeLiRecitalAnnouncementHost } from "@/components/about-d-festival/george-li-recital-announcement-host";
 import { dFestivalElfsightClassFromEnv } from "@/lib/about-d-festival-env";
 
 export const metadata: Metadata = {
@@ -14,9 +15,12 @@ export default function AboutDFestivalPage() {
   const dFestivalElfsightClass = dFestivalElfsightClassFromEnv();
 
   return (
-    <AboutDfestivalLocaleSwitch
-      zh={<AboutZhBody dFestivalElfsightClass={dFestivalElfsightClass} />}
-      en={<AboutEnBody dFestivalElfsightClass={dFestivalElfsightClass} />}
-    />
+    <>
+      <GeorgeLiRecitalAnnouncementHost />
+      <AboutDfestivalLocaleSwitch
+        zh={<AboutZhBody dFestivalElfsightClass={dFestivalElfsightClass} />}
+        en={<AboutEnBody dFestivalElfsightClass={dFestivalElfsightClass} />}
+      />
+    </>
   );
 }

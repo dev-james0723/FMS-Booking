@@ -37,6 +37,10 @@ function monthRangeKeys(year: number, month1: number): { from: string; to: strin
   };
 }
 
+function slotsResetSignature(slots: CurrentSlot[]): string {
+  return slots.map((s) => s.id).join("\0");
+}
+
 function initialMonthFromSlots(slots: CurrentSlot[]): { year: number; month1: number } {
   if (slots.length === 0) {
     const t = hkTodayKey();
@@ -48,15 +52,34 @@ function initialMonthFromSlots(slots: CurrentSlot[]): { year: number; month1: nu
   return { year: y, month1: m };
 }
 
-export function AdminBookingRescheduleModal(props: {
+type AdminBookingRescheduleModalProps = {
   open: boolean;
   onClose: () => void;
   bookingId: string;
   venue: VenueTab;
   currentSlots: CurrentSlot[];
   onApplied: () => void;
-}) {
-  const { open, onClose, bookingId, venue, currentSlots, onApplied } = props;
+};
+
+export function AdminBookingRescheduleModal(props: AdminBookingRescheduleModalProps) {
+  if (!props.open) return null;
+  const sig = slotsResetSignature(props.currentSlots);
+  return (
+    <AdminBookingRescheduleModalOpen
+      key={`${props.bookingId}-${sig}`}
+      onClose={props.onClose}
+      bookingId={props.bookingId}
+      venue={props.venue}
+      currentSlots={props.currentSlots}
+      onApplied={props.onApplied}
+    />
+  );
+}
+
+function AdminBookingRescheduleModalOpen(
+  props: Omit<AdminBookingRescheduleModalProps, "open">,
+) {
+  const { onClose, bookingId, venue, currentSlots, onApplied } = props;
 
   const [{ year, month1 }, setYm] = useState(() => initialMonthFromSlots(currentSlots));
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
@@ -66,16 +89,7 @@ export function AdminBookingRescheduleModal(props: {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    setYm(initialMonthFromSlots(currentSlots));
-    setSelectedDayKey(null);
-    setRemoveIds(new Set());
-    setAddIds(new Set());
-  }, [open, bookingId, currentSlots]);
-
   const loadAvail = useCallback(async () => {
-    if (!open) return;
     setLoadError(null);
     const { from, to } = monthRangeKeys(year, month1);
     const params = new URLSearchParams();
@@ -91,13 +105,12 @@ export function AdminBookingRescheduleModal(props: {
       return;
     }
     setAvail(data.slots ?? []);
-  }, [open, year, month1, venue, bookingId]);
+  }, [year, month1, venue, bookingId]);
 
   useEffect(() => {
-    if (!open) return;
     const t = window.setTimeout(() => void loadAvail(), 0);
     return () => window.clearTimeout(t);
-  }, [open, loadAvail]);
+  }, [loadAvail]);
 
   const currentIdSet = useMemo(() => new Set(currentSlots.map((s) => s.id)), [currentSlots]);
 
@@ -110,10 +123,9 @@ export function AdminBookingRescheduleModal(props: {
   }, [currentIdSet, removeIds]);
 
   const finalCount = useMemo(() => {
-    let n = 0;
-    for (const id of keptIds) n++;
-    for (const id of addIds) {
-      if (!keptIds.has(id)) n++;
+    let n = keptIds.size;
+    for (const addId of addIds) {
+      if (!keptIds.has(addId)) n++;
     }
     return n;
   }, [keptIds, addIds]);
@@ -155,8 +167,6 @@ export function AdminBookingRescheduleModal(props: {
     onApplied();
     onClose();
   }
-
-  if (!open) return null;
 
   const title = `${year} 年 ${month1} 月`;
 
