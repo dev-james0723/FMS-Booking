@@ -5,6 +5,7 @@ import { SiteChrome } from "@/components/site-chrome";
 import { getSessionFromCookies } from "@/lib/auth/session";
 import { localeFromCookieValue } from "@/lib/i18n/locale-cookie";
 import { FMS_LOCALE_STORAGE_KEY } from "@/lib/i18n/types";
+import { Analytics } from "@vercel/analytics/next";
 
 /** Avoid Prisma at build time when DB is unavailable (CI / local build without Postgres). */
 export const dynamic = "force-dynamic";
@@ -99,6 +100,7 @@ export default async function RootLayout({
         <SiteChrome initialLocale={initialLocale} initialSiteMeUser={initialSiteMeUser}>
           {children}
         </SiteChrome>
+        <Analytics />
       </body>
     </html>
   );
