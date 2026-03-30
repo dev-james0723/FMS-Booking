@@ -126,9 +126,11 @@ function RegisterSuccessInner() {
         {!hydrated ? (
           <p className="text-sm text-stone-500 dark:text-stone-400">…</p>
         ) : socialBlocksLogin && !gateComplete ? (
-          <p className="mx-auto max-w-lg text-sm text-amber-900 dark:text-amber-200">
-            {t("reg.successPage.goLoginBlocked")}
-          </p>
+          t("reg.successPage.goLoginBlocked") ? (
+            <p className="mx-auto max-w-lg text-sm text-amber-900 dark:text-amber-200">
+              {t("reg.successPage.goLoginBlocked")}
+            </p>
+          ) : null
         ) : (
           <Link
             href="/login"

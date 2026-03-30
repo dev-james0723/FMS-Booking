@@ -42,10 +42,10 @@ export const DEFAULT_SOCIAL_FOLLOW_URLS: Record<SocialFollowLinkKey, string> = {
     "https://www.instagram.com/dfestival_2026?igsh=MTk2ZjY0c3JlamlpdQ%3D%3D&utm_source=qr",
   dfestival_fb: "https://www.facebook.com/share/1EZ2TaR9zf/?mibextid=wwXIfr",
   hk_fantasia_mgmt_ig:
-    "https://www.instagram.com/fantasia_music_space?igsh=MXV3OGp5ZmgyNnRobA%3D%3D&utm_source=qr",
+    "https://www.instagram.com/fimm_hk?igsh=MXY0bXB6OXlmMXFpcg%3D%3D&utm_source=qr",
   hk_fantasia_mgmt_fb: "https://www.facebook.com/share/17shpXd199/?mibextid=wwXIfr",
   fantasia_space_ig:
-    "https://www.instagram.com/fimm_hk?igsh=MXY0bXB6OXlmMXFpcg%3D%3D&utm_source=qr",
+    "https://www.instagram.com/fantasia_music_space?igsh=MXV3OGp5ZmgyNnRobA%3D%3D&utm_source=qr",
   fantasia_space_fb: "https://www.facebook.com/share/14YQ5F5VMXZ/?mibextid=wwXIfr",
 };
 

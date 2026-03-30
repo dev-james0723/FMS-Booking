@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  experimental: {
+    optimizePackageImports: ["date-fns", "date-fns-tz"],
+  },
   serverExternalPackages: [
     "@prisma/client",
     "prisma",

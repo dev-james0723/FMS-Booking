@@ -65,22 +65,13 @@ export async function POST(req: Request) {
   const session = await getSessionFromCookies();
   const { token, linkKey, repostDeclaration } = parsed.data;
 
-  if (!session?.sub && !token) {
-    return jsonError(
-      "UNAUTHORIZED",
-      apiBilingual(
-        locale,
-        "請登入或使用登記成功頁面的有效連結。",
-        "Sign in or use the valid link from your registration success page."
-      ),
-      401
-    );
-  }
-
+  /**
+   * Prefer setup token when present: `/register/success` sends `token` in the body and also sends
+   * session cookies. Using session first would attribute clicks to the wrong account (or a user
+   * row without a profile), producing "找不到帳戶資料" / "Profile not found."
+   */
   let userId: string;
-  if (session?.sub) {
-    userId = session.sub;
-  } else {
+  if (token) {
     const byToken = await prisma.user.findUnique({
       where: { socialFollowSetupToken: token },
       select: { id: true },
@@ -97,6 +88,18 @@ export async function POST(req: Request) {
       );
     }
     userId = byToken.id;
+  } else if (session?.sub) {
+    userId = session.sub;
+  } else {
+    return jsonError(
+      "UNAUTHORIZED",
+      apiBilingual(
+        locale,
+        "請登入或使用登記成功頁面的有效連結。",
+        "Sign in or use the valid link from your registration success page."
+      ),
+      401
+    );
   }
 
   const user = await prisma.user.findUnique({

@@ -250,9 +250,11 @@ export function SocialFollowSetupPanel({
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs font-medium text-amber-900 dark:text-amber-200">
-            {t("reg.socialFollowSetup.desktopHint")}
-          </p>
+          {t("reg.socialFollowSetup.desktopHint") ? (
+            <p className="mt-4 text-xs font-medium text-amber-900 dark:text-amber-200">
+              {t("reg.socialFollowSetup.desktopHint")}
+            </p>
+          ) : null}
         </section>
       ) : (
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-5 sm:px-4 py-5 text-left">

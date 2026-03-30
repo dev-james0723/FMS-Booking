@@ -247,14 +247,13 @@ export const regZhHK = {
     socialFollowLinkMissing:
       "已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。",
     goLogin: "前往登入",
-    goLoginBlocked:
-      "請先按齊六個追蹤按鈕，並在下方選擇「是」確認已轉發兩個指定貼文及標註帳戶，方可前往登入。",
+    goLoginBlocked: "",
   },
   completeRegistrationSocial: {
     title: "請先完成社交媒體步驟",
     intro:
       "你已登入此帳戶。在以下承諾步驟全部完成之前，你無法使用預約介面或其他帳戶功能。你的帳戶仍需完成登記時承諾的步驟：追蹤三個主辦相關的 Instagram 及 Facebook 帳戶（六個按鈕），並確認已轉發 D Festival 兩個指定貼文及標註「D Festival 青年鋼琴家藝術節」與「幻樂空間」。完成後方可更改密碼（如適用）並使用預約功能。",
-    continueAfterDone: "繼續（前往更改密碼或帳戶）",
+    continueAfterDone: "繼續",
   },
   socialFollowSetup: {
     progressUpdateFail: "無法更新進度",
@@ -268,8 +267,7 @@ export const regZhHK = {
     missingUrls: "有 {count} 個官方連結未能載入，對應按鈕暫時無法使用。請稍後再試或聯絡主辦方。",
     progressLabel: "進度：",
     progressLoading: "…",
-    desktopHint:
-      "請在電腦瀏覽器完成此步驟效果最佳。若你曾清除瀏覽器資料或更換裝置，請登入後聯絡主辦方協助。",
+    desktopHint: "",
     followed: "已追蹤 {label}",
     processing: "處理中…",
     goTo: "前往 {label}",

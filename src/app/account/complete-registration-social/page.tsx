@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 import { SocialFollowSetupPanel } from "@/components/social-follow-setup-panel";
+import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { safeNextPath } from "@/lib/safe-next-path";
 
@@ -30,9 +31,19 @@ function CompleteRegistrationSocialContent() {
         <div className="mt-10 flex justify-center">
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
+              try {
+                await fetch(withBasePath("/api/v1/auth/session/refresh"), {
+                  method: "POST",
+                  credentials: "same-origin",
+                });
+              } catch {
+                /* still navigate — change-password is exempt from social-gate redirect */
+              }
               router.refresh();
-              router.push(next);
+              router.push(
+                `${withBasePath("/account/change-password")}?next=${encodeURIComponent(next)}`
+              );
             }}
             className="rounded-full bg-stone-900 px-8 py-3 text-sm text-white hover:bg-stone-800"
           >

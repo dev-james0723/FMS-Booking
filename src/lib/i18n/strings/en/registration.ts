@@ -254,14 +254,13 @@ export const regEn = {
     socialFollowLinkMissing:
       "You opted in to follow official accounts, but the follow links could not be loaded. Contact the organiser or register again if needed.",
     goLogin: "Go to sign in",
-    goLoginBlocked:
-      "Tap all six follow buttons and select “Yes” below to confirm you reposted the two designated posts and tagged the required accounts before signing in.",
+    goLoginBlocked: "",
   },
   completeRegistrationSocial: {
     title: "Finish the social media steps first",
     intro:
       "You are signed in. Until every step below is complete, booking and the rest of your account stay unavailable. Your account still needs the steps you agreed to at registration: follow the three organiser-related accounts on Instagram and Facebook (six buttons), and confirm you reposted the two designated D Festival posts and tagged “D Festival Young Pianist Programme” and “Fantasia Music Space”. After that you can change your password if required and use booking.",
-    continueAfterDone: "Continue (change password or account)",
+    continueAfterDone: "Continue",
   },
   socialFollowSetup: {
     progressUpdateFail: "Could not update progress",
@@ -276,8 +275,7 @@ export const regEn = {
       "{count} official link(s) could not be loaded, so those buttons are unavailable. Try again later or contact the organiser.",
     progressLabel: "Progress:",
     progressLoading: "…",
-    desktopHint:
-      "A desktop browser works best for this step. If you cleared browser data or switched devices, sign in and contact the organiser for help.",
+    desktopHint: "",
     followed: "Followed {label}",
     processing: "Working…",
     goTo: "Open {label}",
