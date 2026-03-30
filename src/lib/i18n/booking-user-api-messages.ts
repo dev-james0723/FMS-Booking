@@ -37,6 +37,10 @@ export function bookingRuleErrorUserMessage(locale: Locale, e: BookingRuleError)
       return isEn ? "Booking is not open yet." : "預約系統尚未開放";
     case "MUST_CHANGE_PASSWORD":
       return isEn ? "Please change your temporary password first." : "請先更改臨時密碼";
+    case "REGISTRATION_SOCIAL_INCOMPLETE":
+      return isEn
+        ? "Finish following the official accounts and confirm your reposts/tags on the registration steps page before booking."
+        : "請先完成官方帳戶追蹤及轉發與標註確認，方可預約。";
     case "REGISTRATION_INCOMPLETE":
       if (e.message.includes("帳戶未設定有效預約身份")) {
         return isEn

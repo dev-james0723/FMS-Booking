@@ -3,7 +3,12 @@ import { apiBilingual } from "@/lib/i18n/api-bilingual";
 import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
-import { attachUserSessionCookie, signUserSession } from "@/lib/auth/session";
+import {
+  attachUserSessionCookie,
+  buildUserSessionJwtPayload,
+  PRISMA_PROFILE_SELECT_FOR_SESSION_JWT,
+  signUserSession,
+} from "@/lib/auth/session";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -28,7 +33,10 @@ export async function POST(req: Request) {
   const email = parsed.data.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
+    include: {
+      credentials: true,
+      profile: { select: PRISMA_PROFILE_SELECT_FOR_SESSION_JWT },
+    },
   });
 
   if (!user?.credentials) {
@@ -61,14 +69,16 @@ export async function POST(req: Request) {
     data: { lastLoginAt: new Date() },
   });
 
-  const token = await signUserSession({
-    sub: user.id,
-    email: user.email,
-    accountStatus: user.accountStatus,
-    mustChangePassword: user.credentials.mustChangePassword,
-    hasCompletedRegistration: user.hasCompletedRegistration,
-    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
-  });
+  const token = await signUserSession(
+    buildUserSessionJwtPayload({
+      id: user.id,
+      email: user.email,
+      accountStatus: user.accountStatus,
+      hasCompletedRegistration: user.hasCompletedRegistration,
+      credentials: user.credentials,
+      profile: user.profile,
+    })
+  );
 
   const res = jsonOk({
     ok: true,

@@ -7,7 +7,7 @@ import { isJwtSecretConfigured, requireJwtSecret } from "@/lib/jwt-secret";
 const USER_COOKIE = "fms_user_session";
 const ADMIN_COOKIE = "fms_admin_session";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!isJwtSecretConfigured()) {
     return NextResponse.next();
@@ -50,6 +50,16 @@ export async function middleware(request: NextRequest) {
   if (!session) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (
+    !session.registrationSocialGateSatisfied &&
+    pathname !== "/account/complete-registration-social"
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/account/complete-registration-social";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }

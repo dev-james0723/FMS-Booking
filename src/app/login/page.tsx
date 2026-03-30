@@ -7,6 +7,7 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { withBasePath } from "@/lib/base-path";
 import { googleAuthStartUrl } from "@/lib/auth/google-auth-start-url";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 const googleAuthEnabled =
   typeof process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID === "string" &&
@@ -17,7 +18,7 @@ function LoginForm() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/account";
+  const next = safeNextPath(searchParams.get("next"), "/account");
   const loginTitle =
     next.includes("/open-space") ? t("login.titleOpenSpace") : next.startsWith("/booking") ? t("login.titlePianoStudio") : t("login.title");
 
@@ -251,6 +252,14 @@ function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
         />
       </label>
+      <p className="text-right text-xs">
+        <Link
+          href={`/forgot-password?next=${encodeURIComponent(next)}`}
+          className="text-stone-600 underline dark:text-stone-400"
+        >
+          {t("login.forgotPassword")}
+        </Link>
+      </p>
       <button
         type="submit"
         disabled={loading || passkeyLoading}

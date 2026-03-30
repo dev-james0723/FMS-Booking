@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { attachUserSessionCookie, signUserSession } from "@/lib/auth/session";
+import {
+  attachUserSessionCookie,
+  buildUserSessionJwtPayload,
+  PRISMA_PROFILE_SELECT_FOR_SESSION_JWT,
+  signUserSession,
+} from "@/lib/auth/session";
 import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
 import type {
   AuthenticationResponseJSON,
@@ -16,7 +21,12 @@ type UserForPasskeyLogin = {
   accountStatus: AccountStatus;
   hasCompletedRegistration: boolean;
   credentials: { mustChangePassword: boolean };
-  profile: { bookingVenueKind: BookingVenueKind } | null;
+  profile: {
+    bookingVenueKind: BookingVenueKind;
+    socialFollowClaimed: boolean;
+    socialFollowVerified: boolean;
+    socialRepostSetupConfirmed: boolean;
+  } | null;
 };
 
 const bodySchema = z.object({
@@ -58,7 +68,10 @@ export async function POST(req: Request) {
   if (emailNorm) {
     const user = await prisma.user.findUnique({
       where: { email: emailNorm },
-      include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
+      include: {
+        credentials: true,
+        profile: { select: PRISMA_PROFILE_SELECT_FOR_SESSION_JWT },
+      },
     });
 
     if (!user?.credentials) {
@@ -115,7 +128,10 @@ export async function POST(req: Request) {
     where: { credentialId: credId },
     include: {
       user: {
-        include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
+        include: {
+          credentials: true,
+          profile: { select: PRISMA_PROFILE_SELECT_FOR_SESSION_JWT },
+        },
       },
     },
   });
@@ -183,14 +199,16 @@ async function completePasskeyLogin(
     }),
   ]);
 
-  const token = await signUserSession({
-    sub: user.id,
-    email: user.email,
-    accountStatus: user.accountStatus,
-    mustChangePassword: creds.mustChangePassword,
-    hasCompletedRegistration: user.hasCompletedRegistration,
-    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
-  });
+  const token = await signUserSession(
+    buildUserSessionJwtPayload({
+      id: user.id,
+      email: user.email,
+      accountStatus: user.accountStatus,
+      hasCompletedRegistration: user.hasCompletedRegistration,
+      credentials: creds,
+      profile: user.profile,
+    })
+  );
 
   const res = jsonOk({
     ok: true,

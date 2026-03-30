@@ -4,7 +4,9 @@ import { serverLocaleFromCookies } from "@/lib/i18n/server-translate";
 import { prisma } from "@/lib/prisma";
 import {
   attachUserSessionCookie,
+  buildUserSessionJwtPayload,
   getSessionFromCookies,
+  PRISMA_PROFILE_SELECT_FOR_SESSION_JWT,
   signUserSession,
 } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -70,17 +72,22 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.sub },
-    include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
+    include: {
+      credentials: true,
+      profile: { select: PRISMA_PROFILE_SELECT_FOR_SESSION_JWT },
+    },
   });
 
-  const token = await signUserSession({
-    sub: user.id,
-    email: user.email,
-    accountStatus: user.accountStatus,
-    mustChangePassword: false,
-    hasCompletedRegistration: user.hasCompletedRegistration,
-    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
-  });
+  const token = await signUserSession(
+    buildUserSessionJwtPayload({
+      id: user.id,
+      email: user.email,
+      accountStatus: user.accountStatus,
+      hasCompletedRegistration: user.hasCompletedRegistration,
+      credentials: user.credentials,
+      profile: user.profile,
+    })
+  );
   const res = jsonOk({ ok: true });
   return attachUserSessionCookie(res, token);
 }

@@ -77,11 +77,8 @@ async function tryGeminiImage(
       });
       const dataUrl = imageDataUrlFromResponse(response);
       if (dataUrl) return dataUrl;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (process.env.NODE_ENV === "development") {
-        console.warn(`[avatar/generate] Gemini model ${model} failed:`, msg);
-      }
+    } catch {
+      /* try next model */
     }
   }
   return null;

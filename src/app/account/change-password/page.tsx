@@ -4,11 +4,12 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 function Form() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/account";
+  const next = safeNextPath(searchParams.get("next"), "/account");
   const { t } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState("");

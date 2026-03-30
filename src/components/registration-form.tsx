@@ -29,6 +29,7 @@ import {
 import { registrationInstrumentImageMap } from "@/lib/instruments/instrument-reference-images";
 import {
   deriveRegistrationProfile,
+  REGISTRATION_PROFILE_KINDS,
   type RegistrationProfileKind,
 } from "@/lib/registration/profile-kind";
 
@@ -71,6 +72,40 @@ const consentLinkClass =
 const googleAuthEnabled =
   typeof process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID === "string" &&
   process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID.length > 0;
+
+const REGISTRATION_GOOGLE_DRAFT_KEY_STUDIO = "fms_reg_google_return_draft_studio_v1";
+const REGISTRATION_GOOGLE_DRAFT_KEY_OPEN = "fms_reg_google_return_draft_open_v1";
+
+type RegistrationGoogleReturnDraftV1 = {
+  v: 1;
+  venue: "studio" | "open-space";
+  nameZh: string;
+  nameEn: string;
+  email: string;
+  age: number;
+  registrationProfileKind: RegistrationProfileKind | null;
+  teacherName: string;
+  teacherContact: string;
+  instrumentField: string;
+  instrumentMode: "none" | "piano" | "other";
+  otherInstrumentId: string | null;
+  identityFlags: string[];
+  identityOtherText: string;
+  usage: Record<string, boolean>;
+  usageOther: string;
+  selectedPreferredDates: string[];
+  preferredTimeSlotIds: string[];
+  extraNotes: string;
+  interestDfestival: boolean;
+  interestDmasters: boolean;
+  marketingOptIn: boolean;
+  socialFollowClaimed: boolean;
+  socialRepostClaimed: boolean;
+  wantsAmbassador: boolean;
+  agreedTerms: boolean;
+  agreedPrivacy: boolean;
+  agreedEmailNotifications: boolean;
+};
 
 function RedRequiredStarLead({ children }: { children: ReactNode }) {
   return (
@@ -273,6 +308,10 @@ export function RegistrationForm() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const registerForOpenSpace = searchParams.get("for") === "open-space";
+  const googleRegisterReturnUrl = useMemo(
+    () => `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+    [pathname, searchParams],
+  );
   const { t, tr, locale } = useTranslation();
   const dfestivalInfoUrl =
     locale === "en" ? "https://d-festival.org/en-us" : "https://d-festival.org/zh-hk";
@@ -315,6 +354,7 @@ export function RegistrationForm() {
   const [instrumentMode, setInstrumentMode] = useState<"none" | "piano" | "other">("none");
   const [otherInstrumentOpen, setOtherInstrumentOpen] = useState(false);
   const [privacyNoticeOpen, setPrivacyNoticeOpen] = useState(false);
+  const [freeStudioExperienceGuideOpen, setFreeStudioExperienceGuideOpen] = useState(false);
   const [otherInstrumentId, setOtherInstrumentId] = useState<string | null>(null);
   const [instrumentImages, setInstrumentImages] = useState<Record<string, string>>(() =>
     registrationInstrumentImageMap()
@@ -365,8 +405,109 @@ export function RegistrationForm() {
 
   useEffect(() => {
     if (searchParams.get("google_prefill") !== "1") return;
+    const draftKey = registerForOpenSpace
+      ? REGISTRATION_GOOGLE_DRAFT_KEY_OPEN
+      : REGISTRATION_GOOGLE_DRAFT_KEY_STUDIO;
+    const venue: RegistrationGoogleReturnDraftV1["venue"] = registerForOpenSpace
+      ? "open-space"
+      : "studio";
+
+    let draft: RegistrationGoogleReturnDraftV1 | null = null;
+    try {
+      const raw = sessionStorage.getItem(draftKey);
+      if (raw) {
+        const o = JSON.parse(raw) as Partial<RegistrationGoogleReturnDraftV1>;
+        if (o.v === 1 && o.venue === venue) {
+          const pk =
+            o.registrationProfileKind != null &&
+            (REGISTRATION_PROFILE_KINDS as readonly string[]).includes(o.registrationProfileKind)
+              ? o.registrationProfileKind
+              : null;
+          const mode =
+            o.instrumentMode === "piano" || o.instrumentMode === "other" || o.instrumentMode === "none"
+              ? o.instrumentMode
+              : "none";
+          draft = {
+            v: 1,
+            venue,
+            nameZh: typeof o.nameZh === "string" ? o.nameZh : "",
+            nameEn: typeof o.nameEn === "string" ? o.nameEn : "",
+            email: typeof o.email === "string" ? o.email : "",
+            age: typeof o.age === "number" && Number.isFinite(o.age) ? Math.round(o.age) : 18,
+            registrationProfileKind: pk,
+            teacherName: typeof o.teacherName === "string" ? o.teacherName : "",
+            teacherContact: typeof o.teacherContact === "string" ? o.teacherContact : "",
+            instrumentField: typeof o.instrumentField === "string" ? o.instrumentField : "",
+            instrumentMode: mode,
+            otherInstrumentId: typeof o.otherInstrumentId === "string" ? o.otherInstrumentId : null,
+            identityFlags: Array.isArray(o.identityFlags)
+              ? o.identityFlags.filter((x): x is string => typeof x === "string")
+              : [],
+            identityOtherText: typeof o.identityOtherText === "string" ? o.identityOtherText : "",
+            usage:
+              o.usage && typeof o.usage === "object" && !Array.isArray(o.usage)
+                ? (Object.fromEntries(
+                    Object.entries(o.usage as Record<string, unknown>).filter(
+                      (entry): entry is [string, boolean] =>
+                        typeof entry[0] === "string" && typeof entry[1] === "boolean",
+                    ),
+                  ) as Record<string, boolean>)
+                : {},
+            usageOther: typeof o.usageOther === "string" ? o.usageOther : "",
+            selectedPreferredDates: Array.isArray(o.selectedPreferredDates)
+              ? o.selectedPreferredDates.filter((x): x is string => typeof x === "string")
+              : [],
+            preferredTimeSlotIds: Array.isArray(o.preferredTimeSlotIds)
+              ? o.preferredTimeSlotIds.filter((x): x is string => typeof x === "string")
+              : [],
+            extraNotes: typeof o.extraNotes === "string" ? o.extraNotes : "",
+            interestDfestival: !!o.interestDfestival,
+            interestDmasters: !!o.interestDmasters,
+            marketingOptIn: !!o.marketingOptIn,
+            socialFollowClaimed: !!o.socialFollowClaimed,
+            socialRepostClaimed: !!o.socialRepostClaimed,
+            wantsAmbassador: !!o.wantsAmbassador,
+            agreedTerms: !!o.agreedTerms,
+            agreedPrivacy: !!o.agreedPrivacy,
+            agreedEmailNotifications: !!o.agreedEmailNotifications,
+          };
+        }
+      }
+    } catch {
+      draft = null;
+    }
+
+    if (draft) {
+      setNameZh(draft.nameZh);
+      setNameEn(draft.nameEn);
+      setEmail(draft.email);
+      setAge(draft.age);
+      setRegistrationProfileKind(draft.registrationProfileKind);
+      setTeacherName(draft.teacherName);
+      setTeacherContact(draft.teacherContact);
+      setInstrumentField(draft.instrumentField);
+      setInstrumentMode(draft.instrumentMode);
+      setOtherInstrumentId(draft.otherInstrumentId);
+      setIdentityFlags(draft.identityFlags);
+      setIdentityOtherText(draft.identityOtherText);
+      setUsage(draft.usage);
+      setUsageOther(draft.usageOther);
+      setSelectedPreferredDates(draft.selectedPreferredDates);
+      setPreferredTimeSlotIds(draft.preferredTimeSlotIds);
+      setExtraNotes(draft.extraNotes);
+      setInterestDfestival(draft.interestDfestival);
+      setInterestDmasters(draft.interestDmasters);
+      setMarketingOptIn(draft.marketingOptIn);
+      setSocialFollowClaimed(draft.socialFollowClaimed);
+      setSocialRepostClaimed(draft.socialRepostClaimed);
+      setWantsAmbassador(draft.wantsAmbassador);
+      setAgreedTerms(draft.agreedTerms);
+      setAgreedPrivacy(draft.agreedPrivacy);
+      setAgreedEmailNotifications(draft.agreedEmailNotifications);
+    }
+
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const res = await fetch(withBasePath("/api/v1/auth/google/register-prefill"), {
         credentials: "include",
       });
@@ -375,8 +516,16 @@ export function RegistrationForm() {
       };
       if (cancelled) return;
       const prefill = data.prefill;
-      if (prefill?.email) setEmail(prefill.email);
+      if (prefill?.email) {
+        setEmail(prefill.email);
+        setPasskeyPreregToken(null);
+      }
       if (prefill?.nameEn) setNameEn(prefill.nameEn);
+      try {
+        sessionStorage.removeItem(draftKey);
+      } catch {
+        /* ignore */
+      }
       const p = new URLSearchParams(searchParams.toString());
       p.delete("google_prefill");
       const q = p.toString();
@@ -385,7 +534,7 @@ export function RegistrationForm() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, registerForOpenSpace]);
 
   const identityOptions = useMemo(
     () =>
@@ -595,7 +744,10 @@ export function RegistrationForm() {
           email: email.trim(),
           phone: phone.trim(),
           phoneVerificationToken,
-          displayName: nameZh.trim() || undefined,
+          displayName:
+            (locale === "en"
+              ? nameEn.trim() || nameZh.trim()
+              : nameZh.trim() || nameEn.trim()) || undefined,
         }),
       });
       const optData = await optRes.json().catch(() => ({}));
@@ -715,6 +867,15 @@ export function RegistrationForm() {
       setError(t("reg.emailInvalid"));
       return;
     }
+    if (locale === "zh-HK") {
+      if (!nameZh.trim()) {
+        setError(t("reg.nameZhRequiredSubmit"));
+        return;
+      }
+    } else if (!nameEn.trim()) {
+      setError(t("reg.nameEnRequiredSubmit"));
+      return;
+    }
     if (!phoneVerificationToken || !phoneVerified) {
       setError(t("reg.phoneSmsPasskey"));
       return;
@@ -760,6 +921,7 @@ export function RegistrationForm() {
     }
 
     const body = {
+      registrationUiLocale: locale,
       nameZh: nameZh.trim(),
       nameEn: nameEn.trim() || null,
       email: emailTrim,
@@ -877,7 +1039,11 @@ export function RegistrationForm() {
       } catch {
         /* ignore quota / private mode */
       }
-      router.push("/register/success");
+      const tok =
+        typeof okPayload.socialFollowSetupToken === "string"
+          ? okPayload.socialFollowSetupToken
+          : null;
+      router.push(tok ? `/register/success?t=${encodeURIComponent(tok)}` : "/register/success");
     } catch {
       setError(t("reg.networkError"));
     }
@@ -900,6 +1066,48 @@ export function RegistrationForm() {
       )}
 
       <section className="space-y-4">
+        <div>
+          <button
+            type="button"
+            id="reg-free-studio-guide-trigger"
+            aria-expanded={freeStudioExperienceGuideOpen}
+            aria-controls="reg-free-studio-guide-panel"
+            onClick={() => setFreeStudioExperienceGuideOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800/80 bg-[#0f2744] px-4 py-3.5 text-left text-sm font-medium text-white shadow-md transition hover:bg-[#15355a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 dark:border-slate-700/90 dark:bg-[#0c2138] dark:hover:bg-[#122a45]"
+          >
+            <span className="leading-snug">{t("reg.freeStudioExperienceGuideTrigger")}</span>
+            <svg
+              className={`size-5 shrink-0 text-white/90 transition-transform ${freeStudioExperienceGuideOpen ? "rotate-180" : ""}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          {freeStudioExperienceGuideOpen ? (
+            <div
+              id="reg-free-studio-guide-panel"
+              role="region"
+              aria-labelledby="reg-free-studio-guide-trigger"
+              className="mt-3 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 p-3 dark:border-stone-600 dark:bg-stone-900/60"
+            >
+              <Image
+                src={withBasePath("/images/registration/d-festival-free-piano-room-experience-guide.png")}
+                alt={t("reg.freeStudioExperienceGuideAlt")}
+                width={571}
+                height={1024}
+                className="mx-auto h-auto w-full max-w-md rounded-lg shadow-sm"
+                sizes="(max-width: 640px) 100vw, 28rem"
+                priority={false}
+              />
+            </div>
+          ) : null}
+        </div>
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionMusic")}</h2>
         <div className="block text-sm">
           <RedRequiredStarLead>
@@ -1098,27 +1306,47 @@ export function RegistrationForm() {
       <section className="space-y-4">
         <h2 className="font-serif text-xl text-stone-900 dark:text-stone-50">{t("reg.sectionBasic")}</h2>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">{t("reg.nameZh")}</span>
+          <span className="text-stone-700 dark:text-stone-300">
+            {locale === "zh-HK" ? (
+              <RedRequiredStarLead>{t("reg.nameZh")}</RedRequiredStarLead>
+            ) : (
+              t("reg.nameZh")
+            )}
+          </span>
           <input
-            required
+            required={locale === "zh-HK"}
             className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={nameZh}
             onChange={(e) => setNameZh(e.target.value)}
           />
         </label>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">{t("reg.nameEn")}</span>
+          <span className="text-stone-700 dark:text-stone-300">
+            {locale === "en" ? (
+              <RedRequiredStarLead>{t("reg.nameEn")}</RedRequiredStarLead>
+            ) : (
+              t("reg.nameEn")
+            )}
+          </span>
           <input
+            required={locale === "en"}
             className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
           />
         </label>
         <label className="block text-sm">
-          <span className="text-stone-700 dark:text-stone-300">{t("reg.email")}</span>
+          <span className="text-stone-700 dark:text-stone-300">
+            {locale === "zh-HK" ? (
+              <RedRequiredStarLead>{t("reg.email")}</RedRequiredStarLead>
+            ) : (
+              t("reg.email")
+            )}
+          </span>
           <input
             type="email"
             autoComplete="email"
+            required
             className="mt-1 w-full rounded-lg border border-stone-300 bg-surface-input px-4 py-2 sm:px-3 text-foreground dark:border-stone-700"
             value={email}
             onChange={(e) => {
@@ -1131,10 +1359,52 @@ export function RegistrationForm() {
           {googleAuthEnabled ? (
             <>
               <a
-                href={googleAuthStartUrl(
-                  "register",
-                  `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
-                )}
+                href={googleAuthStartUrl("register", googleRegisterReturnUrl)}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                  e.preventDefault();
+                  const draft: RegistrationGoogleReturnDraftV1 = {
+                    v: 1,
+                    venue: registerForOpenSpace ? "open-space" : "studio",
+                    nameZh,
+                    nameEn,
+                    email,
+                    age,
+                    registrationProfileKind,
+                    teacherName,
+                    teacherContact,
+                    instrumentField,
+                    instrumentMode,
+                    otherInstrumentId,
+                    identityFlags,
+                    identityOtherText,
+                    usage,
+                    usageOther,
+                    selectedPreferredDates,
+                    preferredTimeSlotIds,
+                    extraNotes,
+                    interestDfestival,
+                    interestDmasters,
+                    marketingOptIn,
+                    socialFollowClaimed,
+                    socialRepostClaimed,
+                    wantsAmbassador,
+                    agreedTerms,
+                    agreedPrivacy,
+                    agreedEmailNotifications,
+                  };
+                  try {
+                    sessionStorage.setItem(
+                      registerForOpenSpace
+                        ? REGISTRATION_GOOGLE_DRAFT_KEY_OPEN
+                        : REGISTRATION_GOOGLE_DRAFT_KEY_STUDIO,
+                      JSON.stringify(draft),
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                  window.location.href = googleAuthStartUrl("register", googleRegisterReturnUrl);
+                }}
                 className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white py-2.5 text-sm font-medium text-stone-800 shadow-sm hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800"
               >
                 <svg className="size-5 shrink-0" viewBox="0 0 24 24" aria-hidden>

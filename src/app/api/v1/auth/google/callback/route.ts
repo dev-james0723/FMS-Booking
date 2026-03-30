@@ -5,7 +5,12 @@ import {
   attachAdminSessionCookie,
   signAdminSession,
 } from "@/lib/auth/admin-session";
-import { attachUserSessionCookie, signUserSession } from "@/lib/auth/session";
+import {
+  attachUserSessionCookie,
+  buildUserSessionJwtPayload,
+  PRISMA_PROFILE_SELECT_FOR_SESSION_JWT,
+  signUserSession,
+} from "@/lib/auth/session";
 import {
   createGoogleAuthOAuth2Client,
   getGoogleAuthClientId,
@@ -17,6 +22,7 @@ import {
   googleRegisterPrefillCookieOptions,
 } from "@/lib/auth/google-auth-sign-in";
 import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
+import { safeAdminNextPath, safeNextPath } from "@/lib/safe-next-path";
 
 function redirectTo(origin: string, path: string): NextResponse {
   const p = path.startsWith("/") ? path : `/${path}`;
@@ -47,6 +53,13 @@ export async function GET(req: NextRequest) {
   if (!state) {
     return redirectTo(origin, "/login?google=state");
   }
+
+  const nextPath =
+    state.intent === "admin"
+      ? safeAdminNextPath(state.next, "/admin/bookings")
+      : state.intent === "register"
+        ? safeNextPath(state.next, "/register")
+        : safeNextPath(state.next, "/account");
 
   const clientId = getGoogleAuthClientId();
   if (!clientId) {
@@ -84,8 +97,8 @@ export async function GET(req: NextRequest) {
 
   if (state.intent === "register") {
     const token = await signGoogleRegisterPrefillCookieValue(profile);
-    const sep = state.next.includes("?") ? "&" : "?";
-    const targetPath = `${state.next}${sep}google_prefill=1`;
+    const sep = nextPath.includes("?") ? "&" : "?";
+    const targetPath = `${nextPath}${sep}google_prefill=1`;
     const res = redirectTo(origin, targetPath);
     res.cookies.set(GOOGLE_REGISTER_PREFILL_COOKIE, token, googleRegisterPrefillCookieOptions);
     return res;
@@ -103,13 +116,16 @@ export async function GET(req: NextRequest) {
       email: admin.email,
       role: admin.role,
     });
-    const res = NextResponse.redirect(`${origin}${withBasePath(state.next)}`);
+    const res = NextResponse.redirect(`${origin}${withBasePath(nextPath)}`);
     return attachAdminSessionCookie(res, sessionToken);
   }
 
   const user = await prisma.user.findUnique({
     where: { email: profile.email },
-    include: { credentials: true, profile: { select: { bookingVenueKind: true } } },
+    include: {
+      credentials: true,
+      profile: { select: PRISMA_PROFILE_SELECT_FOR_SESSION_JWT },
+    },
   });
 
   if (!user?.credentials) {
@@ -125,15 +141,17 @@ export async function GET(req: NextRequest) {
     data: { lastLoginAt: new Date() },
   });
 
-  const sessionToken = await signUserSession({
-    sub: user.id,
-    email: user.email,
-    accountStatus: user.accountStatus,
-    mustChangePassword: user.credentials.mustChangePassword,
-    hasCompletedRegistration: user.hasCompletedRegistration,
-    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
-  });
+  const sessionToken = await signUserSession(
+    buildUserSessionJwtPayload({
+      id: user.id,
+      email: user.email,
+      accountStatus: user.accountStatus,
+      hasCompletedRegistration: user.hasCompletedRegistration,
+      credentials: user.credentials,
+      profile: user.profile,
+    })
+  );
 
-  const res = NextResponse.redirect(`${origin}${withBasePath(state.next)}`);
+  const res = NextResponse.redirect(`${origin}${withBasePath(nextPath)}`);
   return attachUserSessionCookie(res, sessionToken);
 }

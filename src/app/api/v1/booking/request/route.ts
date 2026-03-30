@@ -141,6 +141,7 @@ export async function POST(req: Request) {
       const forbidden = new Set([
         "BOOKING_NOT_OPEN",
         "MUST_CHANGE_PASSWORD",
+        "REGISTRATION_SOCIAL_INCOMPLETE",
         "REGISTRATION_INCOMPLETE",
         "ACCOUNT_NOT_ACTIVE",
       ]);

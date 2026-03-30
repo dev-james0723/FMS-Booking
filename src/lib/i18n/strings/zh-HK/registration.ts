@@ -57,6 +57,9 @@ export const regZhHK = {
   regProfileTeacherReferred: "老師推薦之學生",
   regProfileDual: "個人使用者及教學／帶學生（同時有教學及練習需求）",
   sectionMusic: "音樂背景",
+  freeStudioExperienceGuideTrigger: "按此快速查看如何參與本次免費琴室體驗",
+  freeStudioExperienceGuideAlt:
+    "D Festival × 幻樂空間：限時免費琴室預約全攻略（活動資訊、參與步驟及重要日期）",
   sectionUsage: "使用用途",
   sectionIntent: "初步預約意向",
   sectionInterest: "興趣與協議",
@@ -64,6 +67,8 @@ export const regZhHK = {
   sectionConsent: "同意事項",
   nameZh: "中文姓名（必填）",
   nameEn: "英文姓名",
+  nameZhRequiredSubmit: "請填寫中文姓名。",
+  nameEnRequiredSubmit: "請填寫英文姓名。",
   email: "Email（作為登入帳號；可手動填寫或使用下方 Google）",
   emailRequiredSubmit: "請填寫電郵，或使用下方 Google 帳戶預填。",
   emailInvalid: "請輸入有效的電郵地址。",
@@ -75,7 +80,7 @@ export const regZhHK = {
     "Face ID、指紋等生物特徵資料主要保留於您的裝置；我們的伺服器僅儲存經加密處理之通行密鑰相關技術資料，以核實為本人操作，無法還原您的容貌或指紋圖像。",
   phoneLabel: "聯絡電話（必填）",
   phoneHint:
-    "用作接收 SMS 驗證碼；每個電話號碼只可登記一個帳戶（防止重複註冊）。",
+    "用作接收 SMS 驗證碼；每個電話號碼只可登記一個帳戶。",
   phonePlaceholder: "例如 91234567 或 +85291234567",
   smsSentWait: "已發送（{seconds}s 後可再發）",
   smsSending: "發送中…",
@@ -183,7 +188,7 @@ export const regZhHK = {
     student_recording: "協助學生錄影",
   },
   fieldLabels: {
-    nameZh: "中文姓名",
+    nameZh: "中文姓名（必填）",
     nameEn: "英文姓名",
     email: "Email",
     phone: "聯絡電話",
@@ -242,6 +247,14 @@ export const regZhHK = {
     socialFollowLinkMissing:
       "已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。",
     goLogin: "前往登入",
+    goLoginBlocked:
+      "請先按齊六個追蹤按鈕，並在下方選擇「是」確認已轉發兩個指定貼文及標註帳戶，方可前往登入。",
+  },
+  completeRegistrationSocial: {
+    title: "請先完成社交媒體步驟",
+    intro:
+      "你的帳戶仍需完成登記時承諾的步驟：追蹤三個主辦相關的 Instagram 及 Facebook 帳戶（六個按鈕），並確認已轉發 D Festival 兩個指定貼文及標註「D Festival 青年鋼琴家藝術節」與「幻樂空間」。完成後方可更改密碼並使用預約功能。",
+    continueAfterDone: "繼續（前往更改密碼或帳戶）",
   },
   socialFollowSetup: {
     progressUpdateFail: "無法更新進度",
@@ -260,10 +273,24 @@ export const regZhHK = {
     followed: "已追蹤 {label}",
     processing: "處理中…",
     goTo: "前往 {label}",
+    allDoneTitle: "追蹤與轉發確認已完成",
+    allDoneBodyPreLogin:
+      "系統已記錄你完成六個官方帳戶追蹤步驟，並確認已轉發兩個指定貼文及標註所需帳戶。你現在可以前往登入；登入後請先更改臨時密碼，方可使用帳戶功能。",
+    allDoneBodyAuthed:
+      "系統已更新你的紀錄。請點擊下方繼續；若尚未更改臨時密碼，你將被帶往更改密碼頁面。",
+    followPhaseDoneTitle: "六個追蹤按鈕已完成",
+    followPhaseDoneBody:
+      "請繼續瀏覽下方兩個指定貼文，轉發至你的 Story 或貼文，並務必標註（Tag）「D Festival 青年鋼琴家藝術節」以及「幻樂空間／Fantasia Music Space」的官方帳戶。",
+    repostDeclareTitle: "轉發與標註確認",
+    repostDeclareQuestion:
+      "你是否已經轉發上述兩個 D Festival 指定貼文，並在限時動態（Story）或貼文中標註（Tag）「D Festival 青年鋼琴家藝術節」及「幻樂空間」？",
+    repostYes: "是，已完成轉發及標註",
+    repostNo: "否，尚未完成",
+    repostNoReminder: "請先完成轉發並標註指定帳戶，然後再選「是」。未完成前無法登入或使用預約功能。",
   },
   repostWidget: {
     title: "轉發指定貼文（登記承諾）",
     body:
-      "請於下方小工具開啟指定貼文，並分享到 Instagram 或 Facebook 限時動態；於限時動態標註 (tag)「D Festival 青年鋼琴家藝術節」及「幻樂空間 Fantasia Music Space」的 Instagram 與 Facebook 帳號。主辦方可依活動條款核實參與情況。",
+      "請於下方小工具開啟兩個指定貼文，轉發到你的 Instagram 或 Facebook 限時動態或貼文，並標註（Tag）「D Festival 青年鋼琴家藝術節」及「幻樂空間 Fantasia Music Space」的官方帳號。主辦方可依活動條款核實參與情況。",
   },
 } as const;

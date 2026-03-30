@@ -461,7 +461,7 @@ export function GeorgeLiRecitalAnnouncement() {
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/40 p-3 backdrop-blur-2xl backdrop-saturate-150 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[110] flex min-h-0 items-end justify-center bg-black/40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-2xl backdrop-saturate-150 sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) dismiss();
@@ -471,19 +471,21 @@ export function GeorgeLiRecitalAnnouncement() {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex max-h-[96vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-50 shadow-2xl dark:border-stone-700 dark:bg-stone-900 sm:max-w-2xl"
+        className="relative flex max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-max(0.75rem,env(safe-area-inset-bottom,0px))-0.75rem)] w-full min-h-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-50 shadow-2xl dark:border-stone-700 dark:bg-stone-900 sm:max-h-[96vh] sm:max-w-2xl"
       >
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={dismiss}
-          className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-stone-900/70 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:bg-stone-100/90 dark:text-stone-900 dark:hover:bg-white"
-          aria-label={t("banner.dismiss")}
-        >
-          ×
-        </button>
+        <div className="flex shrink-0 items-center justify-end border-b border-stone-200/70 bg-stone-50 px-2 py-2 dark:border-stone-700 dark:bg-stone-900 sm:px-3 sm:py-2.5">
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={dismiss}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-900/70 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:bg-stone-100/90 dark:text-stone-900 dark:hover:bg-white"
+            aria-label={t("banner.dismiss")}
+          >
+            ×
+          </button>
+        </div>
 
-        <div className="overflow-y-auto overscroll-contain px-4 pb-5 pt-12 sm:px-6 sm:pb-6 sm:pt-14">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6">
           <h2
             id={titleId}
             className="mx-auto mb-5 max-w-xl text-center font-serif text-[1.35rem] font-semibold leading-snug tracking-tight text-stone-900 sm:text-2xl dark:text-stone-50"

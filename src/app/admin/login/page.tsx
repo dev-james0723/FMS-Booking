@@ -6,6 +6,7 @@ import { startAuthentication, startRegistration } from "@simplewebauthn/browser"
 import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/types";
 import { withBasePath } from "@/lib/base-path";
 import { googleAuthStartUrl } from "@/lib/auth/google-auth-start-url";
+import { safeAdminNextPath } from "@/lib/safe-next-path";
 
 const googleAuthEnabled =
   typeof process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID === "string" &&
@@ -15,7 +16,7 @@ function AdminLoginForm() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/admin/bookings";
+  const next = safeAdminNextPath(searchParams.get("next"), "/admin/bookings");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

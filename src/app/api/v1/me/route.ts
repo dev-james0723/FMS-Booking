@@ -4,6 +4,7 @@ import { getSessionFromCookies } from "@/lib/auth/session";
 import { resolveReferrerDisplayForUser } from "@/lib/referral/ambassador";
 import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import { getAllSettings, getEffectiveNow } from "@/lib/settings";
+import { isRegistrationSocialGateSatisfied } from "@/lib/auth/registration-social-gate";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -28,13 +29,14 @@ export async function GET() {
   const now = await getEffectiveNow();
   const bookingOpen = isBookingPortalLiveFromSettings(settings, now);
 
+  const p = user.profile;
+  const registrationSocialGateSatisfied = isRegistrationSocialGateSatisfied(p);
   const canAccessBookingPortal =
     user.hasCompletedRegistration &&
     user.accountStatus === "active" &&
     user.credentials !== null &&
-    user.credentials.mustChangePassword === false;
-
-  const p = user.profile;
+    user.credentials.mustChangePassword === false &&
+    registrationSocialGateSatisfied;
   const referrerNameZh = await resolveReferrerDisplayForUser(
     prisma,
     user.referralAttributionCode
@@ -64,6 +66,7 @@ export async function GET() {
     gates: {
       bookingPortalOpen: bookingOpen,
       canAccessBookingPortal,
+      registrationSocialGateSatisfied,
       serverNow: now.toISOString(),
     },
   });

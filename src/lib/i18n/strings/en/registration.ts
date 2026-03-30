@@ -59,13 +59,19 @@ export const regEn = {
   regProfileTeacherReferred: "Student referred by a teacher",
   regProfileDual: "Individual & teaching (both practice and teaching needs)",
   sectionMusic: "Musical background",
+  freeStudioExperienceGuideTrigger:
+    "Tap here for a quick guide to this free piano room experience",
+  freeStudioExperienceGuideAlt:
+    "D Festival × Magic Music Space: limited-time free piano room booking guide (how to join, dates, and steps)",
   sectionUsage: "Intended use",
   sectionIntent: "Initial booking preferences",
   sectionInterest: "Interests & agreements",
   sectionRequiredHint: "Required fields",
   sectionConsent: "Consent",
-  nameZh: "Chinese name (required)",
-  nameEn: "English name",
+  nameZh: "Chinese name",
+  nameEn: "English name (Required)",
+  nameZhRequiredSubmit: "Please enter your Chinese name.",
+  nameEnRequiredSubmit: "Please enter your English name.",
   email: "Email (for sign-in — type it in or use Google below)",
   emailRequiredSubmit: "Please enter your email, or use Google sign-in below to prefill it.",
   emailInvalid: "Please enter a valid email address.",
@@ -248,6 +254,14 @@ export const regEn = {
     socialFollowLinkMissing:
       "You opted in to follow official accounts, but the follow links could not be loaded. Contact the organiser or register again if needed.",
     goLogin: "Go to sign in",
+    goLoginBlocked:
+      "Tap all six follow buttons and select “Yes” below to confirm you reposted the two designated posts and tagged the required accounts before signing in.",
+  },
+  completeRegistrationSocial: {
+    title: "Finish the social media steps first",
+    intro:
+      "Your account still needs the steps you agreed to at registration: follow the three organiser-related accounts on Instagram and Facebook (six buttons), and confirm you reposted the two designated D Festival posts and tagged “D Festival Young Pianist Programme” and “Fantasia Music Space”. After that you can change your password and use booking.",
+    continueAfterDone: "Continue (change password or account)",
   },
   socialFollowSetup: {
     progressUpdateFail: "Could not update progress",
@@ -267,10 +281,25 @@ export const regEn = {
     followed: "Followed {label}",
     processing: "Working…",
     goTo: "Open {label}",
+    allDoneTitle: "Follow and repost confirmation complete",
+    allDoneBodyPreLogin:
+      "We recorded all six follow taps and your confirmation that you reposted the two designated posts with the required tags. You can sign in now; after sign-in, change your temporary password before using your account.",
+    allDoneBodyAuthed:
+      "Your record is updated. Tap continue below; if you still use a temporary password, you will be sent to change it.",
+    followPhaseDoneTitle: "All six follow buttons are done",
+    followPhaseDoneBody:
+      "Open the two designated posts below, repost them to your Story or feed, and tag the official accounts for D Festival Young Pianist Programme and Fantasia Music Space.",
+    repostDeclareTitle: "Repost and tag confirmation",
+    repostDeclareQuestion:
+      "Have you reposted both designated D Festival posts and tagged “D Festival Young Pianist Programme” and “Fantasia Music Space” in your Story or post?",
+    repostYes: "Yes — I reposted and tagged",
+    repostNo: "Not yet",
+    repostNoReminder:
+      "Please repost and tag the required accounts first, then choose “Yes”. You cannot sign in or book until this is done.",
   },
   repostWidget: {
     title: "Repost designated posts (registration commitment)",
     body:
-      "Use the widget below to open the designated posts and share them to Instagram or Facebook Stories; tag the D Festival Young Pianist Program and Fantasia Music Space on Instagram and Facebook. The organiser may verify participation under the campaign terms.",
+      "Use the widget below to open the two designated posts and share them to Instagram or Facebook Stories or your feed; tag the D Festival Young Pianist Programme and Fantasia Music Space official accounts. The organiser may verify participation under the campaign terms.",
   },
 } as const;

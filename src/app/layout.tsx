@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
@@ -33,6 +33,11 @@ const defaultDescription =
   "D Festival 青年鋼琴藝術節與 Fantasia Music Space 幻樂空間聯合企劃 — 登記、預約與禮遇一站式平台。";
 /** Same asset as the home hero; explicit OG image so crawlers don’t pick partner logos above the fold. */
 const ogImage = "/images/home/lead-grand-piano-studio.png";
+
+/** Lets `env(safe-area-inset-*)` apply on notched devices (modal overlays, etc.). */
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: siteMetadataBase(),

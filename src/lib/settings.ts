@@ -48,11 +48,6 @@ function hasExplicitUtcOrOffset(iso: string): boolean {
 
 export async function getAllSettings(): Promise<Record<string, unknown>> {
   if (!process.env.DATABASE_URL?.trim()) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[settings] DATABASE_URL is not set; using built-in fallbacks. Configure DATABASE_URL for live system settings.",
-      );
-    }
     return { ...FALLBACK_SYSTEM_SETTINGS };
   }
 

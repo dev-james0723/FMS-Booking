@@ -7,19 +7,13 @@ import {
   type GoogleAuthIntent,
 } from "@/lib/auth/google-auth-sign-in";
 import { getWebAuthnSettingsForRequest } from "@/lib/webauthn/config";
+import { safeAdminNextPath, safeNextPath } from "@/lib/safe-next-path";
 
 const SCOPES = ["openid", "email", "profile"];
 
 function parseIntent(raw: string | null): GoogleAuthIntent | null {
   if (raw === "login" || raw === "register" || raw === "admin") return raw;
   return null;
-}
-
-function safeNextPath(raw: string | null, fallback: string): string {
-  if (!raw || raw.length > 512) return fallback;
-  const t = raw.trim();
-  if (!t.startsWith("/") || t.startsWith("//") || t.includes("://")) return fallback;
-  return t;
 }
 
 export async function GET(req: NextRequest) {
@@ -37,7 +31,11 @@ export async function GET(req: NextRequest) {
 
   const defaultNext =
     intent === "admin" ? "/admin/bookings" : intent === "register" ? "/register" : "/account";
-  const next = safeNextPath(req.nextUrl.searchParams.get("next"), defaultNext);
+  const rawNext = req.nextUrl.searchParams.get("next");
+  const next =
+    intent === "admin"
+      ? safeAdminNextPath(rawNext, defaultNext)
+      : safeNextPath(rawNext, defaultNext);
 
   const { origin } = await getWebAuthnSettingsForRequest();
   const redirectUri = `${origin}${withBasePath("/api/v1/auth/google/callback")}`;

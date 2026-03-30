@@ -205,7 +205,8 @@ model User {
   credentials              LoginCredential?
   registrationSubmissions  RegistrationSubmission[]
   bookingRequests          BookingRequest[]
-  passwordResetTokens      PasswordResetToken[]
+  passwordResetTokens           PasswordResetToken[]
+  passwordResetPhoneChallenges  PasswordResetPhoneChallenge[]
   emailLogs                EmailLog[]
   socialBonusSubmissions   SocialBonusSubmission[]
   bonusRewards             BonusReward[]
@@ -279,6 +280,9 @@ model UserProfile {
   socialFollowVerifiedAt DateTime? @map("social_follow_verified_at")
   /// Opt-in: willing to repost two specified D Festival posts for community bonus slots.
   socialRepostClaimed  Boolean @default(false) @map("social_repost_claimed")
+  /// Post-registration: user declared they reposted the two D Festival posts and tagged the required accounts.
+  socialRepostSetupConfirmed   Boolean   @default(false) @map("social_repost_setup_confirmed")
+  socialRepostSetupConfirmedAt DateTime? @map("social_repost_setup_confirmed_at")
   wantsAmbassador      Boolean @default(false) @map("wants_ambassador")
   /// cat | dog | rabbit | hamster — avatar picker / optional AI icon.
   favoriteAvatarAnimal String? @map("favorite_avatar_animal")
@@ -398,6 +402,25 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// SMS OTP for password reset (not registration).
+model PasswordResetPhoneChallenge {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  phoneNorm      String    @map("phone_norm")
+  codeHash       String    @map("code_hash")
+  expiresAt      DateTime  @map("expires_at")
+  verifyAttempts Int       @default(0) @map("verify_attempts")
+  verifiedAt     DateTime? @map("verified_at")
+  consumedAt     DateTime? @map("consumed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([phoneNorm, createdAt])
+  @@map("password_reset_phone_challenges")
 }
 
 model RegistrationSubmission {

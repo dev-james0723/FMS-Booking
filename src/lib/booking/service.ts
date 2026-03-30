@@ -29,6 +29,7 @@ import {
 } from "@/lib/booking/settings";
 import { COUNTED_REQUEST_STATUS } from "@/lib/booking/day-counts";
 import { userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
+import { isRegistrationSocialGateSatisfied } from "@/lib/auth/registration-social-gate";
 
 function mergeDayCounts(
   base: Map<string, number>,
@@ -64,7 +65,10 @@ function userHasSlotOverlap(newSlots: BookingSlot[], existing: { slot: BookingSl
 }
 
 export async function assertBookingPortalAllowed(
-  user: User & { credentials: { mustChangePassword: boolean } | null }
+  user: User & {
+    credentials: { mustChangePassword: boolean } | null;
+    profile: Parameters<typeof isRegistrationSocialGateSatisfied>[0];
+  }
 ) {
   const settings = await getAllSettings();
   const now = await getEffectiveNow();
@@ -79,6 +83,12 @@ export async function assertBookingPortalAllowed(
   }
   if (!user.credentials || user.credentials.mustChangePassword) {
     throw new BookingRuleError("MUST_CHANGE_PASSWORD", "請先更改臨時密碼");
+  }
+  if (!isRegistrationSocialGateSatisfied(user.profile)) {
+    throw new BookingRuleError(
+      "REGISTRATION_SOCIAL_INCOMPLETE",
+      "請先完成追蹤官方帳戶及轉發與標註確認"
+    );
   }
   return { settings, now };
 }

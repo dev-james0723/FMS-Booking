@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { REGISTRATION_PROFILE_KINDS } from "@/lib/registration/profile-kind";
 
+const REGISTRATION_UI_LOCALES = ["en", "zh-HK"] as const;
+export type RegistrationUiLocale = (typeof REGISTRATION_UI_LOCALES)[number];
+
 /** Allow common HK / intl. formats; dots and extensions often appear in contact numbers. */
 const phoneSchema = z
   .string()
@@ -13,7 +16,12 @@ const usagePurposesSchema = z.record(z.string(), z.union([z.boolean(), z.string(
 
 export const registrationSchema = z
   .object({
-    nameZh: z.string().trim().min(1).max(200),
+    /**
+     * UI locale at submit time: zh-HK requires Chinese name; en requires English name.
+     * Defaults to zh-HK when omitted (older clients).
+     */
+    registrationUiLocale: z.enum(REGISTRATION_UI_LOCALES).default("zh-HK"),
+    nameZh: z.string().trim().max(200),
     nameEn: z.string().trim().max(200).optional().nullable(),
     email: z.string().trim().email().max(320),
     phone: phoneSchema,
@@ -67,6 +75,23 @@ export const registrationSchema = z
     bookingVenueKind: z.enum(["studio_room", "open_space"]).default("studio_room"),
   })
   .superRefine((data, ctx) => {
+    const loc = data.registrationUiLocale;
+    if (loc === "en") {
+      const en = (data.nameEn ?? "").trim();
+      if (!en) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please enter your English name.",
+          path: ["nameEn"],
+        });
+      }
+    } else if (!data.nameZh.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "請填寫中文姓名。",
+        path: ["nameZh"],
+      });
+    }
     if (data.identityFlags.includes("other")) {
       const t = data.identityOtherText?.trim() ?? "";
       if (!t) {

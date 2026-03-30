@@ -430,17 +430,17 @@ function DirectionsOnPageToc() {
       </p>
       <ul className="mt-3 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-4">
         {DIRECTIONS_ONPAGE_TOC.map(({ hash, titleKey, Icon, iconWrapClass, tileClass }) => (
-          <li key={hash}>
+          <li key={hash} className="min-w-0">
             <a
               href={`#${hash}`}
-              className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center transition hover:shadow-md dark:hover:shadow-none ${tileClass}`}
+              className={`box-border flex h-full min-h-[6rem] w-full flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center transition hover:shadow-md dark:hover:shadow-none ${tileClass}`}
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ${iconWrapClass}`}
               >
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-stone-800 dark:text-stone-100">
+              <span className="line-clamp-2 break-words text-[11px] font-semibold leading-snug text-stone-800 dark:text-stone-100">
                 {t(titleKey)}
               </span>
             </a>

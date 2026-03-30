@@ -255,6 +255,7 @@ export async function POST(req: Request) {
             socialFollowClaimed: data.socialFollowClaimed,
             socialFollowLinkClicks: {},
             socialFollowVerified: false,
+            socialRepostSetupConfirmed: false,
             socialRepostClaimed: data.socialRepostClaimed,
             wantsAmbassador: data.wantsAmbassador,
             agreedTerms: data.agreedTerms,
@@ -329,12 +330,14 @@ export async function POST(req: Request) {
     );
 
     let emailOutcome: Awaited<ReturnType<typeof sendRegistrationConfirmation>>;
+    const confirmationDisplayName =
+      data.nameZh.trim() || data.nameEn?.trim() || email.split("@")[0] || email;
     try {
       emailOutcome = await sendRegistrationConfirmation({
         userId: result.id,
         toEmail: email,
         tempPassword,
-        userName: data.nameZh.trim(),
+        userName: confirmationDisplayName,
       });
     } catch (emailErr) {
       console.error("[registration] confirmation email pipeline", emailErr);

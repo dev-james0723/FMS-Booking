@@ -182,11 +182,12 @@ export async function sendRegistrationAdminNotification(params: {
   clientIp: string | null;
 }): Promise<void> {
   const toList = defaultRegistrationAdminEmails();
-  const nameZh =
-    typeof params.payloadSnapshot.nameZh === "string"
-      ? params.payloadSnapshot.nameZh.trim()
-      : "（未有中文姓名）";
-  const subject = `【新用戶登記】${nameZh}｜${params.registrantEmail}`;
+  const nameZhRaw =
+    typeof params.payloadSnapshot.nameZh === "string" ? params.payloadSnapshot.nameZh.trim() : "";
+  const nameEnRaw =
+    typeof params.payloadSnapshot.nameEn === "string" ? params.payloadSnapshot.nameEn.trim() : "";
+  const displayName = nameZhRaw || nameEnRaw || "（未有姓名）";
+  const subject = `【新用戶登記】${displayName}｜${params.registrantEmail}`;
 
   const rows = buildDetailRows(params.payloadSnapshot);
   const textLines = [

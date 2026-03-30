@@ -8,6 +8,7 @@ export type SessionPayload = {
   mustChangePassword: boolean;
   hasCompletedRegistration: boolean;
   bookingVenueKind?: BookingVenueKind;
+  registrationSocialGateSatisfied: boolean;
 };
 
 export async function verifyUserSessionToken(
@@ -23,6 +24,9 @@ export async function verifyUserSessionToken(
     const rawVenue = payload.bookingVenueKind;
     const bookingVenueKind: BookingVenueKind | undefined =
       rawVenue === "open_space" || rawVenue === "studio_room" ? rawVenue : undefined;
+    const rawGate = payload.registrationSocialGateSatisfied;
+    const registrationSocialGateSatisfied =
+      rawGate === undefined ? true : Boolean(rawGate);
     return {
       sub,
       email,
@@ -30,6 +34,7 @@ export async function verifyUserSessionToken(
       mustChangePassword: Boolean(payload.mustChangePassword),
       hasCompletedRegistration: Boolean(payload.hasCompletedRegistration),
       bookingVenueKind,
+      registrationSocialGateSatisfied,
     };
   } catch {
     return null;

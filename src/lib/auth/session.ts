@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import type { AccountStatus, BookingVenueKind } from "@prisma/client";
 import { jwtSecretKeyBytes } from "@/lib/jwt-secret";
+import { isRegistrationSocialGateSatisfied } from "@/lib/auth/registration-social-gate";
 
 const COOKIE = "fms_user_session";
 
@@ -14,9 +15,46 @@ export type SessionPayload = {
   hasCompletedRegistration: boolean;
   /** Booking nav target; legacy tokens omit → verify yields undefined, UI defaults to studio. */
   bookingVenueKind?: BookingVenueKind;
+  /** false = must finish post-registration social steps before the rest of the account area. */
+  registrationSocialGateSatisfied: boolean;
   iat?: number;
   exp?: number;
 };
+
+/** Profile fields needed to set `registrationSocialGateSatisfied` on the session JWT. */
+export type SessionProfileSlice = {
+  bookingVenueKind: BookingVenueKind;
+  socialFollowClaimed: boolean;
+  socialFollowVerified: boolean;
+  socialRepostSetupConfirmed: boolean;
+} | null;
+
+/** Prisma `include.profile.select` for signing or refreshing the user session JWT. */
+export const PRISMA_PROFILE_SELECT_FOR_SESSION_JWT = {
+  bookingVenueKind: true,
+  socialFollowClaimed: true,
+  socialFollowVerified: true,
+  socialRepostSetupConfirmed: true,
+} as const;
+
+export function buildUserSessionJwtPayload(user: {
+  id: string;
+  email: string;
+  accountStatus: AccountStatus;
+  hasCompletedRegistration: boolean;
+  credentials: { mustChangePassword: boolean } | null;
+  profile: SessionProfileSlice;
+}): Omit<SessionPayload, "iat" | "exp"> {
+  return {
+    sub: user.id,
+    email: user.email,
+    accountStatus: user.accountStatus,
+    mustChangePassword: user.credentials?.mustChangePassword ?? true,
+    hasCompletedRegistration: user.hasCompletedRegistration,
+    bookingVenueKind: user.profile?.bookingVenueKind ?? "studio_room",
+    registrationSocialGateSatisfied: isRegistrationSocialGateSatisfied(user.profile ?? undefined),
+  };
+}
 
 export async function signUserSession(payload: Omit<SessionPayload, "iat" | "exp">): Promise<string> {
   return new SignJWT({ ...payload })
@@ -38,6 +76,9 @@ export async function verifyUserSession(token: string): Promise<SessionPayload |
     const rawVenue = payload.bookingVenueKind;
     const bookingVenueKind: BookingVenueKind | undefined =
       rawVenue === "open_space" || rawVenue === "studio_room" ? rawVenue : undefined;
+    const rawGate = payload.registrationSocialGateSatisfied;
+    const registrationSocialGateSatisfied =
+      rawGate === undefined ? true : Boolean(rawGate);
     if (!sub || !email) return null;
     return {
       sub,
@@ -46,6 +87,7 @@ export async function verifyUserSession(token: string): Promise<SessionPayload |
       mustChangePassword,
       hasCompletedRegistration,
       bookingVenueKind,
+      registrationSocialGateSatisfied,
     };
   } catch {
     return null;
