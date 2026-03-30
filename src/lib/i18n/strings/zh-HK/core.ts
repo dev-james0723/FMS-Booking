@@ -71,9 +71,11 @@ export const coreZhHK = {
       "幻樂空間琴室內景：設有三角鋼琴的練習與排練空間，牆身為木飾面，環境整潔明亮。",
     eligibilityMemo: {
       sectionAria: "免費體驗活動參加資格說明",
-      title: "如何獲得今次免費體驗活動資格",
+      titleBefore: "5 分鐘完成申請 - 即享 1 個月",
+      titleHighlight: "每日免費琴房體驗",
+      titleAfter: "！",
       alert:
-        "重要：你必須先於本網站完成登記。完成登記後，你仍須完成下列兩項全部要求，方可符合參加今次免費體驗活動的資格。",
+        "重要：你必須先於本網站完成登記並建立帳戶。完成登記後，你仍須完成下列兩項全部要求，方可符合參加今次免費體驗活動的資格。",
       step1Heading: "一、追蹤官方社交帳戶",
       step1Intro: "請追蹤（Follow）以下帳號的 Instagram 及 Facebook：",
       step1a: "D Festival 青年鋼琴家藝術節",
@@ -85,8 +87,7 @@ export const coreZhHK = {
       step2a: "分享至限時動態（Story）或個人貼文；",
       step2b:
         "標註（Tag）「D Festival 青年鋼琴家藝術節」及「幻樂空間」的 Instagram 或 Facebook 帳號。",
-      closing:
-        "請注意：僅完成網上登記並不足夠。你必須在完成登記後切實做到以上兩項全部要求，才可參加今次免費體驗活動。主辦方有權核對相關社交媒體上的紀錄。",
+      closing: "立即登記 ! 👇",
     },
   },
   campaign: {

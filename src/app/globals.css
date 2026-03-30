@@ -58,6 +58,62 @@ html {
   }
 }
 
+/* Home eligibility memo title: highlighter under each wrapped line (box-decoration-break) */
+@keyframes eligibility-memo-highlight-sweep-bg {
+  0% {
+    background-size: 0% 0.38em;
+    background-position: left bottom;
+  }
+  18% {
+    background-size: 100% 0.38em;
+    background-position: left bottom;
+  }
+  45% {
+    background-size: 100% 0.38em;
+    background-position: left bottom;
+  }
+  46% {
+    background-size: 100% 0.38em;
+    background-position: right bottom;
+  }
+  62% {
+    background-size: 0% 0.38em;
+    background-position: right bottom;
+  }
+  100% {
+    background-size: 0% 0.38em;
+    background-position: left bottom;
+  }
+}
+
+.eligibility-memo-title-highlight {
+  margin-inline: 0.125rem;
+  padding-inline: 0.06em;
+  background-image: linear-gradient(
+    rgb(220 38 38 / 0.78),
+    rgb(220 38 38 / 0.78)
+  );
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 0% 0.38em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.dark .eligibility-memo-title-highlight {
+  background-image: linear-gradient(
+    rgb(248 113 113 / 0.82),
+    rgb(248 113 113 / 0.82)
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .eligibility-memo-title-highlight {
+    animation: eligibility-memo-highlight-sweep-bg 3.2s
+      cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
 /* Account ambassador: copy-link — periodic subtle bounce + wobble (use with motion-safe:) */
 @keyframes ambassador-copy-link-wobble {
   0%,

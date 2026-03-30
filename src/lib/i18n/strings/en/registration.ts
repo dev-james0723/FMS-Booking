@@ -260,7 +260,7 @@ export const regEn = {
   completeRegistrationSocial: {
     title: "Finish the social media steps first",
     intro:
-      "Your account still needs the steps you agreed to at registration: follow the three organiser-related accounts on Instagram and Facebook (six buttons), and confirm you reposted the two designated D Festival posts and tagged “D Festival Young Pianist Programme” and “Fantasia Music Space”. After that you can change your password and use booking.",
+      "You are signed in. Until every step below is complete, booking and the rest of your account stay unavailable. Your account still needs the steps you agreed to at registration: follow the three organiser-related accounts on Instagram and Facebook (six buttons), and confirm you reposted the two designated D Festival posts and tagged “D Festival Young Pianist Programme” and “Fantasia Music Space”. After that you can change your password if required and use booking.",
     continueAfterDone: "Continue (change password or account)",
   },
   socialFollowSetup: {

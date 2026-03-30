@@ -253,7 +253,7 @@ export const regZhHK = {
   completeRegistrationSocial: {
     title: "請先完成社交媒體步驟",
     intro:
-      "你的帳戶仍需完成登記時承諾的步驟：追蹤三個主辦相關的 Instagram 及 Facebook 帳戶（六個按鈕），並確認已轉發 D Festival 兩個指定貼文及標註「D Festival 青年鋼琴家藝術節」與「幻樂空間」。完成後方可更改密碼並使用預約功能。",
+      "你已登入此帳戶。在以下承諾步驟全部完成之前，你無法使用預約介面或其他帳戶功能。你的帳戶仍需完成登記時承諾的步驟：追蹤三個主辦相關的 Instagram 及 Facebook 帳戶（六個按鈕），並確認已轉發 D Festival 兩個指定貼文及標註「D Festival 青年鋼琴家藝術節」與「幻樂空間」。完成後方可更改密碼（如適用）並使用預約功能。",
     continueAfterDone: "繼續（前往更改密碼或帳戶）",
   },
   socialFollowSetup: {

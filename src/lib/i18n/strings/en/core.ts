@@ -72,9 +72,11 @@ export const coreEn = {
       "Fantasia Music Space studio with a grand piano, wood-panelled walls, and bright lighting.",
     eligibilityMemo: {
       sectionAria: "How to qualify for the free studio experience",
-      title: "How to qualify for this free experience",
+      titleBefore: "Apply in 5 minutes — enjoy ",
+      titleHighlight: "1 month of daily free piano room access!",
+      titleAfter: "",
       alert:
-        "Important: You must complete registration on this website first. After registering, you must also complete both requirements below in full to be eligible for this free experience.",
+        "Important: You must complete registration and create an account on this website first. After registering, you must also complete both requirements below in full to be eligible for this free experience.",
       step1Heading: "1. Follow the official social accounts",
       step1Intro: "Follow (Instagram and Facebook) for all of the following:",
       step1a: "D Festival Young Pianist Program",
@@ -86,8 +88,7 @@ export const coreEn = {
       step2a: "Share to your Story or to a personal feed post; and",
       step2b:
         "Tag the Instagram or Facebook accounts of “D Festival Young Pianist Program” and “Fantasia Music Space”.",
-      closing:
-        "Registration alone is not enough. After you register, you must complete both items above in full to take part in this free experience. The organiser may verify your activity on social media.",
+      closing: "Register now! 👇",
     },
   },
   campaign: {

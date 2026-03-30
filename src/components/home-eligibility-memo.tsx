@@ -19,7 +19,11 @@ export function HomeEligibilityMemo() {
               id={memoTitleId}
               className="text-center font-serif text-lg font-semibold leading-snug tracking-tight text-stone-900 sm:text-xl"
             >
-              {t("home.eligibilityMemo.title")}
+              {t("home.eligibilityMemo.titleBefore")}
+              <span className="eligibility-memo-title-highlight">
+                {t("home.eligibilityMemo.titleHighlight")}
+              </span>
+              {t("home.eligibilityMemo.titleAfter")}
             </h2>
 
             <p className="rounded-md border border-amber-800/15 bg-amber-100/60 p-5 text-sm font-medium leading-relaxed text-stone-900 sm:p-6">
@@ -51,7 +55,7 @@ export function HomeEligibilityMemo() {
               </div>
             </div>
 
-            <p className="border-t border-amber-800/15 pt-4 text-sm font-medium leading-relaxed text-stone-900 sm:pt-5">
+            <p className="border-t border-amber-800/15 pt-4 text-center text-sm font-medium leading-relaxed text-stone-900 sm:pt-5">
               {t("home.eligibilityMemo.closing")}
             </p>
           </div>
