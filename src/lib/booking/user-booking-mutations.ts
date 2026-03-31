@@ -13,6 +13,7 @@ import {
 } from "@/lib/booking/booking-reschedule-core";
 import { BOOKING_SELF_SERVICE_CUTOFF_MS } from "@/lib/booking/booking-self-service-policy";
 import {
+  advanceWindowDays,
   effectiveCapacityTotalForSlot,
   getQuotaNumericLimits,
   isSlotDateWithinRollingWindow,
@@ -30,6 +31,7 @@ export type UserBookingMutationDetails = {
   dailyMax?: number;
   rollingMax?: number;
   count?: number;
+  windowDays?: number;
 };
 
 export class UserBookingMutationError extends Error {
@@ -160,10 +162,12 @@ export async function userRescheduleBookingRequest(
         `時段不在活動有效期內（slot ${s.id.slice(0, 8)}…）`
       );
     }
-    if (!isSlotDateWithinRollingWindow(todayKey, sk)) {
+    const slotWindowDays = advanceWindowDays(req.user.quotaTier, sk);
+    if (!isSlotDateWithinRollingWindow(todayKey, sk, slotWindowDays)) {
       throw new UserBookingMutationError(
         "BOOKING_OUTSIDE_ROLLING_WINDOW",
-        "自行更改時段只可選未來 3 個香港曆日內之可用時段（與新預約相同之滾動窗口）。"
+        "自行更改時段只可選未來可預約範圍內之可用時段。",
+        { windowDays: slotWindowDays }
       );
     }
   }

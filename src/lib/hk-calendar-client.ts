@@ -84,19 +84,23 @@ export function parseCampaignDateKeysFromSettings(
 }
 
 /**
- * Live booking: only HK calendar dates within the rolling window (inclusive count from today).
- * @param rollingWindowCalendarDays e.g. 3 → today and the next two days
+ * Live booking: only HK calendar dates within the advance window.
+ * Weekend (Sat/Sun) days use `weekendDays`; weekdays use `weekdayDays`.
  */
 export function isHkDayBookable(params: {
   dateKey: string;
   todayKey: string;
   campaignStart: string;
   campaignEnd: string;
-  rollingWindowCalendarDays: number;
+  weekdayDays: number;
+  weekendDays: number;
 }): boolean {
-  const { dateKey, todayKey, campaignStart, campaignEnd, rollingWindowCalendarDays } = params;
+  const { dateKey, todayKey, campaignStart, campaignEnd, weekdayDays, weekendDays } = params;
   if (dateKey < campaignStart || dateKey > campaignEnd) return false;
   if (dateKey < todayKey) return false;
   const apart = dateKeysDaysApart(todayKey, dateKey);
-  return apart >= 0 && apart < rollingWindowCalendarDays;
+  const dow = hkCalendarDayOfWeekSun0(dateKey);
+  const isWeekend = dow === 0 || dow === 6;
+  const windowDays = isWeekend ? weekendDays : weekdayDays;
+  return apart >= 0 && apart < windowDays;
 }

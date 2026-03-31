@@ -114,6 +114,14 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link
+                  href={withBasePath("/business-collaboration")}
+                  className={footerLinkClass}
+                >
+                  {t("nav.businessCollaboration")}
+                </Link>
+              </li>
+              <li>
                 <Link href={withBasePath("/contact")} className={footerLinkClass}>
                   {t("nav.contact")}
                 </Link>

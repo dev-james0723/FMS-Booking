@@ -2,13 +2,16 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { loadUserExistingDayCounts } from "@/lib/booking/day-counts";
 import {
+  ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+  ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
+  ADVANCE_DAYS_TEACHING_WEEKDAY,
+  ADVANCE_DAYS_TEACHING_WEEKEND,
   BOOKING_COOLDOWN_MS,
-  ROLLING_WINDOW_CALENDAR_DAYS,
 } from "@/lib/booking/booking-constants";
 import {
+  advanceWindowEndDateKey,
   cooldownRemainingMs,
   getQuotaNumericLimits,
-  rollingWindowEndDateKey,
 } from "@/lib/booking/booking-rules";
 import {
   bookableHeadroomForHkDay,
@@ -91,22 +94,27 @@ export async function GET(req: Request) {
   const dualEligible =
     profile != null && profile.individualEligible && profile.teachingEligible;
 
-  let rollingEndKey = rollingWindowEndDateKey(todayKey);
-  let rollingStartKey = todayKey;
-  let rollingCalendarDays = ROLLING_WINDOW_CALENDAR_DAYS;
+  const weekdayDays =
+    quotaTier === "teaching" ? ADVANCE_DAYS_TEACHING_WEEKDAY : ADVANCE_DAYS_INDIVIDUAL_WEEKDAY;
+  const weekendDays =
+    quotaTier === "teaching" ? ADVANCE_DAYS_TEACHING_WEEKEND : ADVANCE_DAYS_INDIVIDUAL_WEEKEND;
+
+  let advEndKey = advanceWindowEndDateKey(todayKey, quotaTier);
+  let advStartKey = todayKey;
+  let advCalendarDays = weekdayDays;
   if (startKey && endKey) {
     if (todayKey > endKey) {
-      rollingStartKey = endKey;
-      rollingEndKey = endKey;
-      rollingCalendarDays = 1;
+      advStartKey = endKey;
+      advEndKey = endKey;
+      advCalendarDays = 1;
     } else if (todayKey < startKey) {
-      rollingStartKey = startKey;
-      rollingEndKey = rollingWindowEndDateKey(startKey);
-      if (rollingEndKey > endKey) rollingEndKey = endKey;
-      rollingCalendarDays = hkCalendarDaysBetween(rollingStartKey, rollingEndKey) + 1;
+      advStartKey = startKey;
+      advEndKey = advanceWindowEndDateKey(startKey, quotaTier);
+      if (advEndKey > endKey) advEndKey = endKey;
+      advCalendarDays = hkCalendarDaysBetween(advStartKey, advEndKey) + 1;
     } else {
-      if (rollingEndKey > endKey) rollingEndKey = endKey;
-      rollingCalendarDays = hkCalendarDaysBetween(rollingStartKey, rollingEndKey) + 1;
+      if (advEndKey > endKey) advEndKey = endKey;
+      advCalendarDays = hkCalendarDaysBetween(advStartKey, advEndKey) + 1;
     }
   }
   const cooldownRemaining = cooldownRemainingMs(user.lastBookingAt, now);
@@ -121,10 +129,12 @@ export async function GET(req: Request) {
     tier: quotaTier === "teaching" ? "teaching" : "individual",
     limits: { dailyMax, rollingMax },
     todayKey,
-    rollingWindow: {
-      calendarDays: rollingCalendarDays,
-      startKey: rollingStartKey,
-      endKey: rollingEndKey,
+    advanceWindow: {
+      weekdayDays,
+      weekendDays,
+      calendarDays: advCalendarDays,
+      startKey: advStartKey,
+      endKey: advEndKey,
     },
     eligibility: profile
       ? {

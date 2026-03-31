@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import { BookingRuleError } from "@/lib/booking/booking-errors";
 import { BOOKING_COOLDOWN_MS } from "@/lib/booking/booking-constants";
 import {
+  advanceWindowDays,
+  advanceWindowEndDateKey,
   assertCooldownAllowsBooking,
   getQuotaNumericLimits,
   isSlotDateWithinRollingWindow,
   resolveBookingIdentityTypeOrThrow,
-  rollingWindowEndDateKey,
 } from "@/lib/booking/booking-rules";
+import { isHkWeekend } from "@/lib/booking/hk-dates";
 import type { BookingNumericSettings } from "@/lib/booking/settings";
 
 const sampleNums: BookingNumericSettings = {
@@ -18,20 +20,71 @@ const sampleNums: BookingNumericSettings = {
   maxAdvanceDays: 2,
 };
 
-describe("rolling window", () => {
+describe("isSlotDateWithinRollingWindow", () => {
   it("allows today and the next two HK calendar days when window is 3", () => {
-    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-01")).toBe(true);
-    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-02")).toBe(true);
-    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-03")).toBe(true);
-    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-04")).toBe(false);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-01", 3)).toBe(true);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-02", 3)).toBe(true);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-03", 3)).toBe(true);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-04", 3)).toBe(false);
   });
 
   it("rejects past dates", () => {
-    expect(isSlotDateWithinRollingWindow("2026-04-02", "2026-04-01")).toBe(false);
+    expect(isSlotDateWithinRollingWindow("2026-04-02", "2026-04-01", 7)).toBe(false);
   });
 
-  it("rollingWindowEndDateKey spans window-1 days from today", () => {
-    expect(rollingWindowEndDateKey("2026-04-01")).toBe("2026-04-03");
+  it("works with window=7", () => {
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-07", 7)).toBe(true);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-08", 7)).toBe(false);
+  });
+
+  it("works with window=14", () => {
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-14", 14)).toBe(true);
+    expect(isSlotDateWithinRollingWindow("2026-04-01", "2026-04-15", 14)).toBe(false);
+  });
+});
+
+describe("isHkWeekend", () => {
+  it("identifies Saturday as weekend", () => {
+    // 2026-04-04 is a Saturday
+    expect(isHkWeekend("2026-04-04")).toBe(true);
+  });
+  it("identifies Sunday as weekend", () => {
+    // 2026-04-05 is a Sunday
+    expect(isHkWeekend("2026-04-05")).toBe(true);
+  });
+  it("identifies Monday as weekday", () => {
+    // 2026-04-06 is a Monday
+    expect(isHkWeekend("2026-04-06")).toBe(false);
+  });
+  it("identifies Friday as weekday", () => {
+    // 2026-04-03 is a Friday
+    expect(isHkWeekend("2026-04-03")).toBe(false);
+  });
+});
+
+describe("advanceWindowDays", () => {
+  it("teaching tier, weekday slot → 14", () => {
+    // 2026-04-06 is Monday
+    expect(advanceWindowDays("teaching", "2026-04-06")).toBe(14);
+  });
+  it("teaching tier, weekend slot → 7", () => {
+    // 2026-04-04 is Saturday
+    expect(advanceWindowDays("teaching", "2026-04-04")).toBe(7);
+  });
+  it("individual tier, weekday slot → 7", () => {
+    expect(advanceWindowDays("individual", "2026-04-06")).toBe(7);
+  });
+  it("individual tier, weekend slot → 3", () => {
+    expect(advanceWindowDays("individual", "2026-04-04")).toBe(3);
+  });
+});
+
+describe("advanceWindowEndDateKey", () => {
+  it("teaching tier uses weekday (max) advance → today + 13", () => {
+    expect(advanceWindowEndDateKey("2026-04-01", "teaching")).toBe("2026-04-14");
+  });
+  it("individual tier uses weekday (max) advance → today + 6", () => {
+    expect(advanceWindowEndDateKey("2026-04-01", "individual")).toBe("2026-04-07");
   });
 });
 

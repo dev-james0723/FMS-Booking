@@ -154,6 +154,14 @@ export function InfoMenuDropdown() {
             {t("nav.termsAndConditions")}
           </Link>
           <Link
+            href="/business-collaboration"
+            className={itemClass}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.businessCollaboration")}
+          </Link>
+          <Link
             href="/contact"
             className={itemClass}
             role="menuitem"

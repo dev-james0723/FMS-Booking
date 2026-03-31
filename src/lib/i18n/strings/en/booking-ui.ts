@@ -12,7 +12,7 @@ export const bookingEn = {
   portal: {
     title: "Piano studio booking",
     introBeforeQuotaLink:
-      "Pick slots and submit a request. Booking always opens on a rolling basis: you may only book available slots within the next 3 calendar days (inclusive); session limits (30 minutes = 0.5 hour each) use a single ",
+      "Pick slots and submit a request. Booking opens on a rolling basis: weekday slots up to 7–14 days ahead, weekend slots up to 3–7 days ahead (varies by account tier); session limits (30 minutes = 0.5 hour each) use a single ",
     introQuotaLinkLabel: "quota tier",
     introAfterQuotaLink:
       " per account; after each successful submission you must wait 3 hours before submitting again. When your submission succeeds, the slots you picked are confirmed.",
@@ -38,7 +38,7 @@ export const bookingEn = {
   openSpacePortal: {
     title: "Large instruments / Open Space booking",
     intro:
-      "These slots are from the Open Space inventory, separate from the soundproof studio room pool. If you registered via the studio-room channel, Open Space and studio bookings share the same session caps (daily and rolling 3-day)—there is no second quota. If you registered via the large-instrument / Open Space channel, you may only book here. Please read the venue notes below before choosing times.",
+      "These slots are from the Open Space inventory, separate from the soundproof studio room pool. If you registered via the studio-room channel, Open Space and studio bookings share the same session caps (daily and rolling 3-consecutive-day)—there is no second quota. If you registered via the large-instrument / Open Space channel, you may only book here. Please read the venue notes below before choosing times.",
     linkCalendar: "Calendar overview (timeline)",
     linkHistory: "Booking history",
     linkAccount: "My account",
@@ -119,9 +119,9 @@ export const bookingEn = {
       contactClose: "Close",
       rescheduleTitle: "Change time slots",
       rescheduleIntro:
-        "Tick slots to release, pick a day on the calendar, then choose new slots. Like new bookings, you may only add slots within the next {windowDays} Hong Kong calendar days from today (full or closed slots stay unselectable).",
+        "Tick slots to release, pick a day on the calendar, then choose new slots. Like new bookings, you may only add slots within your advance window: weekday slots up to {weekdayDays} days ahead, weekend slots up to {weekendDays} days (full or closed slots stay unselectable).",
       rescheduleRollingHint:
-        "Dates open for new slots: {from}–{to} (Hong Kong calendar; same {windowDays}-day rolling window as new bookings).",
+        "Dates open for new slots: {from}–{to} (Hong Kong calendar; weekdays up to {weekdayDays} days, weekends up to {weekendDays} days).",
       rescheduleNoRollingWindow:
         "No dates are currently inside the rolling window for changes. Try again later or contact the organiser.",
       rescheduleOriginalLabel: "Current slots (tick to release)",
@@ -163,28 +163,22 @@ export const bookingEn = {
       "Booking is not open yet. Tap a day within the campaign to preview 30-minute slots; slots stay locked until opening and cannot be selected or submitted.",
     bookingOpensLine: "Booking opens (Hong Kong): {time}",
     campaignLine:
-      "Campaign days (Hong Kong): {range} · rolling booking — only the next {windowDays} calendar days (inclusive) are selectable · 30-minute slots",
+      "Campaign days (Hong Kong): {range} · rolling booking — weekday slots up to {weekdayDays} days ahead, weekend (Sat–Sun) slots up to {weekendDays} days · 30-minute slots",
     rulesAtAGlance: "Quick guide",
     ruleCardRollingTitle: "Rolling bookable dates",
     ruleCardRollingSummary:
-      "You may only book slots in the next {windowDays} calendar days from today (inclusive).",
+      "You may book weekday slots up to {weekdayDays} days ahead and weekend slots up to {weekendDays} days ahead (inclusive from today).",
     ruleRollingExpand: "Examples & diagram",
     ruleRollingIntro1: "Booking always opens on a rolling basis.",
     ruleRollingIntro2:
-      "You may only book slots within the next {windowDays} calendar days in Hong Kong time (including today).",
-    ruleRollingVisTitle: "Diagram: 3-day rolling window",
+      "Weekday (Mon–Fri) slots: up to {weekdayDays} calendar days ahead. Weekend (Sat–Sun) slots: up to {weekendDays} calendar days ahead. Both inclusive from today (Hong Kong time).",
+    ruleRollingVisTitle: "Advance booking window",
     ruleRollingVisSchematicCaption:
-      "Whatever day is “today”, you can always pick three consecutive calendar days starting from today.",
-    ruleRollingVisRollHint: "Each new day, the window shifts forward by one.",
-    ruleRollingVisDay0: "Today",
-    ruleRollingVisDay1: "+1 day",
-    ruleRollingVisDay2: "+2 days",
-    ruleRollingLabelToday: "Today",
-    ruleRollingLabelBookable: "Bookable",
-    ruleRollingLabelBlocked: "Not bookable",
-    ruleRollingExamplesTitle: "Examples (fixed dates)",
-    ruleRollingEx1Caption: "If today is 1 April 2026",
-    ruleRollingEx2Caption: "If today is 2 April 2026",
+      "The number of days you can book ahead depends on whether the slot falls on a weekday or weekend.",
+    ruleRollingVisRollHint: "Each new day, both windows shift forward by one.",
+    ruleRollingVisWeekdayLabel: "Weekday (Mon–Fri)",
+    ruleRollingVisWeekendLabel: "Weekend (Sat–Sun)",
+    ruleRollingVisDaysValue: "{days} days",
     ruleCardSlotTitle: "Session length",
     ruleCardSlotSummary: "Each slot is 30 minutes (one pick = one session).",
     ruleCardIndividualTitle: "Individual quota tier",
@@ -275,11 +269,11 @@ export const bookingEn = {
     noInventoryLabel: "No slots",
     notYetOpenLabel: "Not open",
     hintPickDayLive:
-      "Pick a day first; a green dot means slots are still available. Live booking: only the next {windowDays} calendar days from today (inclusive), not after {lastDay}.",
+      "Pick a day first; a green dot means slots are still available. Weekday slots: up to {weekdayDays} days ahead; weekend slots: up to {weekendDays} days. Not after {lastDay}.",
     hintPickDayTestMode:
-      "Test mode: same live rules (rolling {windowDays} days). Pick a day first; a green dot means slots remain; “Not open” means that calendar day is outside the rolling window.",
+      "Test mode: same live rules (weekdays {weekdayDays} days, weekends {weekendDays} days). Pick a day first; a green dot means slots remain; “Not open” means outside the advance window.",
     hintPickDayPreview:
-      "Before booking opens, tap any day in the campaign ({range}) to preview. After opening, only the next {windowDays} calendar days (inclusive), not after {lastDay}.",
+      "Before booking opens, tap any day in the campaign ({range}) to preview. After opening: weekday slots up to {weekdayDays} days, weekend slots up to {weekendDays} days, not after {lastDay}.",
     slotsTitleLive: "{day} · available slots",
     slotsTitlePreview: "{day} · slot preview (not selectable yet)",
     slotsTitleNone: "Choose a day on the calendar above",

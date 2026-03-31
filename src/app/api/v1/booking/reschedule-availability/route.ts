@@ -1,10 +1,11 @@
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireUserSession } from "@/lib/auth/require-session";
 import {
+  advanceWindowDays,
+  advanceWindowEndDateKey,
   effectiveCapacityTotalForSlot,
   isSlotDateWithinRollingWindow,
   loadSlotUsageCountsDbExcludingRequest,
-  rollingWindowEndDateKey,
 } from "@/lib/booking/booking-rules";
 import { parseCampaignDateKeys } from "@/lib/booking/settings";
 import { parseBookingVenueQuery, userMayAccessBookingVenue } from "@/lib/booking/venue-kind";
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
   const { startKey, endKey } = parseCampaignDateKeys(settings);
 
   let rangeFrom = todayKey;
-  let rangeTo = rollingWindowEndDateKey(todayKey);
+  let rangeTo = advanceWindowEndDateKey(todayKey, user.quotaTier);
   if (startKey && endKey) {
     if (rangeFrom < startKey) rangeFrom = startKey;
     if (rangeTo > endKey) rangeTo = endKey;
@@ -113,7 +114,7 @@ export async function GET(req: Request) {
   const slots = rawSlots.filter((s) => {
     const sk = hkDateKey(s.startsAt);
     if (startKey && endKey && (sk < startKey || sk > endKey)) return false;
-    return isSlotDateWithinRollingWindow(todayKey, sk);
+    return isSlotDateWithinRollingWindow(todayKey, sk, advanceWindowDays(user.quotaTier, sk));
   });
 
   const ids = slots.map((s) => s.id);

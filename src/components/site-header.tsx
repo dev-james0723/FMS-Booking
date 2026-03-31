@@ -709,6 +709,15 @@ export function SiteHeader() {
                         {t("nav.contact")}
                       </Link>
                     </MobileNavZipItem>
+                    <MobileNavZipItem index={13}>
+                      <Link
+                        href="/business-collaboration"
+                        className={`${linkPlain} w-full justify-center py-2`}
+                        onClick={closeMobileMenu}
+                      >
+                        {t("nav.businessCollaboration")}
+                      </Link>
+                    </MobileNavZipItem>
                   </>
                 )}
                 {meUser && (
@@ -814,6 +823,15 @@ export function SiteHeader() {
                         onClick={closeMobileMenu}
                       >
                         {t("nav.contact")}
+                      </Link>
+                    </MobileNavZipItem>
+                    <MobileNavZipItem index={12}>
+                      <Link
+                        href="/business-collaboration"
+                        className={`${linkPlain} w-full justify-center py-2`}
+                        onClick={closeMobileMenu}
+                      >
+                        {t("nav.businessCollaboration")}
                       </Link>
                     </MobileNavZipItem>
                   </>

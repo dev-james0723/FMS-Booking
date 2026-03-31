@@ -12,7 +12,7 @@ export const bookingZhHK = {
   portal: {
     title: "琴室預約系統",
     introBeforeQuotaLink:
-      "請選擇時段後提交預約。所有預約以滾動方式開放，用戶只可預約未來 3 日內之可用時段；節數上限（每節 30 分鐘＝0.5 小時）按",
+      "請選擇時段後提交預約。所有預約以滾動方式開放：平日時段最多提前 7–14 日預約，週末時段最多提前 3–7 日預約（視乎帳戶級別）；節數上限（每節 30 分鐘＝0.5 小時）按",
     introQuotaLinkLabel: "帳戶配額級別",
     introAfterQuotaLink:
       "統一計算；每次成功提交預約後須冷卻 3 小時方可再提交。成功提交後，所選時段即屬已確認預約。",
@@ -38,7 +38,7 @@ export const bookingZhHK = {
   openSpacePortal: {
     title: "大型樂器 / 開放空間預約系統",
     intro:
-      "此處可預約的是開放空間時段庫存，與隔音琴室房內時段為不同庫存。若以琴室通道完成登記，開放空間與琴室預約共用同一套節數上限（單日／滑動三日），不會另有一套配額；若以大型樂器／開放空間通道登記，則只可於此通道預約。請先細讀下方場地說明，再選擇時段。",
+      "此處可預約的是開放空間時段庫存，與隔音琴室房內時段為不同庫存。若以琴室通道完成登記，開放空間與琴室預約共用同一套節數上限（單日／連續三日），不會另有一套配額；若以大型樂器／開放空間通道登記，則只可於此通道預約。請先細讀下方場地說明，再選擇時段。",
     linkCalendar: "月曆總覽（時間軸）",
     linkHistory: "預約紀錄",
     linkAccount: "我的帳戶",
@@ -117,9 +117,9 @@ export const bookingZhHK = {
       contactClose: "關閉",
       rescheduleTitle: "更改時段",
       rescheduleIntro:
-        "先勾選要釋放的原有時段，再於月曆選日並點選可加入的新時段。可加入的日期與新預約相同：只限香港曆日起計未來 {windowDays} 日內（已滿或他人已佔用的節數不會出現為可選）。",
+        "先勾選要釋放的原有時段，再於月曆選日並點選可加入的新時段。平日時段最多可提前 {weekdayDays} 日預約，週末時段最多提前 {weekendDays} 日（已滿或他人已佔用的節數不會出現為可選）。",
       rescheduleRollingHint:
-        "可選新時段之日期：{from} 至 {to}（香港曆日，與新預約相同之 {windowDays} 日滾動窗口）。",
+        "可選新時段之日期：{from} 至 {to}（香港曆日；平日最多 {weekdayDays} 日、週末最多 {weekendDays} 日）。",
       rescheduleNoRollingWindow: "目前沒有符合滾動窗口之可改期日期；請稍後再試或聯絡主辦方。",
       rescheduleOriginalLabel: "原有時段（勾選＝釋放該節）",
       reschedulePrevMonth: "上月",
@@ -160,27 +160,21 @@ export const bookingZhHK = {
       "預約尚未正式開放。請先於月曆點選活動期內日子，預覽 30 分鐘一格的時段版面；時段在開放前會鎖定，無法選取或提交。",
     bookingOpensLine: "正式開始預約時間（香港）：{time}",
     campaignLine:
-      "活動日（香港）：{range} · 預約以滾動方式開放，只可選未來 {windowDays} 日內（含今日）之時段 · 每節 30 分鐘",
+      "活動日（香港）：{range} · 滾動預約：平日時段最多提前 {weekdayDays} 日、週末（六日）最多提前 {weekendDays} 日 · 每節 30 分鐘",
     rulesAtAGlance: "規則速覽",
     ruleCardRollingTitle: "滾動可選日期",
     ruleCardRollingSummary:
-      "只可以預約未來 {windowDays} 個曆日內（含今日）之可用時段。",
+      "平日時段最多提前 {weekdayDays} 個曆日預約，週末時段最多提前 {weekendDays} 個曆日（均含今日起計）。",
     ruleRollingExpand: "查看例子與圖解",
     ruleRollingIntro1: "所有預約必須以「滾動方式」開放。",
-    ruleRollingIntro2: "用戶只可以預約「未來 {windowDays} 日內」的可用時段（香港曆日，含今日）。",
-    ruleRollingVisTitle: "圖解：三日滾動窗口",
+    ruleRollingIntro2: "平日（週一至週五）時段：最多提前 {weekdayDays} 個曆日預約。週末（週六、日）時段：最多提前 {weekendDays} 個曆日預約。均由今日起計（香港曆日）。",
+    ruleRollingVisTitle: "可提前預約日數",
     ruleRollingVisSchematicCaption:
-      "不論哪一天是「今天」，可預約範圍一律為由「今天」起計連續三個曆日。",
-    ruleRollingVisRollHint: "每過一日，此範圍會隨日曆向前滾動一日。",
-    ruleRollingVisDay0: "今天",
-    ruleRollingVisDay1: "+1 曆日",
-    ruleRollingVisDay2: "+2 曆日",
-    ruleRollingLabelToday: "今",
-    ruleRollingLabelBookable: "可選",
-    ruleRollingLabelBlocked: "不可選",
-    ruleRollingExamplesTitle: "例子（固定日期，方便對照）",
-    ruleRollingEx1Caption: "如果今天是 2026 年 4 月 1 日",
-    ruleRollingEx2Caption: "如果今天是 2026 年 4 月 2 日",
+      "可提前預約的日數取決於該時段是平日還是週末。",
+    ruleRollingVisRollHint: "每過一日，兩個窗口都會向前滾動一日。",
+    ruleRollingVisWeekdayLabel: "平日（週一至週五）",
+    ruleRollingVisWeekendLabel: "週末（週六、日）",
+    ruleRollingVisDaysValue: "{days} 日",
     ruleCardSlotTitle: "每節時長",
     ruleCardSlotSummary: "每格預約為 30 分鐘（半小時）。",
     ruleCardIndividualTitle: "個人配額級別",
@@ -267,11 +261,11 @@ export const bookingZhHK = {
     noInventoryLabel: "無時段",
     notYetOpenLabel: "未開放",
     hintPickDayLive:
-      "請先選擇一日；綠點代表該日仍有可預約時段。可預約範圍：由今日起計未來 {windowDays} 個曆日內（含今日），且不晚於 {lastDay}。",
+      "請先選擇一日；綠點代表該日仍有可預約時段。平日時段最多提前 {weekdayDays} 日、週末時段最多提前 {weekendDays} 日，且不晚於 {lastDay}。",
     hintPickDayTestMode:
-      "測試模式：伺服器以正式開放後之規則運作（滾動 {windowDays} 日）。請先選擇一日；綠點代表該日仍有可預約時段；「未開放」表示該日尚未進入可預約範圍。",
+      "測試模式：伺服器以正式開放後之規則運作（平日 {weekdayDays} 日、週末 {weekendDays} 日）。請先選擇一日；綠點代表該日仍有可預約時段；「未開放」表示該日尚未進入可預約範圍。",
     hintPickDayPreview:
-      "開放預約前，可點選活動期（{range}）內任何一日預覽時段。正式開放後，只可選未來 {windowDays} 個曆日內（含今日）、且不晚於 {lastDay} 的日子。",
+      "開放預約前，可點選活動期（{range}）內任何一日預覽時段。正式開放後：平日最多提前 {weekdayDays} 日、週末最多提前 {weekendDays} 日，且不晚於 {lastDay}。",
     slotsTitleLive: "{day} 可選時段",
     slotsTitlePreview: "{day} 時段預覽（尚未開放選取）",
     slotsTitleNone: "請在上面的月曆上選擇一日",

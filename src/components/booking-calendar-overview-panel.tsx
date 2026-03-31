@@ -7,7 +7,10 @@ import {
   summarizeDaySlotsText,
   type TimelineSlotInput,
 } from "@/components/day-slots-timeline";
-import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import {
+  ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+  ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
+} from "@/lib/booking/booking-constants";
 import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
@@ -102,7 +105,8 @@ function MonthCalendarBlock(props: {
               todayKey: props.todayKey,
               campaignStart: CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
               campaignEnd: CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
-              rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+              weekdayDays: ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+              weekendDays: ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
             });
           const selectable = inCampaign && inRolling;
           const sum = selectable ? daySummary(props.slots, key) : { total: 0, openAvailable: 0, openFull: 0, closed: 0 };

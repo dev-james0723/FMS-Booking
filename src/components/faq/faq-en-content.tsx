@@ -86,6 +86,23 @@ export function FaqEnContent() {
                 title: "Organiser discretion",
                 tags: ["May change or cancel bookings"],
               },
+              {
+                variant: "violet",
+                icon: "calendar",
+                title: "Advance booking window (varies by tier)",
+                tags: [
+                  "Teaching / dual: weekday 14 days, weekend 7 days",
+                  "Individual / referred: weekday 7 days, weekend 3 days",
+                ],
+                blurb: "The system determines how far ahead you can book based on your user category and whether the slot falls on a weekday or weekend. Weekend slots have a shorter window to keep prime-time availability fair.",
+              },
+              {
+                variant: "sky",
+                icon: "scale",
+                title: "Rolling 3-day quota unchanged",
+                tags: ["Quota cap and advance window are separate"],
+                blurb: "Regardless of how far ahead you can book, the maximum number of sessions in any 3 consecutive Hong Kong calendar days remains the same (based on your user category).",
+              },
             ]}
           />
         </section>

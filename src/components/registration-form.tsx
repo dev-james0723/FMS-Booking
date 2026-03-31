@@ -11,7 +11,8 @@ import {
   CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY,
   CAMPAIGN_EXPERIENCE_LAST_DAY_KEY,
 } from "@/lib/booking/campaign-constants";
-import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+/** Quota rolling window: "any 3 consecutive calendar days" — separate from booking horizon. */
+const QUOTA_ROLLING_WINDOW_DAYS = 3;
 import {
   parseBookingNumericSettings,
   quotaLimitsForTier,
@@ -202,7 +203,7 @@ function RegistrationProfileQuotaPanel(props: {
         <div>
           <p className="text-sm text-stone-700 dark:text-stone-300">
             {props.tr("reg.quotaRollingLine", {
-              days: String(ROLLING_WINDOW_CALENDAR_DAYS),
+              days: String(QUOTA_ROLLING_WINDOW_DAYS),
               blocks: String(rollingMax),
               slotMinutes: String(props.slotDurationMinutes),
               hours: rHours,

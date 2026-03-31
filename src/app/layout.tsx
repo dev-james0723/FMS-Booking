@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteChrome } from "@/components/site-chrome";
@@ -104,6 +105,7 @@ export default async function RootLayout({
         <SiteChrome initialLocale={initialLocale} initialSiteMeUser={initialSiteMeUser}>
           {children}
         </SiteChrome>
+        <Analytics />
       </body>
     </html>
   );

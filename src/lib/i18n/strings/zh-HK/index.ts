@@ -3,6 +3,7 @@ import { accountZhHK } from "./account-ui";
 import { bookingZhHK } from "./booking-ui";
 import { coreZhHK } from "./core";
 import { directionsZhHK } from "./directions-ui";
+import { partnershipsZhHK } from "./partnerships-ui";
 import { regZhHK } from "./registration";
 
 export const zhHKStrings = {
@@ -12,6 +13,7 @@ export const zhHKStrings = {
   booking: bookingZhHK,
   account: accountZhHK,
   directions: directionsZhHK,
+  partnerships: partnershipsZhHK,
 };
 
 export type AppStrings = DeepStringValues<typeof zhHKStrings>;

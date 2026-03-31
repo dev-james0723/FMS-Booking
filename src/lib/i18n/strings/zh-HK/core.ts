@@ -20,6 +20,7 @@ export const coreZhHK = {
     bookPianoStudioSlots: "預約琴室時段",
     bookOpenSpaceSlots: "預約大型樂器 / 開放空間使用時段",
     contact: "聯絡資訊",
+    businessCollaboration: "商業合作",
     infoMenu: "更多",
     faq: "常見問題（FAQ）",
     directions: "如何前往幻樂空間",

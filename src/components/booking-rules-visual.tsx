@@ -14,61 +14,44 @@ import {
 type T = (path: string) => string;
 type Tr = (path: string, vars: Record<string, string>) => string;
 
-type DayPillTone = "today" | "bookable" | "blocked";
-
-function RollingDayArrow() {
-  return (
-    <span className="select-none px-0.5 text-[11px] text-stone-400 dark:text-stone-500" aria-hidden>
-      →
-    </span>
-  );
-}
-
-function RollingDayPill({
-  dateLine,
-  tone,
-  todayLabel,
-  bookableLabel,
-  blockedLabel,
+function AdvanceWindowRow({
+  icon,
+  label,
+  days,
 }: {
-  dateLine: string;
-  tone: DayPillTone;
-  todayLabel: string;
-  bookableLabel: string;
-  blockedLabel: string;
+  icon: string;
+  label: string;
+  days: string;
 }) {
-  const shell =
-    tone === "today"
-      ? "border-violet-500/65 bg-violet-100 shadow-sm dark:border-violet-400/55 dark:bg-violet-950/45"
-      : tone === "bookable"
-        ? "border-emerald-600/45 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-950/40"
-        : "border-dashed border-stone-300 bg-stone-100/70 dark:border-stone-600 dark:bg-stone-800/55";
-  const foot =
-    tone === "today" ? todayLabel : tone === "bookable" ? bookableLabel : blockedLabel;
   return (
-    <div
-      className={`flex min-w-[3.1rem] flex-col items-center rounded-lg border px-2 py-1.5 text-center ${shell}`}
-    >
-      <span className="text-[11px] font-semibold tabular-nums text-stone-900 dark:text-stone-50">
-        {dateLine}
-      </span>
-      <span className="mt-1 text-[9px] font-medium leading-none text-stone-600 dark:text-stone-400">
-        {foot}
+    <div className="flex items-center gap-2 rounded-lg border border-stone-200/80 bg-stone-50/80 px-3 py-2 dark:border-stone-700 dark:bg-stone-900/40">
+      <span className="text-base" aria-hidden>{icon}</span>
+      <span className="flex-1 text-[11px] text-stone-700 dark:text-stone-300">{label}</span>
+      <span className="font-semibold tabular-nums text-sm text-stone-900 dark:text-stone-50">
+        {days}
       </span>
     </div>
   );
 }
 
-function RollingRuleExpanded({ t, tr, windowDays }: { t: T; tr: Tr; windowDays: string }) {
-  const todayL = t("booking.request.ruleRollingLabelToday");
-  const bookL = t("booking.request.ruleRollingLabelBookable");
-  const blockL = t("booking.request.ruleRollingLabelBlocked");
-
+function RollingRuleExpanded({
+  t,
+  tr,
+  weekdayDays,
+  weekendDays,
+}: {
+  t: T;
+  tr: Tr;
+  weekdayDays: string;
+  weekendDays: string;
+}) {
   return (
     <div className="mt-2 space-y-3 border-l-2 border-stone-200 pl-2.5 text-[11px] leading-relaxed text-stone-600 dark:border-stone-600 dark:text-stone-400">
       <div className="space-y-1.5">
         <p>{t("booking.request.ruleRollingIntro1")}</p>
-        <p>{tr("booking.request.ruleRollingIntro2", { windowDays })}</p>
+        <p>
+          {tr("booking.request.ruleRollingIntro2", { weekdayDays, weekendDays })}
+        </p>
       </div>
 
       <div
@@ -82,111 +65,22 @@ function RollingRuleExpanded({ t, tr, windowDays }: { t: T; tr: Tr; windowDays: 
         <p className="mt-1.5 text-[11px] text-stone-600 dark:text-stone-400">
           {t("booking.request.ruleRollingVisSchematicCaption")}
         </p>
-        <div className="mt-2 flex flex-wrap items-center gap-y-1">
-          <RollingDayPill
-            dateLine={t("booking.request.ruleRollingVisDay0")}
-            tone="today"
-            todayLabel={todayL}
-            bookableLabel={bookL}
-            blockedLabel={blockL}
+        <div className="mt-2.5 space-y-1.5">
+          <AdvanceWindowRow
+            icon="📅"
+            label={t("booking.request.ruleRollingVisWeekdayLabel")}
+            days={tr("booking.request.ruleRollingVisDaysValue", { days: weekdayDays })}
           />
-          <RollingDayArrow />
-          <RollingDayPill
-            dateLine={t("booking.request.ruleRollingVisDay1")}
-            tone="bookable"
-            todayLabel={todayL}
-            bookableLabel={bookL}
-            blockedLabel={blockL}
-          />
-          <RollingDayArrow />
-          <RollingDayPill
-            dateLine={t("booking.request.ruleRollingVisDay2")}
-            tone="bookable"
-            todayLabel={todayL}
-            bookableLabel={bookL}
-            blockedLabel={blockL}
+          <AdvanceWindowRow
+            icon="🗓️"
+            label={t("booking.request.ruleRollingVisWeekendLabel")}
+            days={tr("booking.request.ruleRollingVisDaysValue", { days: weekendDays })}
           />
         </div>
         <p className="mt-2 flex items-start gap-1.5 text-[10px] text-stone-500 dark:text-stone-500">
           <span className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-sm bg-violet-400/80 dark:bg-violet-500/70" />
           <span>{t("booking.request.ruleRollingVisRollHint")}</span>
         </p>
-      </div>
-
-      <div>
-        <p className="mb-2 text-[10px] font-semibold text-stone-700 dark:text-stone-300">
-          {t("booking.request.ruleRollingExamplesTitle")}
-        </p>
-        <div className="space-y-3">
-          <div>
-            <p className="mb-1.5 text-[11px] font-medium text-stone-800 dark:text-stone-200">
-              {t("booking.request.ruleRollingEx1Caption")}
-            </p>
-            <div className="flex flex-wrap items-center gap-y-1">
-              <RollingDayPill
-                dateLine="4 / 1"
-                tone="today"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-              <RollingDayArrow />
-              <RollingDayPill
-                dateLine="4 / 2"
-                tone="bookable"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-              <RollingDayArrow />
-              <RollingDayPill
-                dateLine="4 / 3"
-                tone="bookable"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-            </div>
-          </div>
-          <div>
-            <p className="mb-1.5 text-[11px] font-medium text-stone-800 dark:text-stone-200">
-              {t("booking.request.ruleRollingEx2Caption")}
-            </p>
-            <div className="flex flex-wrap items-center gap-y-1">
-              <RollingDayPill
-                dateLine="4 / 1"
-                tone="blocked"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-              <RollingDayArrow />
-              <RollingDayPill
-                dateLine="4 / 2"
-                tone="today"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-              <RollingDayArrow />
-              <RollingDayPill
-                dateLine="4 / 3"
-                tone="bookable"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-              <RollingDayArrow />
-              <RollingDayPill
-                dateLine="4 / 4"
-                tone="bookable"
-                todayLabel={todayL}
-                bookableLabel={bookL}
-                blockedLabel={blockL}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -249,7 +143,17 @@ function IconWrap({
   );
 }
 
-export function BookingRulesVisual({ t, tr, windowDays }: { t: T; tr: Tr; windowDays: string }) {
+export function BookingRulesVisual({
+  t,
+  tr,
+  weekdayDays,
+  weekendDays,
+}: {
+  t: T;
+  tr: Tr;
+  weekdayDays: string;
+  weekendDays: string;
+}) {
   return (
     <div className="space-y-3">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
@@ -263,8 +167,10 @@ export function BookingRulesVisual({ t, tr, windowDays }: { t: T; tr: Tr; window
             </IconWrap>
           }
           title={t("booking.request.ruleCardRollingTitle")}
-          summary={tr("booking.request.ruleCardRollingSummary", { windowDays })}
-          detailsContent={<RollingRuleExpanded t={t} tr={tr} windowDays={windowDays} />}
+          summary={tr("booking.request.ruleCardRollingSummary", { weekdayDays, weekendDays })}
+          detailsContent={
+            <RollingRuleExpanded t={t} tr={tr} weekdayDays={weekdayDays} weekendDays={weekendDays} />
+          }
           detailsLabel={t("booking.request.ruleRollingExpand")}
         />
 

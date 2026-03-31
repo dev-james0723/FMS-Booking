@@ -20,6 +20,7 @@ export const coreEn = {
     bookPianoStudioSlots: "Book piano studio slots",
     bookOpenSpaceSlots: "Book large instrument / Open Space usage time slots",
     contact: "Contact",
+    businessCollaboration: "Partnerships",
     infoMenu: "More",
     faq: "FAQ",
     directions: "How to get to Fantasia Music Space",

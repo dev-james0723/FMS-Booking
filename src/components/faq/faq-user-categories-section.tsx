@@ -18,6 +18,13 @@ const copy = {
     quotaDay: "每日最多",
     quotaRolling: "連續 3 日最多",
     sessionUnit: "節",
+    advanceCaption: "可提前預約日數（由今日起計，含今日）",
+    advanceWeekday: "平日（一至五）",
+    advanceWeekend: "週末（六、日）",
+    advanceDayUnit: "日",
+    advanceNote: "週末時段之可預約日數較短，以確保高峰時段之公平使用。",
+    advTierTeaching: "教學／雙重身份",
+    advTierIndividual: "個人／老師推薦學生",
     tierPersonal: "個人使用者配額",
     tierTeaching: "教學使用者配額",
     tierTeacherReferredStudent: "老師推薦之學生使用者配額",
@@ -61,6 +68,13 @@ const copy = {
     quotaDay: "Max per day",
     quotaRolling: "Max in any 3 days",
     sessionUnit: "sessions",
+    advanceCaption: "Advance booking window (from today, inclusive)",
+    advanceWeekday: "Weekday (Mon–Fri)",
+    advanceWeekend: "Weekend (Sat–Sun)",
+    advanceDayUnit: "days",
+    advanceNote: "Weekend slots have a shorter advance window to keep prime-time availability fair.",
+    advTierTeaching: "Teaching / dual-identity",
+    advTierIndividual: "Individual / teacher-referred",
     tierPersonal: "Individual user quota",
     tierTeaching: "Teaching user quota",
     tierTeacherReferredStudent: "Teacher-referred student quota",
@@ -158,6 +172,35 @@ type QuotaTableLabelKey =
   | "tierTeaching"
   | "tierTeacherReferredStudent"
   | "tierDualPracticeTeaching";
+
+type AdvanceWindowLabelKey = "advTierTeaching" | "advTierIndividual";
+
+const ADVANCE_WINDOW_ROWS: Array<{
+  labelKey: AdvanceWindowLabelKey;
+  dot: string;
+  cellBg: string;
+  numColor: string;
+  weekday: number;
+  weekend: number;
+  note?: "zh" | "en";
+}> = [
+  {
+    labelKey: "advTierTeaching",
+    dot: "bg-violet-500",
+    cellBg: "bg-violet-500/5",
+    numColor: "text-violet-800 dark:text-violet-200",
+    weekday: 14,
+    weekend: 7,
+  },
+  {
+    labelKey: "advTierIndividual",
+    dot: "bg-teal-500",
+    cellBg: "bg-teal-500/5",
+    numColor: "text-teal-800 dark:text-teal-200",
+    weekday: 7,
+    weekend: 3,
+  },
+];
 
 const QUOTA_TABLE_ROWS: Array<{
   labelKey: QuotaTableLabelKey;
@@ -258,6 +301,54 @@ export function FaqUserCategoriesSection({ locale }: { locale: Locale }) {
             </Fragment>
           ))}
         </div>
+      </div>
+
+      <div
+        className="mt-5 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700 bg-surface"
+        role="region"
+        aria-label={t.advanceCaption}
+      >
+        <p className="border-b border-stone-200 bg-stone-100/80 px-4 py-2.5 text-xs font-medium uppercase tracking-wide text-stone-600 dark:border-stone-700 dark:bg-stone-800/80 dark:text-stone-400">
+          {t.advanceCaption}
+        </p>
+        <div className="grid grid-cols-[minmax(0,1.4fr)_1fr_1fr] text-sm">
+          <div className="border-b border-stone-200 px-3 py-2.5 font-medium text-stone-500 dark:border-stone-700 dark:text-stone-400 sm:px-4" />
+          <div className="border-b border-l border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-700 dark:border-stone-700 dark:text-stone-200 sm:px-3 sm:text-sm">
+            {t.advanceWeekday}
+          </div>
+          <div className="border-b border-l border-stone-200 px-2 py-2.5 text-center text-xs font-semibold text-stone-700 dark:border-stone-700 dark:text-stone-200 sm:px-3 sm:text-sm">
+            {t.advanceWeekend}
+          </div>
+          {ADVANCE_WINDOW_ROWS.map((row, i) => (
+            <Fragment key={row.labelKey}>
+              <div
+                className={`flex items-center gap-2 px-3 py-3 sm:px-4 ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${row.dot}`} aria-hidden />
+                <span className="font-medium text-stone-900 dark:text-stone-50">{t[row.labelKey]}</span>
+              </div>
+              <div
+                className={`flex items-center justify-center border-l border-stone-200 px-2 py-3 text-center dark:border-stone-700 ${row.cellBg} ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`text-lg font-semibold tabular-nums ${row.numColor}`}>
+                  {row.weekday}
+                  <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.advanceDayUnit}</span>
+                </span>
+              </div>
+              <div
+                className={`flex items-center justify-center border-l border-stone-200 px-2 py-3 text-center dark:border-stone-700 ${row.cellBg} ${i > 0 ? "border-t border-stone-200 dark:border-stone-700" : ""}`}
+              >
+                <span className={`text-lg font-semibold tabular-nums ${row.numColor}`}>
+                  {row.weekend}
+                  <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{t.advanceDayUnit}</span>
+                </span>
+              </div>
+            </Fragment>
+          ))}
+        </div>
+        <p className="border-t border-stone-200 bg-stone-50/80 px-4 py-2.5 text-xs text-stone-500 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-400">
+          {t.advanceNote}
+        </p>
       </div>
 
       <ul className="mt-5 space-y-3 list-none p-0">

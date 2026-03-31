@@ -3,7 +3,10 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
-import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import {
+  ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+  ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
+} from "@/lib/booking/booking-constants";
 import { displayVenueLabel, formatSlotListLineZhDateEnRange } from "@/lib/booking-slot-display";
 import { buildMonthGrid, daysInCalendarMonth, slotStartsAtToHkDateKey } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
@@ -312,7 +315,8 @@ function UserBookingRescheduleModalOpen(
             </h2>
             <p className="mt-1 text-xs text-slate-400">
               {tr("booking.historyPanel.selfService.rescheduleIntro", {
-                windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                weekdayDays: String(ADVANCE_DAYS_INDIVIDUAL_WEEKDAY),
+                weekendDays: String(ADVANCE_DAYS_INDIVIDUAL_WEEKEND),
               })}
             </p>
           </div>
@@ -435,7 +439,8 @@ function UserBookingRescheduleModalOpen(
                 {tr("booking.historyPanel.selfService.rescheduleRollingHint", {
                   from: bookableDateRange.from,
                   to: bookableDateRange.to,
-                  windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                  weekdayDays: String(ADVANCE_DAYS_INDIVIDUAL_WEEKDAY),
+                  weekendDays: String(ADVANCE_DAYS_INDIVIDUAL_WEEKEND),
                 })}
               </p>
             ) : bookableDateRange && bookableDateRange.from > bookableDateRange.to ? (

@@ -80,10 +80,13 @@ export function bookingRuleErrorUserMessage(locale: Locale, e: BookingRuleError)
         : "此帳戶僅可預約開放空間時段；請使用大型樂器／開放空間預約頁面。琴室通道登記者可於琴室或開放空間預約（節數上限共用）。";
     case "SLOT_CLOSED":
       return isEn ? `This slot is closed.${slotSuffix(locale, slotId)}` : `時段已關閉${slotSuffix(locale, slotId)}`;
-    case "BOOKING_OUTSIDE_ROLLING_WINDOW":
+    case "BOOKING_OUTSIDE_ROLLING_WINDOW": {
+      const windowDays = numField(d, "windowDays");
+      const windowLabel = windowDays != null ? String(windowDays) : "?";
       return isEn
-        ? `You can only book slots within the next 3 Hong Kong calendar days.${slotSuffix(locale, slotId)}${slotDate && isEn ? ` (${slotDate})` : ""}`
-        : `你目前只可預約未來 3 日內之時段。${slotSuffix(locale, slotId)}`;
+        ? `You can only book slots up to ${windowLabel} Hong Kong calendar days ahead for this day type.${slotSuffix(locale, slotId)}${slotDate ? ` (${slotDate})` : ""}`
+        : `你只可預約未來 ${windowLabel} 個香港曆日內之時段（視乎平日或週末）。${slotSuffix(locale, slotId)}`;
+    }
     case "SLOT_FULL":
       return isEn
         ? `That slot is fully booked — please pick another time.${slotSuffix(locale, slotId)}`
@@ -175,10 +178,13 @@ export function userBookingMutationUserMessage(locale: Locale, e: UserBookingMut
       return isEn
         ? `That slot is outside the campaign dates.${slotSuffix(locale, slotId)}`
         : `時段不在活動有效期內${slotSuffix(locale, slotId)}`;
-    case "BOOKING_OUTSIDE_ROLLING_WINDOW":
+    case "BOOKING_OUTSIDE_ROLLING_WINDOW": {
+      const wd = d?.windowDays;
+      const wdLabel = typeof wd === "number" ? String(wd) : "?";
       return isEn
-        ? "Self-service changes are limited to available slots within the next 3 Hong Kong calendar days (same window as new bookings)."
-        : "自行更改時段只可選未來 3 個香港曆日內之可用時段（與新預約相同之滾動窗口）。";
+        ? `Self-service changes are limited to available slots within the next ${wdLabel} Hong Kong calendar days for this day type (same advance window as new bookings).`
+        : `自行更改時段只可選未來 ${wdLabel} 個香港曆日內之可用時段（視乎平日或週末，與新預約相同之可提前預約範圍）。`;
+    }
     case "INTERNAL":
       return isEn ? "Slot data is inconsistent. Please try again." : "時段資料不一致";
     case "SLOT_FULL":

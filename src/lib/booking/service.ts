@@ -13,6 +13,7 @@ export { BookingRuleError };
 export type { BookingGateErrorCode } from "@/lib/booking/booking-errors";
 import { isBookingPortalLiveFromSettings } from "@/lib/booking/booking-portal-live";
 import {
+  advanceWindowDays,
   assertCooldownAllowsBooking,
   effectiveCapacityTotalForSlot,
   getQuotaNumericLimits,
@@ -195,11 +196,12 @@ export async function validateAndCreateBookingRequest(params: {
             slotId: s.id,
           });
         }
-        if (!isSlotDateWithinRollingWindow(todayKey, sk)) {
+        const slotWindowDays = advanceWindowDays(u.quotaTier, sk);
+        if (!isSlotDateWithinRollingWindow(todayKey, sk, slotWindowDays)) {
           throw new BookingRuleError(
             "BOOKING_OUTSIDE_ROLLING_WINDOW",
             "你目前只可預約未來 3 日內之時段。",
-            { slotId: s.id, slotDate: sk }
+            { slotId: s.id, slotDate: sk, windowDays: slotWindowDays }
           );
         }
       }

@@ -2,10 +2,13 @@ import type { BookingIdentityType, BookingVenueKind, QuotaTier } from "@prisma/c
 import type { Prisma } from "@prisma/client";
 import { BookingRuleError } from "@/lib/booking/booking-errors";
 import {
+  ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+  ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
+  ADVANCE_DAYS_TEACHING_WEEKDAY,
+  ADVANCE_DAYS_TEACHING_WEEKEND,
   BOOKING_COOLDOWN_MS,
-  ROLLING_WINDOW_CALENDAR_DAYS,
 } from "@/lib/booking/booking-constants";
-import { hkCalendarDaysBetween, shiftHkDateKey } from "@/lib/booking/hk-dates";
+import { hkCalendarDaysBetween, isHkWeekend, shiftHkDateKey } from "@/lib/booking/hk-dates";
 import {
   quotaLimitsForTier,
   type BookingNumericSettings,
@@ -15,14 +18,41 @@ import { prisma } from "@/lib/prisma";
 export function isSlotDateWithinRollingWindow(
   todayKey: string,
   slotDayKey: string,
-  windowDays: number = ROLLING_WINDOW_CALENDAR_DAYS
+  windowDays: number
 ): boolean {
   const advance = hkCalendarDaysBetween(todayKey, slotDayKey);
   return advance >= 0 && advance < windowDays;
 }
 
-export function rollingWindowEndDateKey(todayKey: string): string {
-  return shiftHkDateKey(todayKey, ROLLING_WINDOW_CALENDAR_DAYS - 1);
+/**
+ * Per-tier, weekday/weekend-aware booking horizon (inclusive calendar days from today).
+ *
+ * | Tier        | Mon–Fri | Sat–Sun |
+ * |-------------|---------|---------|
+ * | teaching    |      14 |       7 |
+ * | individual  |       7 |       3 |
+ */
+export function advanceWindowDays(
+  quotaTier: "individual" | "teaching",
+  slotDayKey: string
+): number {
+  const weekend = isHkWeekend(slotDayKey);
+  if (quotaTier === "teaching") {
+    return weekend ? ADVANCE_DAYS_TEACHING_WEEKEND : ADVANCE_DAYS_TEACHING_WEEKDAY;
+  }
+  return weekend ? ADVANCE_DAYS_INDIVIDUAL_WEEKEND : ADVANCE_DAYS_INDIVIDUAL_WEEKDAY;
+}
+
+/** Outer-bound end date for the advance window (weekday value, always >= weekend). */
+export function advanceWindowEndDateKey(
+  todayKey: string,
+  quotaTier: "individual" | "teaching"
+): string {
+  const maxDays =
+    quotaTier === "teaching"
+      ? ADVANCE_DAYS_TEACHING_WEEKDAY
+      : ADVANCE_DAYS_INDIVIDUAL_WEEKDAY;
+  return shiftHkDateKey(todayKey, maxDays - 1);
 }
 
 export function getQuotaNumericLimits(

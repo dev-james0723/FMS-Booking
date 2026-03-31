@@ -3,6 +3,7 @@ import { accountEn } from "./account-ui";
 import { bookingEn } from "./booking-ui";
 import { coreEn } from "./core";
 import { directionsEn } from "./directions-ui";
+import { partnershipsEn } from "./partnerships-ui";
 import { regEn } from "./registration";
 
 export const enStrings: AppStrings = {
@@ -12,4 +13,5 @@ export const enStrings: AppStrings = {
   booking: bookingEn,
   account: accountEn,
   directions: directionsEn,
+  partnerships: partnershipsEn,
 };

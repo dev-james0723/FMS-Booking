@@ -24,6 +24,14 @@ export function hkCalendarDaysBetween(todayKey: string, otherKey: string): numbe
   return Math.round((t1 - t0) / 86400000);
 }
 
+/** True if dateKey (yyyy-MM-dd) falls on Saturday (6) or Sunday (0) in HK. */
+export function isHkWeekend(dateKey: string): boolean {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const utcMs = Date.UTC(y, m - 1, d, 4, 0, 0);
+  const dow = new Date(utcMs).getUTCDay();
+  return dow === 0 || dow === 6;
+}
+
 export function maxRollingThreeDaySum(counts: Map<string, number>): number {
   if (counts.size === 0) return 0;
   const keys = [...counts.keys()].sort();

@@ -15,7 +15,10 @@ import {
   formatSlotDateForLocale,
   formatSlotTimeRangeEn,
 } from "@/lib/booking-slot-display";
-import { ROLLING_WINDOW_CALENDAR_DAYS } from "@/lib/booking/booking-constants";
+import {
+  ADVANCE_DAYS_INDIVIDUAL_WEEKDAY,
+  ADVANCE_DAYS_INDIVIDUAL_WEEKEND,
+} from "@/lib/booking/booking-constants";
 import { parseBookingTestMode } from "@/lib/booking/booking-portal-live";
 import { shiftHkDateKey } from "@/lib/booking/hk-dates";
 import {
@@ -74,7 +77,13 @@ type LimitsPayload = {
   /** Additional sessions still bookable today under daily + rolling-3d rules */
   todayBookableRemaining?: number;
   rollingSumCommitted?: number;
-  rollingWindow?: { calendarDays: number; startKey: string; endKey: string };
+  advanceWindow?: {
+    weekdayDays: number;
+    weekendDays: number;
+    calendarDays: number;
+    startKey: string;
+    endKey: string;
+  };
   eligibility?: {
     individualEligible: boolean;
     teachingEligible: boolean;
@@ -696,10 +705,13 @@ export function BookingRequestPanel(props: {
     setSubmitting(false);
   }
 
+  const advWeekdayDays = limits?.advanceWindow?.weekdayDays ?? ADVANCE_DAYS_INDIVIDUAL_WEEKDAY;
+  const advWeekendDays = limits?.advanceWindow?.weekendDays ?? ADVANCE_DAYS_INDIVIDUAL_WEEKEND;
+
   const lastBookableKey =
     campaign.start && campaign.end
       ? (() => {
-          const raw = shiftHkDateKey(todayKey, ROLLING_WINDOW_CALENDAR_DAYS - 1);
+          const raw = shiftHkDateKey(todayKey, advWeekdayDays - 1);
           return raw <= campaign.end ? raw : campaign.end;
         })()
       : null;
@@ -822,7 +834,8 @@ export function BookingRequestPanel(props: {
           <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
             {tr("booking.request.campaignLine", {
               range: campaignRange,
-              windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+              weekdayDays: String(advWeekdayDays),
+              weekendDays: String(advWeekendDays),
             })}
           </p>
         </div>
@@ -1040,17 +1053,17 @@ export function BookingRequestPanel(props: {
               ) : null}
             </div>
 
-            {limits.rollingWindow ? (
+            {limits.advanceWindow ? (
               <div className="mt-3 flex flex-col gap-1.5 rounded-lg border border-dashed border-stone-300 bg-stone-50/80 px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900/30 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
                   {t("booking.request.limitsWindowLabel")}
                 </span>
                 <span className="font-mono text-sm font-medium text-stone-800 dark:text-stone-200">
-                  <span className="text-stone-500 dark:text-stone-500">{limits.rollingWindow.startKey}</span>
+                  <span className="text-stone-500 dark:text-stone-500">{limits.advanceWindow.startKey}</span>
                   <span className="mx-2 text-stone-400 dark:text-stone-600" aria-hidden>
                     →
                   </span>
-                  <span className="text-stone-500 dark:text-stone-500">{limits.rollingWindow.endKey}</span>
+                  <span className="text-stone-500 dark:text-stone-500">{limits.advanceWindow.endKey}</span>
                 </span>
               </div>
             ) : null}
@@ -1206,7 +1219,8 @@ export function BookingRequestPanel(props: {
                 todayKey,
                 campaignStart: campaign.start!,
                 campaignEnd: campaign.end!,
-                rollingWindowCalendarDays: ROLLING_WINDOW_CALENDAR_DAYS,
+                weekdayDays: advWeekdayDays,
+                weekendDays: advWeekendDays,
               });
             const bookable = inCampaignRange ? (bookingLive ? inRollingWindow : true) : false;
             const notYetOpen =
@@ -1268,11 +1282,13 @@ export function BookingRequestPanel(props: {
               {bookingTestMode
                 ? tr("booking.request.hintPickDayTestMode", {
                     range: campaignRange,
-                    windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                    weekdayDays: String(advWeekdayDays),
+                    weekendDays: String(advWeekendDays),
                     lastDay: lastBookableKey ?? t("booking.request.dash"),
                   })
                 : tr("booking.request.hintPickDayLive", {
-                    windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                    weekdayDays: String(advWeekdayDays),
+                    weekendDays: String(advWeekendDays),
                     lastDay: lastBookableKey ?? t("booking.request.dash"),
                   })}
             </>
@@ -1280,7 +1296,8 @@ export function BookingRequestPanel(props: {
             <>
               {tr("booking.request.hintPickDayPreview", {
                 range: campaignRange,
-                windowDays: String(ROLLING_WINDOW_CALENDAR_DAYS),
+                weekdayDays: String(advWeekdayDays),
+                weekendDays: String(advWeekendDays),
                 lastDay: lastBookableKey ?? t("booking.request.dash"),
               })}
             </>
@@ -1646,7 +1663,8 @@ export function BookingRequestPanel(props: {
         <BookingRulesVisual
           t={t}
           tr={tr}
-          windowDays={String(ROLLING_WINDOW_CALENDAR_DAYS)}
+          weekdayDays={String(advWeekdayDays)}
+          weekendDays={String(advWeekendDays)}
         />
       </div>
 
