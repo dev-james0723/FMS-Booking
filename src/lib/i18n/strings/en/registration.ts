@@ -250,7 +250,7 @@ export const regEn = {
     devPasswordWarning:
       "Production never shows passwords on screen; do not enable this behaviour on a public deployment.",
     footerHint:
-      "Change your temporary password right after first sign-in; booking will open when the organiser announces it.",
+      "If you sign in first with email and the temporary password, change your password after sign-in. If you use Face ID / fingerprint (passkey) or Google first, you can skip that step. Booking opens when the organiser announces it.",
     socialFollowLinkMissing:
       "You opted in to follow official accounts, but the follow links could not be loaded. Contact the organiser or register again if needed.",
     goLogin: "Go to sign in",
@@ -281,9 +281,9 @@ export const regEn = {
     goTo: "Open {label}",
     allDoneTitle: "Follow and repost confirmation complete",
     allDoneBodyPreLogin:
-      "We recorded all six follow taps and your confirmation that you reposted the two designated posts with the required tags. You can sign in now; after sign-in, change your temporary password before using your account.",
+      "We recorded all six follow taps and your confirmation that you reposted the two designated posts with the required tags. You can sign in now. If you use email and the temporary password, change it after sign-in; if you use Face ID / fingerprint (passkey) or Google, you can use your account without that step.",
     allDoneBodyAuthed:
-      "Your record is updated. Tap continue below; if you still use a temporary password, you will be sent to change it.",
+      "Your record is updated. Tap continue below. If you signed in with email and a temporary password and have not changed it yet, you will be sent to change it; passkey or Google sign-in will not require a password change.",
     followPhaseDoneTitle: "All six follow buttons are done",
     followPhaseDoneBody:
       "Open the two designated posts below, repost them to your Story or feed, and tag the official accounts for D Festival Young Pianist Programme and Fantasia Music Space.",

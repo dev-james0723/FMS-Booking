@@ -184,6 +184,7 @@ async function completePasskeyLogin(
   }
 
   const creds = user.credentials;
+  const clearMustChange = creds.mustChangePassword;
 
   await prisma.$transaction([
     prisma.webAuthnCredential.update({
@@ -195,9 +196,16 @@ async function completePasskeyLogin(
     }),
     prisma.loginCredential.update({
       where: { userId: user.id },
-      data: { lastLoginAt: new Date() },
+      data: {
+        lastLoginAt: new Date(),
+        ...(clearMustChange ? { mustChangePassword: false } : {}),
+      },
     }),
   ]);
+
+  const credentialsForSession = clearMustChange
+    ? { ...creds, mustChangePassword: false }
+    : creds;
 
   const token = await signUserSession(
     buildUserSessionJwtPayload({
@@ -205,18 +213,18 @@ async function completePasskeyLogin(
       email: user.email,
       accountStatus: user.accountStatus,
       hasCompletedRegistration: user.hasCompletedRegistration,
-      credentials: creds,
+      credentials: credentialsForSession,
       profile: user.profile,
     })
   );
 
   const res = jsonOk({
     ok: true,
-    mustChangePassword: creds.mustChangePassword,
+    mustChangePassword: credentialsForSession.mustChangePassword,
     user: {
       id: user.id,
       email: user.email,
-      mustChangePassword: creds.mustChangePassword,
+      mustChangePassword: credentialsForSession.mustChangePassword,
       hasCompletedRegistration: user.hasCompletedRegistration,
     },
   });

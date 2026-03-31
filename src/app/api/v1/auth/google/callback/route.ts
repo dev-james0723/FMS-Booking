@@ -136,10 +136,18 @@ export async function GET(req: NextRequest) {
     return redirectTo(origin, "/login?google=disabled");
   }
 
+  const clearedPasswordChange = user.credentials.mustChangePassword;
   await prisma.loginCredential.update({
     where: { userId: user.id },
-    data: { lastLoginAt: new Date() },
+    data: {
+      lastLoginAt: new Date(),
+      ...(clearedPasswordChange ? { mustChangePassword: false } : {}),
+    },
   });
+
+  const credentialsForSession = clearedPasswordChange
+    ? { ...user.credentials, mustChangePassword: false }
+    : user.credentials;
 
   const sessionToken = await signUserSession(
     buildUserSessionJwtPayload({
@@ -147,7 +155,7 @@ export async function GET(req: NextRequest) {
       email: user.email,
       accountStatus: user.accountStatus,
       hasCompletedRegistration: user.hasCompletedRegistration,
-      credentials: user.credentials,
+      credentials: credentialsForSession,
       profile: user.profile,
     })
   );

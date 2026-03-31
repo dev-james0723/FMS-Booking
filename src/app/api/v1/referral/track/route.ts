@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { jsonOk } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
+import { sendReferralLinkOpenedToAmbassador } from "@/lib/email/referral-link-opened";
 import { findReferralCodeByRaw } from "@/lib/referral/ambassador";
 import { isValidReferralCodeParam, referralTrackCookieName } from "@/lib/referral/constants";
 
@@ -34,6 +35,22 @@ export async function POST(req: Request) {
   await prisma.$executeRaw(
     Prisma.sql`UPDATE referral_codes SET open_count = COALESCE(open_count, 0) + 1 WHERE id = ${row.id}`
   );
+
+  const ambassador = await prisma.user.findUnique({
+    where: { id: row.ambassadorUserId },
+    select: {
+      id: true,
+      email: true,
+      profile: { select: { nameZh: true } },
+    },
+  });
+  if (ambassador?.email) {
+    void sendReferralLinkOpenedToAmbassador({
+      ambassadorUserId: ambassador.id,
+      toEmail: ambassador.email,
+      ambassadorNameZh: ambassador.profile?.nameZh?.trim() ?? "",
+    }).catch((e) => console.error("[referral/track] link opened notify email", e));
+  }
 
   const res = NextResponse.json({ ok: true, counted: true as const });
   res.cookies.set(cookieName, "1", {

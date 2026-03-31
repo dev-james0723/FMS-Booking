@@ -3,6 +3,7 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import {
   findReferralCodeByRaw,
   finalizeAmbassadorReferralForNewUser,
+  type FinalizeAmbassadorReferralOutcome,
 } from "@/lib/referral/ambassador";
 import { registrationSchema } from "@/lib/validation/registration";
 import { hashPassword } from "@/lib/password";
@@ -10,6 +11,7 @@ import {
   sendRegistrationAdminNotification,
   sendRegistrationConfirmation,
 } from "@/lib/email";
+import { sendAmbassadorRefereeRegisteredEmail } from "@/lib/email/ambassador-referee-registered";
 import { normalizePhoneForSms } from "@/lib/phone-normalize";
 import { verifyPasskeyPreregToken } from "@/lib/passkey-prereg-token";
 import { verifyPhoneRegistrationProof } from "@/lib/phone-registration-proof";
@@ -210,7 +212,7 @@ export async function POST(req: Request) {
       })
     ) as Prisma.InputJsonValue;
 
-    const result = await prisma.$transaction(
+    const { user: result, referralFinalizeOutcome } = await prisma.$transaction(
       async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -312,8 +314,9 @@ export async function POST(req: Request) {
           throw new Error("PHONE_VERIFICATION_ALREADY_USED");
         }
 
+        let referralOutcome: FinalizeAmbassadorReferralOutcome | null = null;
         if (resolvedReferral) {
-          await finalizeAmbassadorReferralForNewUser(
+          referralOutcome = await finalizeAmbassadorReferralForNewUser(
             tx,
             allSettings,
             user.id,
@@ -321,13 +324,37 @@ export async function POST(req: Request) {
           );
         }
 
-        return user;
+        return { user, referralFinalizeOutcome: referralOutcome };
       },
       {
         maxWait: 10_000,
         timeout: 20_000,
       }
     );
+
+    let ambassadorReferralNameZh: string | null = null;
+    if (referralFinalizeOutcome?.kind === "recorded" && resolvedReferral) {
+      const ambRow = await prisma.user.findUnique({
+        where: { id: resolvedReferral.ambassadorUserId },
+        select: {
+          email: true,
+          profile: { select: { nameZh: true } },
+        },
+      });
+      ambassadorReferralNameZh = ambRow?.profile?.nameZh?.trim() || null;
+      if (ambRow?.email) {
+        void sendAmbassadorRefereeRegisteredEmail({
+          ambassadorUserId: resolvedReferral.ambassadorUserId,
+          toEmail: ambRow.email,
+          ambassadorNameZh: ambassadorReferralNameZh ?? "",
+          refereeDisplayName:
+            data.nameZh.trim() || data.nameEn?.trim() || email.split("@")[0] || email,
+          bonusSlotGranted: referralFinalizeOutcome.bonusSlotGranted,
+        }).catch((e) =>
+          console.error("[registration] ambassador referee registered email", e)
+        );
+      }
+    }
 
     let emailOutcome: Awaited<ReturnType<typeof sendRegistrationConfirmation>>;
     const confirmationDisplayName =
@@ -338,6 +365,10 @@ export async function POST(req: Request) {
         toEmail: email,
         tempPassword,
         userName: confirmationDisplayName,
+        referralFromAmbassadorNameZh:
+          referralFinalizeOutcome?.kind === "recorded"
+            ? ambassadorReferralNameZh?.trim() || "推薦人"
+            : null,
       });
     } catch (emailErr) {
       console.error("[registration] confirmation email pipeline", emailErr);

@@ -243,7 +243,8 @@ export const regZhHK = {
     devEmailLabel: "登入帳號（Email）",
     devPasswordLabel: "臨時密碼",
     devPasswordWarning: "正式環境不會在畫面上顯示密碼；請勿於公開部署開啟此行為。",
-    footerHint: "首次登入後請立即更改密碼；預約系統將於主辦公布時間開放預約。",
+    footerHint:
+      "若以電郵及臨時密碼首次登入，請更改密碼；若以 Face ID／指紋（通行密鑰）或 Google 帳戶首次登入則無需改密碼。預約系統將於主辦公布時間開放預約。",
     socialFollowLinkMissing:
       "已承諾追蹤官方帳戶，但未能載入追蹤步驟連結。請聯絡主辦方或重新登記（如適用）。",
     goLogin: "前往登入",
@@ -273,9 +274,9 @@ export const regZhHK = {
     goTo: "前往 {label}",
     allDoneTitle: "追蹤與轉發確認已完成",
     allDoneBodyPreLogin:
-      "系統已記錄你完成六個官方帳戶追蹤步驟，並確認已轉發兩個指定貼文及標註所需帳戶。你現在可以前往登入；登入後請先更改臨時密碼，方可使用帳戶功能。",
+      "系統已記錄你完成六個官方帳戶追蹤步驟，並確認已轉發兩個指定貼文及標註所需帳戶。你現在可以前往登入。若以電郵及臨時密碼登入，請於登入後更改密碼；若以 Face ID／指紋（通行密鑰）或 Google 帳戶登入，則可直接使用帳戶功能。",
     allDoneBodyAuthed:
-      "系統已更新你的紀錄。請點擊下方繼續；若尚未更改臨時密碼，你將被帶往更改密碼頁面。",
+      "系統已更新你的紀錄。請點擊下方繼續。若以電郵及臨時密碼登入且尚未改密碼，你將被帶往更改密碼頁面；若以 Face ID／指紋或 Google 登入則不會要求改密碼。",
     followPhaseDoneTitle: "六個追蹤按鈕已完成",
     followPhaseDoneBody:
       "請繼續瀏覽下方兩個指定貼文，轉發至你的 Story 或貼文，並務必標註（Tag）「D Festival 青年鋼琴家藝術節」以及「幻樂空間／Fantasia Music Space」的官方帳戶。",

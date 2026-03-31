@@ -1,9 +1,13 @@
-import type { CameraRentalPaymentChoice } from "@prisma/client";
+import type { BookingVenueKind, CameraRentalPaymentChoice } from "@prisma/client";
 import {
   CAMERA_RENTAL_STRIPE_CHECKOUT_URL,
   CAMERA_USAGE_GUIDE_DRIVE_URL,
   cameraRentalQrAbsUrl,
 } from "@/lib/booking/camera-rental";
+import {
+  displayVenueLabel,
+  formatSlotListLineForLocale,
+} from "@/lib/booking-slot-display";
 import { sessionCountWithHoursPack } from "@/lib/i18n/session-hours";
 import type { Locale } from "@/lib/i18n/types";
 import { withBasePath } from "@/lib/base-path";
@@ -40,6 +44,82 @@ const btnStyle =
 
 function linkButton(href: string, label: string): string {
   return `<a href="${escapeHtml(href)}" style="${btnStyle}">${escapeHtml(label)}</a>`;
+}
+
+function bookingVenueCategoryLine(
+  locale: Locale,
+  venueKind: BookingVenueKind,
+): string {
+  if (locale === "en") {
+    return venueKind === "open_space"
+      ? "Booking type: Large instrument / Open Space"
+      : "Booking type: Piano studio";
+  }
+  return venueKind === "open_space"
+    ? "預約類別：大型樂器／開放空間時段"
+    : "預約類別：琴室時段";
+}
+
+function slotSpaceLabel(
+  locale: Locale,
+  venueKind: BookingVenueKind,
+  venueLabel: string | null | undefined,
+): string {
+  const v = venueLabel?.trim();
+  if (v) return displayVenueLabel(v, locale);
+  return venueKind === "open_space"
+    ? locale === "en"
+      ? "Large instrument / Open Space"
+      : "大型樂器／開放空間"
+    : locale === "en"
+      ? "Piano studio"
+      : "琴室";
+}
+
+function uniqueSlotSpaceLabels(
+  locale: Locale,
+  venueKind: BookingVenueKind,
+  slots: { venueLabel: string | null | undefined }[],
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of slots) {
+    const label = slotSpaceLabel(locale, venueKind, s.venueLabel);
+    if (!seen.has(label)) {
+      seen.add(label);
+      out.push(label);
+    }
+  }
+  return out;
+}
+
+function perSessionLinesForMail(
+  locale: Locale,
+  venueKind: BookingVenueKind,
+  slots: { startsAt: Date; endsAt: Date; venueLabel: string | null | undefined }[],
+): { textLines: string[]; htmlItems: string[] } {
+  const sorted = [...slots].sort(
+    (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
+  );
+  const textLines: string[] = [];
+  const htmlItems: string[] = [];
+  sorted.forEach((s, i) => {
+    const n = i + 1;
+    const timeLine = formatSlotListLineForLocale(s.startsAt, s.endsAt, locale);
+    const space = slotSpaceLabel(locale, venueKind, s.venueLabel);
+    if (locale === "en") {
+      textLines.push(`  • Session ${n}: ${timeLine} · ${space}`);
+      htmlItems.push(
+        `<li style="margin:0 0 6px;"><strong>Session ${n}</strong> — ${escapeHtml(timeLine)} · ${escapeHtml(space)}</li>`,
+      );
+    } else {
+      textLines.push(`  • 第 ${n} 節：${timeLine} · ${space}`);
+      htmlItems.push(
+        `<li style="margin:0 0 6px;"><strong>第 ${n} 節</strong> — ${escapeHtml(timeLine)} · ${escapeHtml(space)}</li>`,
+      );
+    }
+  });
+  return { textLines, htmlItems };
 }
 
 function compactNavLinks(items: [string, string][]): string {
@@ -137,14 +217,44 @@ export function buildBookingSubmittedMail(
     greetingName: string;
     requestId: string;
     slotCount: number;
-    slots: { startsAt: Date; endsAt: Date }[];
+    venueKind: BookingVenueKind;
+    slots: { startsAt: Date; endsAt: Date; venueLabel: string | null }[];
     cameraRentalOptIn: boolean;
     cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
   },
 ): { subject: string; text: string; html: string } {
   const safeName = escapeHtml(params.greetingName);
   const sessions = sessionCountWithHoursPack(locale, params.slotCount);
-  const timeSummary = formatBookingSlotsSummaryForMail(locale, params.slots);
+  const slotIntervals = params.slots.map((s) => ({
+    startsAt: s.startsAt,
+    endsAt: s.endsAt,
+  }));
+  const timeSummary = formatBookingSlotsSummaryForMail(locale, slotIntervals);
+  const categoryLine = bookingVenueCategoryLine(locale, params.venueKind);
+  const uniqueSpaces = uniqueSlotSpaceLabels(
+    locale,
+    params.venueKind,
+    params.slots,
+  );
+  const bookedSpacesLine =
+    locale === "en"
+      ? uniqueSpaces.length === 1
+        ? `Booked space: ${uniqueSpaces[0]}`
+        : `Booked spaces: ${uniqueSpaces.join("; ")}`
+      : uniqueSpaces.length === 1
+        ? `預約空間：${uniqueSpaces[0]}`
+        : `預約空間：${uniqueSpaces.join("；")}`;
+  const perSession = perSessionLinesForMail(
+    locale,
+    params.venueKind,
+    params.slots,
+  );
+  const perSessionHeading =
+    locale === "en"
+      ? "Sessions (time and space)"
+      : "各節詳情（時段及空間／房間）";
+  const perSessionHtml = `<p style="margin:16px 0 6px;font-weight:600;font-size:14px;color:#44403c;">${escapeHtml(perSessionHeading)}</p>
+<ul style="margin:8px 0 0;padding-left:20px;">${perSession.htmlItems.join("")}</ul>`;
   const driveUrl = driveFolderUrl();
   const igUrl = getSocialFollowUrl("fantasia_space_ig");
   const fbUrl = getSocialFollowUrl("fantasia_space_fb");
@@ -206,8 +316,14 @@ export function buildBookingSubmittedMail(
       "",
       "Your booking status: CONFIRMED.",
       "",
-      `You have booked ${sessions}. Scheduled times (Hong Kong Time):`,
+      categoryLine,
+      bookedSpacesLine,
+      "",
+      `You have booked ${sessions}. Overview by date (Hong Kong Time):`,
       ...timeSummary.textLines.map((line) => `  • ${line}`),
+      "",
+      perSessionHeading,
+      ...perSession.textLines,
       "",
       `Reference: ${params.requestId}`,
       `View your bookings: ${urls.history}`,
@@ -283,8 +399,11 @@ export function buildBookingSubmittedMail(
       <div style="margin:0 0 14px;padding:10px 14px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;font-size:14px;line-height:1.55;color:#065f46;">
         <p style="margin:0;font-weight:700;">Status: Confirmed</p>
       </div>
-      <p style="margin:0 0 8px;">You have booked <strong>${escapeHtml(sessions)}</strong>. Your scheduled times:</p>
+      <p style="margin:0 0 6px;font-size:14px;line-height:1.55;"><strong>${escapeHtml(categoryLine)}</strong></p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;">${escapeHtml(bookedSpacesLine)}</p>
+      <p style="margin:0 0 8px;">You have booked <strong>${escapeHtml(sessions)}</strong>. Overview by date (Hong Kong Time):</p>
       ${timeSummary.htmlBlock}
+      ${perSessionHtml}
       <p style="margin:14px 0 16px;font-size:14px;">Reference: <strong>${escapeHtml(params.requestId)}</strong></p>
       <p style="margin:0 0 12px;">${linkButton(urls.history, "View my booking history")}</p>
       <p style="margin:0 0 4px;font-weight:600;font-size:14px;color:#44403c;">Quick links</p>
@@ -337,8 +456,14 @@ export function buildBookingSubmittedMail(
     "",
     "預約狀態：已確認",
     "",
-    `您本次共預約 ${sessions}，時段如下（香港時間）：`,
+    categoryLine,
+    bookedSpacesLine,
+    "",
+    `您本次共預約 ${sessions}，日期概覽如下（香港時間）：`,
     ...timeSummary.textLines.map((line) => `  • ${line}`),
+    "",
+    perSessionHeading,
+    ...perSession.textLines,
     "",
     `參考編號：${params.requestId}`,
     `查看預約紀錄：${urls.history}`,
@@ -414,8 +539,11 @@ export function buildBookingSubmittedMail(
       <div style="margin:0 0 14px;padding:10px 14px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;font-size:14px;line-height:1.55;color:#065f46;">
         <p style="margin:0;font-weight:700;">預約狀態：已確認</p>
       </div>
-      <p style="margin:0 0 8px;">您本次共預約 <strong>${escapeHtml(sessions)}</strong>，時段如下：</p>
+      <p style="margin:0 0 6px;font-size:14px;line-height:1.55;"><strong>${escapeHtml(categoryLine)}</strong></p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;">${escapeHtml(bookedSpacesLine)}</p>
+      <p style="margin:0 0 8px;">您本次共預約 <strong>${escapeHtml(sessions)}</strong>，日期概覽如下（香港時間）：</p>
       ${timeSummary.htmlBlock}
+      ${perSessionHtml}
       <p style="margin:14px 0 16px;font-size:14px;">參考編號：<strong>${escapeHtml(params.requestId)}</strong></p>
       <p style="margin:0 0 12px;">${linkButton(urls.history, "查看我的預約紀錄")}</p>
       <p style="margin:0 0 4px;font-weight:600;font-size:14px;color:#44403c;">本網站連結</p>

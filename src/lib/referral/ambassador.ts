@@ -51,23 +51,31 @@ function ambassadorBonusCap(settings: Record<string, unknown>): number {
   return Math.floor(n);
 }
 
+export type FinalizeAmbassadorReferralOutcome =
+  | { kind: "skipped_self" | "skipped_duplicate" }
+  | { kind: "recorded"; bonusSlotGranted: boolean };
+
 /**
  * After a new user row exists: attach referral, grant ambassador bonus (capped).
- * `resolved` must be a real row where ambassador ≠ new user.
+ * `resolved` must be a real row where ambassador ≠ new user for a recorded referral.
  */
 export async function finalizeAmbassadorReferralForNewUser(
   tx: Prisma.TransactionClient,
   settings: Record<string, unknown>,
   newUserId: string,
   resolved: { id: string; code: string; ambassadorUserId: string }
-): Promise<void> {
-  if (resolved.ambassadorUserId === newUserId) return;
+): Promise<FinalizeAmbassadorReferralOutcome> {
+  if (resolved.ambassadorUserId === newUserId) {
+    return { kind: "skipped_self" };
+  }
 
   const dup = await tx.referral.findFirst({
     where: { referralCodeId: resolved.id, refereeUserId: newUserId },
     select: { id: true },
   });
-  if (dup) return;
+  if (dup) {
+    return { kind: "skipped_duplicate" };
+  }
 
   const referralRow = await tx.referral.create({
     data: {
@@ -81,7 +89,9 @@ export async function finalizeAmbassadorReferralForNewUser(
   const granted = await tx.ambassadorReward.count({
     where: { ambassadorUserId: resolved.ambassadorUserId },
   });
-  if (granted >= cap) return;
+  if (granted >= cap) {
+    return { kind: "recorded", bonusSlotGranted: false };
+  }
 
   const bonus = await tx.bonusReward.create({
     data: {
@@ -104,6 +114,8 @@ export async function finalizeAmbassadorReferralForNewUser(
       bonusRewardId: bonus.id,
     },
   });
+
+  return { kind: "recorded", bonusSlotGranted: true };
 }
 
 export async function resolveReferrerDisplayForUser(

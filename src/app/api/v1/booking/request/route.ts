@@ -102,13 +102,18 @@ export async function POST(req: Request) {
           : p.nameZh;
       const slotsForMail = [...full.allocations]
         .sort((a, b) => a.slot.startsAt.getTime() - b.slot.startsAt.getTime())
-        .map((a) => ({ startsAt: a.slot.startsAt, endsAt: a.slot.endsAt }));
+        .map((a) => ({
+          startsAt: a.slot.startsAt,
+          endsAt: a.slot.endsAt,
+          venueLabel: a.slot.venueLabel,
+        }));
       await sendBookingSubmitted({
         userId: full.userId,
         toEmail: full.user.email,
         greetingName,
         requestId: full.id,
         slotCount: full.allocations.length,
+        venueKind: full.venueKind,
         slots: slotsForMail,
         locale,
         cameraRentalOptIn: full.cameraRentalOptIn,

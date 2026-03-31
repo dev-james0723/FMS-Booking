@@ -1,4 +1,8 @@
-import { EmailLogStatus, type CameraRentalPaymentChoice } from "@prisma/client";
+import {
+  EmailLogStatus,
+  type BookingVenueKind,
+  type CameraRentalPaymentChoice,
+} from "@prisma/client";
 import { Resend } from "resend";
 import type { Locale } from "@/lib/i18n/types";
 import { buildBookingSubmittedMail } from "@/lib/email/booking-submitted-mail";
@@ -10,7 +14,8 @@ export async function sendBookingSubmitted(params: {
   greetingName: string;
   requestId: string;
   slotCount: number;
-  slots: { startsAt: Date; endsAt: Date }[];
+  venueKind: BookingVenueKind;
+  slots: { startsAt: Date; endsAt: Date; venueLabel: string | null }[];
   locale: Locale;
   cameraRentalOptIn: boolean;
   cameraRentalPaymentChoice: CameraRentalPaymentChoice | null;
@@ -19,6 +24,7 @@ export async function sendBookingSubmitted(params: {
     greetingName: params.greetingName,
     requestId: params.requestId,
     slotCount: params.slotCount,
+    venueKind: params.venueKind,
     slots: params.slots,
     cameraRentalOptIn: params.cameraRentalOptIn,
     cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
@@ -41,6 +47,7 @@ export async function sendBookingSubmitted(params: {
       payload: {
         requestId: params.requestId,
         slotCount: params.slotCount,
+        venueKind: params.venueKind,
         locale: params.locale,
         cameraRentalOptIn: params.cameraRentalOptIn,
         cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
@@ -73,6 +80,7 @@ export async function sendBookingSubmitted(params: {
         payload: {
           requestId: params.requestId,
           slotCount: params.slotCount,
+          venueKind: params.venueKind,
           locale: params.locale,
           cameraRentalOptIn: params.cameraRentalOptIn,
           cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
@@ -92,6 +100,7 @@ export async function sendBookingSubmitted(params: {
       payload: {
         requestId: params.requestId,
         slotCount: params.slotCount,
+        venueKind: params.venueKind,
         locale: params.locale,
         cameraRentalOptIn: params.cameraRentalOptIn,
         cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
@@ -110,6 +119,7 @@ export async function sendBookingSubmitted(params: {
       payload: {
         requestId: params.requestId,
         slotCount: params.slotCount,
+        venueKind: params.venueKind,
         locale: params.locale,
         cameraRentalOptIn: params.cameraRentalOptIn,
         cameraRentalPaymentChoice: params.cameraRentalPaymentChoice,
