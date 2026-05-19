@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { isHkDayBookable } from "@/lib/hk-calendar-client";
 
 describe("isHkDayBookable", () => {
-  const start = "2026-04-03";
-  const end = "2026-05-03";
+  const start = "2026-05-20";
+  const end = "2026-06-15";
 
   it("allows weekday within weekday window", () => {
-    // 2026-04-06 is Monday, 3 days from 2026-04-03 (Friday, today)
+    // 2026-05-21 is Thursday, 1 day from 2026-05-20 (Wednesday, today)
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-06",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-21",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 7,
@@ -20,11 +20,11 @@ describe("isHkDayBookable", () => {
   });
 
   it("rejects weekday beyond weekday window", () => {
-    // 2026-04-10 is Friday, 7 days from 2026-04-03 → apart=7, window=7 → false (not <7)
+    // 2026-05-27 is Wednesday, 7 days from 2026-05-20 → apart=7, window=7 → false (not <7)
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-10",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-27",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 7,
@@ -34,11 +34,11 @@ describe("isHkDayBookable", () => {
   });
 
   it("allows weekend within weekend window", () => {
-    // 2026-04-04 is Saturday, 1 day from today 2026-04-03
+    // 2026-05-23 is Saturday, 1 day from 2026-05-22 (Friday, today)
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-04",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-23",
+        todayKey: "2026-05-22",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 7,
@@ -48,11 +48,11 @@ describe("isHkDayBookable", () => {
   });
 
   it("rejects weekend beyond weekend window", () => {
-    // 2026-04-11 is Saturday, 8 days from 2026-04-03 → weekendDays=3 → false
+    // 2026-05-30 is Saturday, 10 days from 2026-05-20 → weekendDays=3 → false
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-11",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-30",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 7,
@@ -64,8 +64,8 @@ describe("isHkDayBookable", () => {
   it("blocks days before today even in campaign", () => {
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-02",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-19",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 7,
@@ -77,8 +77,8 @@ describe("isHkDayBookable", () => {
   it("blocks before campaign start", () => {
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-02",
-        todayKey: "2026-03-30",
+        dateKey: "2026-05-19",
+        todayKey: "2026-05-10",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 14,
@@ -88,11 +88,11 @@ describe("isHkDayBookable", () => {
   });
 
   it("teaching tier: weekend 7 days ahead allowed", () => {
-    // 2026-04-12 is Sunday, 9 days from 2026-04-03 → weekendDays=7 → false
+    // 2026-05-31 is Sunday, 11 days from 2026-05-20 → weekendDays=7 → false
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-12",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-31",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 14,
@@ -100,11 +100,11 @@ describe("isHkDayBookable", () => {
       })
     ).toBe(false);
 
-    // 2026-04-05 is Sunday, 2 days from 2026-04-03 → weekendDays=7 → true
+    // 2026-05-25 is Sunday, 5 days from 2026-05-20 → weekendDays=7 → true
     expect(
       isHkDayBookable({
-        dateKey: "2026-04-05",
-        todayKey: "2026-04-03",
+        dateKey: "2026-05-25",
+        todayKey: "2026-05-20",
         campaignStart: start,
         campaignEnd: end,
         weekdayDays: 14,

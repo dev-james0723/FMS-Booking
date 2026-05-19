@@ -245,7 +245,7 @@ function padMonthDay(n: number): string {
 }
 
 function defaultHkMonthKey(todayKey: string, cStart: string | null, cEnd: string | null): string {
-  if (!cStart || !cEnd) return "2026-04";
+  if (!cStart || !cEnd) return "2026-05";
   let y: number;
   let m: number;
   if (todayKey < cStart) {

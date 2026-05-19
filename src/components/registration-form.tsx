@@ -1617,17 +1617,17 @@ export function RegistrationForm() {
           </p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-start">
             <RegistrationPreferredDateMonth
-              title={t("reg.monthApr")}
+              title={t("reg.monthMay")}
               year={2026}
-              month1={4}
+              month1={5}
               selectedPreferredDates={selectedPreferredDates}
               onToggleDate={togglePreferredDate}
               weekdays={calWeekdays}
             />
             <RegistrationPreferredDateMonth
-              title={t("reg.monthMay")}
+              title={t("reg.monthJune")}
               year={2026}
-              month1={5}
+              month1={6}
               selectedPreferredDates={selectedPreferredDates}
               onToggleDate={togglePreferredDate}
               weekdays={calWeekdays}

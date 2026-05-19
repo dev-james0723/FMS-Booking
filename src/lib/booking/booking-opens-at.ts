@@ -7,7 +7,8 @@ import { hkDateKey, HK_TZ } from "@/lib/time";
  * Some deployments stored `booking_opens_at` on 2026-03-31 11:00 HKT by mistake.
  * Portal open is aligned with the first experience day at 11:00 Hong Kong.
  */
-const STALE_BOOKING_OPENS_HK_DATE_KEYS = new Set(["2026-03-31"]);
+/** Legacy portal-open dates remapped to the current campaign first day at 11:00 HKT. */
+const STALE_BOOKING_OPENS_HK_DATE_KEYS = new Set(["2026-03-31", "2026-04-03"]);
 
 export function parseBookingOpensAt(raw: unknown): Date | null {
   const d = parseInstantSetting(raw);

@@ -147,8 +147,8 @@ export const regEn = {
   prefDates: "Preferred dates (multiple)",
   prefDatesHint:
     "Selectable range: {campaignRange} (Hong Kong calendar). Tap a day to select or deselect; grey days are outside the campaign.",
-  monthApr: "April 2026",
-  monthMay: "May 2026 (end of campaign)",
+  monthMay: "May 2026",
+  monthJune: "June 2026 (end of campaign)",
   selectedDates: "Selected dates",
   noneSelected: "None yet — tap dates on the calendar.",
   prefSlots: "Preferred time bands (multiple)",

@@ -335,13 +335,13 @@ export const bookingZhHK = {
     overviewIntro: "",
     dayDetailHint:
       "點選下方月曆上的日期，即可查看該日每個時段是「仍可預約」、「已預約」或「已關閉」。此頁只供查閱，提交預約請使用預約版面。",
-    jumpFirstCampaignDay: "查看活動首天（4 月 3 日）",
-    jumpLastCampaignDay: "查看活動最後一天（5 月 3 日）",
+    jumpFirstCampaignDay: "查看活動首天（5 月 20 日）",
+    jumpLastCampaignDay: "查看活動最後一天（6 月 15 日）",
     refresh: "重新整理",
     loading: "載入中…",
     loadError: "無法載入月曆資料",
-    monthApr: "2026 年 4 月",
-    monthMay: "2026 年 5 月（活動尾段）",
+    monthMay: "2026 年 5 月",
+    monthJune: "2026 年 6 月（活動尾段）",
     leaveOverview: "離開月曆總覽",
     legend:
       "綠底：當日仍有可預約時段 · 紅底：當日已無任何可預約時段（時段已被預約或已關閉） · 灰底：未有時段或不在免費體驗期內",

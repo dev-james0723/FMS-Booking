@@ -47,7 +47,7 @@ export function FaqEnContent() {
                 variant: "violet",
                 icon: "calendar",
                 title: "Campaign window (example)",
-                tags: ["3 Apr–3 May 2026", "Daily: 06:00–20:00", "Hong Kong time"],
+                tags: ["20 May–15 Jun 2026", "Daily: 06:00–20:00", "Hong Kong time"],
               },
               {
                 variant: "sky",
@@ -257,7 +257,7 @@ export function FaqEnContent() {
                       <strong className="text-stone-700 dark:text-stone-300">D Festival</strong> application fee and 50% off the{" "}
                       <strong className="text-stone-700 dark:text-stone-300">D Masters</strong> preliminary application fee. Promo codes are sent
                       automatically to the referee. All extra time slots must be used{" "}
-                      <strong className="text-stone-700 dark:text-stone-300">after 3 May 2026</strong>. After this free experience programme ends, the
+                      <strong className="text-stone-700 dark:text-stone-300">after 15 June 2026</strong>. After this free experience programme ends, the
                       organiser will progressively notify users who earned extra Time Slots when they may book.
                     </p>
                   </>

@@ -149,7 +149,7 @@ export const accountZhHK = {
   ambassadorRewardsStatCapSub: "節（12.5 小時）· 即最多 25 位成功推薦",
   ambassadorRewardsNoteAvailability: "須視乎名額及時段供應。",
   ambassadorRewardsNoteTransfer: "不可轉讓、不可兌換現金。",
-  ambassadorRewardsNoteAfter: "所有 bonus slot 額外時段只可於今次免費體驗活動後使用（亦即 5 月 3 日後）。",
+  ambassadorRewardsNoteAfter: "所有 bonus slot 額外時段只可於今次免費體驗活動後使用（亦即 6 月 15 日後）。",
   ambassadorRewardsNoteRemind: "屆時幻樂空間會分批提醒合資格推薦人何時可進行房間預約。",
   ambassadorShareLink: "專屬分享連結",
   ambassadorCopyLink: "複製連結",
@@ -174,7 +174,7 @@ export const accountZhHK = {
   ambassadorPopupDfestival: "D Festival 青年鋼琴家藝術節：報名費半價；優惠碼將自動發送至你的登記電郵。",
   ambassadorPopupDmasters: "D Masters 國際鋼琴比賽：初賽報名費半價；優惠碼將自動發送至你的登記電郵。",
   ambassadorPopupNote:
-    "注意：所有額外預約時段須於 2026 年 5 月 3 日後使用。是次免費體驗活動結束後，主辦方將逐步通知獲取額外 Time Slots 之用戶何時可預約。D Festival／D Masters 報名優惠之使用須遵守主辦方條款。",
+    "注意：所有額外預約時段須於 2026 年 6 月 15 日後使用。是次免費體驗活動結束後，主辦方將逐步通知獲取額外 Time Slots 之用戶何時可預約。D Festival／D Masters 報名優惠之使用須遵守主辦方條款。",
   ambassadorPopupCopyAll: "一鍵複製禮遇及優惠碼",
   ambassadorPopupCopied: "已複製",
   ambassadorPopupClose: "關閉",

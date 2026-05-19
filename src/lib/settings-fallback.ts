@@ -4,16 +4,16 @@
  */
 export const FALLBACK_SYSTEM_SETTINGS_ROWS: { key: string; value: unknown }[] = [
   { key: "site_registration_opens_at", value: "2026-03-11T00:00:00+08:00" },
-  { key: "booking_opens_at", value: "2026-04-03T11:00:00+08:00" },
+  { key: "booking_opens_at", value: "2026-05-20T11:00:00+08:00" },
   { key: "booking_test_mode", value: false },
-  { key: "booking_reminder_scheduled_at", value: "2026-04-02T11:00:00+08:00" },
-  { key: "campaign_starts_at", value: "2026-04-03T00:00:00+08:00" },
-  { key: "campaign_ends_at", value: "2026-05-03T23:59:59+08:00" },
+  { key: "booking_reminder_scheduled_at", value: "2026-05-19T11:00:00+08:00" },
+  { key: "campaign_starts_at", value: "2026-05-20T00:00:00+08:00" },
+  { key: "campaign_ends_at", value: "2026-06-15T23:59:59+08:00" },
   {
     key: "dfestival_dmasters_privilege_deadline_at",
-    value: "2026-05-03T23:59:59+08:00",
+    value: "2026-06-15T23:59:59+08:00",
   },
-  { key: "post_experience_coupon_valid_from", value: "2026-05-04T00:00:00+08:00" },
+  { key: "post_experience_coupon_valid_from", value: "2026-06-16T00:00:00+08:00" },
   {
     key: "post_experience_coupon_valid_until",
     value: "2026-06-30T23:59:59+08:00",

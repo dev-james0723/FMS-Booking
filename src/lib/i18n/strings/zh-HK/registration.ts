@@ -144,8 +144,8 @@ export const regZhHK = {
   prefDates: "希望使用日期（可複選）",
   prefDatesHint:
     "可選範圍為 {campaignRange}（香港日期）。單擊日子可選取，再單擊可取消；灰色日子不在活動期內。",
-  monthApr: "2026 年 4 月",
-  monthMay: "2026 年 5 月（活動尾段）",
+  monthMay: "2026 年 5 月",
+  monthJune: "2026 年 6 月（活動尾段）",
   selectedDates: "已選日期",
   noneSelected: "「尚未選擇」，請在日曆點選日子。",
   prefSlots: "希望使用時段（可複選）",

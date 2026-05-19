@@ -64,7 +64,7 @@ export function AdminControlPageClient() {
       <div>
         <h1 className="text-xl font-semibold text-white">控制</h1>
         <p className="mt-2 text-sm text-slate-400">
-          預約系統測試模式：啟用後會略過主頁倒數與「預約尚未開放」限制，讓已登入用戶依現有活動日期（4 月 3 日—5 月 3
+          預約系統測試模式：啟用後會略過主頁倒數與「預約尚未開放」限制，讓已登入用戶依現有活動日期（5 月 20 日—6 月 15
           日）及滾動窗口規則測試琴室與開放空間預約。關閉後還原為以「正式開放預約時間」為準，直至該時間前任何人都無法成功提交預約。
         </p>
       </div>

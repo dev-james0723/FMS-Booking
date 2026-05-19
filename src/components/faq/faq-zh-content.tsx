@@ -46,7 +46,7 @@ export function FaqZhContent() {
                 variant: "violet",
                 icon: "calendar",
                 title: "體驗期間（例子）",
-                tags: ["2026/4/3–5/3", "每日：06:00–20:00", "香港時間"],
+                tags: ["2026/5/20–6/15", "每日：06:00–20:00", "香港時間"],
               },
               {
                 variant: "sky",
@@ -251,7 +251,7 @@ export function FaqZhContent() {
                     <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
                       被推薦人：可享 <strong className="text-stone-700 dark:text-stone-300">D Festival</strong> 報名費半價、
                       <strong className="text-stone-700 dark:text-stone-300"> D Masters</strong> 初賽報名費半價；所有優惠碼將會自動發送到被推薦人；所有額外時段須於
-                      <strong className="text-stone-700 dark:text-stone-300"> 2026/5/3</strong> 後使用，主辦方會於此次免費體驗活動後，逐步向獲取額外 Time Slots
+                      <strong className="text-stone-700 dark:text-stone-300"> 2026/6/15</strong> 後使用，主辦方會於此次免費體驗活動後，逐步向獲取額外 Time Slots
                       的用戶通知何時能進行預約。
                     </p>
                   </>

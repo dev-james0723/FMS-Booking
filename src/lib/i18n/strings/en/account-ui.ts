@@ -155,7 +155,7 @@ export const accountEn = {
   ambassadorRewardsNoteAvailability: "Subject to slot availability.",
   ambassadorRewardsNoteTransfer: "Non-transferable and cannot be exchanged for cash.",
   ambassadorRewardsNoteAfter:
-    "Bonus slots may only be used after this free experience programme ends (after 3 May).",
+    "Bonus slots may only be used after this free experience programme ends (after 15 June).",
   ambassadorRewardsNoteRemind:
     "Fantasia Music Space will remind eligible referrers in batches when they may book rooms.",
   ambassadorShareLink: "Your share link",
@@ -183,7 +183,7 @@ export const accountEn = {
   ambassadorPopupDmasters:
     "D Masters International Piano Competition — 50% off the preliminary application fee; your promo code will be sent automatically to your registration email.",
   ambassadorPopupNote:
-    "All extra booking slots must be used after 3 May 2026. After this free experience programme ends, the organiser will progressively notify users who earned extra Time Slots when they may book. D Festival and D Masters offers remain subject to the organiser’s terms.",
+    "All extra booking slots must be used after 15 June 2026. After this free experience programme ends, the organiser will progressively notify users who earned extra Time Slots when they may book. D Festival and D Masters offers remain subject to the organiser’s terms.",
   ambassadorPopupCopyAll: "Copy offer details",
   ambassadorPopupCopied: "Copied",
   ambassadorPopupClose: "Close",

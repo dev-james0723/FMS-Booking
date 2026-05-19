@@ -25,8 +25,8 @@ import { buildMonthGrid, isHkDayBookable } from "@/lib/hk-calendar-client";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { HK_TZ } from "@/lib/time";
 
-const APRIL_2026 = { year: 2026, month1: 4 };
 const MAY_2026 = { year: 2026, month1: 5 };
+const JUNE_2026 = { year: 2026, month1: 6 };
 
 function hkTodayYmd(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: HK_TZ });
@@ -371,9 +371,9 @@ export function BookingCalendarOverviewPanel(props: {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <MonthCalendarBlock
-          title={t("booking.cal.monthApr")}
-          year={APRIL_2026.year}
-          month1={APRIL_2026.month1}
+          title={t("booking.cal.monthMay")}
+          year={MAY_2026.year}
+          month1={MAY_2026.month1}
           slots={displaySlots}
           selected={selected}
           onSelect={selectDay}
@@ -390,9 +390,9 @@ export function BookingCalendarOverviewPanel(props: {
           }
         />
         <MonthCalendarBlock
-          title={t("booking.cal.monthMay")}
-          year={MAY_2026.year}
-          month1={MAY_2026.month1}
+          title={t("booking.cal.monthJune")}
+          year={JUNE_2026.year}
+          month1={JUNE_2026.month1}
           slots={displaySlots}
           selected={selected}
           onSelect={selectDay}

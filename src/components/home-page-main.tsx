@@ -29,9 +29,8 @@ export function HomePageMain({
   initialNowMs,
   venueAddressZh,
 }: Props) {
-  const { t, tr } = useTranslation();
+  const { t } = useTranslation();
   const { user: meUser, bookingHref } = useSiteMe();
-  const campaignRange = t("campaign.dateRange");
 
   return (
     <main className="mx-auto max-w-5xl px-5 sm:px-4 pb-16 pt-6 sm:pt-8">
@@ -43,7 +42,7 @@ export function HomePageMain({
         {t("home.title")}
       </h1>
       <p className="mx-auto mt-6 max-w-2xl text-center text-stone-600 dark:text-stone-400">
-        {tr("home.lead", { campaignRange })}
+        {t("home.lead")}
       </p>
 
       <div className="mx-auto mt-8 w-full max-w-3xl">

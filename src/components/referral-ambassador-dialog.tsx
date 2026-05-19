@@ -6,11 +6,11 @@ import { AMBASSADOR_REFEREE_PROMO_CODES } from "@/lib/referral/ambassador-promo-
 
 const COPY_PROMO_CODES_ZH = `D Festival 青年鋼琴家藝術節 — 報名費半價（優惠碼將自動發送至你的登記電郵；備用代碼：${AMBASSADOR_REFEREE_PROMO_CODES.dFestivalHalfPrice}）。
 D Masters 國際鋼琴比賽 — 初賽報名費半價（優惠碼將自動發送至你的登記電郵；備用代碼：${AMBASSADOR_REFEREE_PROMO_CODES.dMastersHalfPrice}）。
-注意：所有額外預約時段須於 2026 年 5 月 3 日後使用。免費體驗活動結束後，主辦方將逐步通知獲取額外 Time Slots 之用戶何時可預約。`;
+注意：所有額外預約時段須於 2026 年 6 月 15 日後使用。免費體驗活動結束後，主辦方將逐步通知獲取額外 Time Slots 之用戶何時可預約。`;
 
 const COPY_PROMO_CODES_EN = `D Festival Young Pianist Program — 50% off application fee (promo code sent automatically to your registration email; backup code: ${AMBASSADOR_REFEREE_PROMO_CODES.dFestivalHalfPrice}).
 D Masters International Piano Competition — 50% off preliminary application fee (promo code sent automatically to your registration email; backup code: ${AMBASSADOR_REFEREE_PROMO_CODES.dMastersHalfPrice}).
-Note: All extra booking slots must be used after 3 May 2026. After the free experience programme ends, the organiser will progressively notify users who earned extra Time Slots when they may book.`;
+Note: All extra booking slots must be used after 15 June 2026. After the free experience programme ends, the organiser will progressively notify users who earned extra Time Slots when they may book.`;
 
 export function ReferralAmbassadorDialog(props: {
   ambassadorNameZh: string;

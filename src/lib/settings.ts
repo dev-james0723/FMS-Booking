@@ -125,7 +125,7 @@ function bookingOpensInstantForEffectiveNow(raw: unknown): Date | null {
   const d = parseInstantSetting(raw);
   if (!d) return null;
   const key = d.toLocaleDateString("en-CA", { timeZone: HK_TZ });
-  if (key === "2026-03-31") {
+  if (key === "2026-03-31" || key === "2026-04-03") {
     return fromZonedTime(`${CAMPAIGN_EXPERIENCE_FIRST_DAY_KEY}T11:00:00`, HK_TZ);
   }
   return d;

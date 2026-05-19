@@ -17,5 +17,6 @@ function run(cmd) {
 }
 
 run("npx prisma migrate deploy");
+run("npx tsx scripts/backfill-booking-slots-6-20-hkt.ts");
 run("npx prisma generate");
 run("npx next build");

@@ -344,13 +344,13 @@ export const bookingEn = {
     overviewIntro: "",
     dayDetailHint:
       "Tap a date on the calendars below to see each slot as available, booked, or closed. This page is view-only — use the booking flow to submit a request.",
-    jumpFirstCampaignDay: "View campaign first day (3 Apr)",
-    jumpLastCampaignDay: "View campaign last day (3 May)",
+    jumpFirstCampaignDay: "View campaign first day (20 May)",
+    jumpLastCampaignDay: "View campaign last day (15 Jun)",
     refresh: "Refresh",
     loading: "Loading…",
     loadError: "Could not load calendar data",
-    monthApr: "April 2026",
-    monthMay: "May 2026 (end of campaign)",
+    monthMay: "May 2026",
+    monthJune: "June 2026 (end of campaign)",
     leaveOverview: "Leave calendar overview",
     legend:
       "Green: still has bookable slots · Red: no bookable slots left (full or closed) · Grey: no slots or outside free experience dates",
