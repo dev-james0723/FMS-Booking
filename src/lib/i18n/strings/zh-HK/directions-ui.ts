@@ -8,7 +8,7 @@ export const directionsZhHK = {
   addressLabel: "地址",
   tocHeading: "本頁目錄",
   tocNavAria: "頁內導航：跳至各交通段落",
-  addressFull: "香港新界荃灣沙咀道 29-35 號科技中心 9 樓 17 室",
+  addressFull: "香港新界荃灣沙咀道 29-35 號科技中心 9 樓 10 室",
   copyAddress: "複製地址",
   copied: "已複製",
   mapTitle: "位置地圖",

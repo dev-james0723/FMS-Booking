@@ -9,7 +9,7 @@ export const directionsEn = {
   tocHeading: "On this page",
   tocNavAria: "In-page navigation: jump to transport sections",
   addressFull:
-    "Room 17, 9/F, Technology Centre, Nos. 29-35 Sha Tsui Road, Tsuen Wan, New Territories, Hong Kong",
+    "Room 10, 9/F, Technology Centre, Nos. 29-35 Sha Tsui Road, Tsuen Wan, New Territories, Hong Kong",
   copyAddress: "Copy address",
   copied: "Copied",
   mapTitle: "Map",
